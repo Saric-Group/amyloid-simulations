@@ -11,7 +11,7 @@ args=("$@")
 JOB_PBS=${args[0]}
 REPEAT=${args[1]}
 
-$(dirname "${BASH_SOURCE[0]}")/setup_scripts/get_libs.sh
+./$(dirname "${BASH_SOURCE[0]}")/setup_scripts/get_libs.sh
 
 source ~/simulations/venv/bin/activate
 

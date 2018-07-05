@@ -8,6 +8,8 @@
 
 data/*
 
+libs/*
+
 *.log
 *.lammps
 *.dat
