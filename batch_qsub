@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+# first argument has to be the PBS script to run
+# second argument has to be the number of times to repeat each job
+# other arguments have to be config file paths (expected to end with .cfg)
+
+# two arguments are passed to the PBS script: "cfg_file_name" and "repeat"
+
+args=("$@")
+
+JOB_PBS=${args[0]}
+REPEAT=${args[1]}
+
+$(dirname "${BASH_SOURCE[0]}")/setup_scripts/get_libs.sh
+
+source ~/simulations/venv/bin/activate
+
+for ((i=2; i < ${#args[*]}; i++)) do
+	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`
+	mkdir -p "$CFG_FILE_NAME"
+	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat=$REPEAT
+done

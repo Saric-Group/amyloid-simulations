@@ -1,0 +1,16 @@
+
+# Eclipse stuff
+.project
+.pydevproject
+.settings
+
+*.pyc
+
+data/*
+
+*.log
+*.lammps
+*.dat
+*.dump
+
+TODO

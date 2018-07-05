@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#PBS -N amyloid_single-state
+#PBS -q batch
+#PBS -l nodes=1:ppn=1
+#PBS -l pmem=800M
+#PBS -l walltime=48:00:00
+#PBS -M eugen.rozic.17@ucl.ac.uk
+#PBS -m aef
+#PBS -V
+#PBS -o "${cfg_file_name}/${PBS_JOBID}.out"
+#PBS -j oe
+
+cd $PBS_O_WORKDIR # where it is called from
+
+PROJECT_HOME="$PBS_O_HOME/simulations/amyloids"
+
+PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
+export PYTHONPATH
+
+for i in `seq 1 $repeat`; do
+
+	SEED=$(( 10#`date +%N` % 900000000 ))
+
+	python "$PROJECT_HOME"/programs/simple_nve.py "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED --num_cells 7 --sim_length 1000000 --MC_moves 0 --output_freq 10000 --silent
+
+	python "$PROJECT_HOME"/tools/cluster_analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${SEED}.dump"
+	
+done
