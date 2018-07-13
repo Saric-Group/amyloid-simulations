@@ -46,14 +46,13 @@ if args.seed is None:
     import time
     args.seed = int((time.time() % 1)*1000000)
     print "WARNING: no seed given explicitly; using:", args.seed
+    
+logfile = os.path.join(args.output_folder, 'lammps.log')
 
-py_lmp = PyLammps()
-if args.silent:
-    py_lmp.log("none")
-else:
-    py_lmp.log(os.path.join(args.output_folder, 'lammps.log'))
+py_lmp = PyLammps(cmdargs=['-screen','none'])
+py_lmp.log(logfile)
 
-max_rod_type = rods.init(py_lmp, args.config_file, args.output_folder)
+max_rod_type = rods.init(py_lmp, args.config_file, args.output_folder, logfile)
 
 # DEFINE SIMULATION BOX
 py_lmp.boundary("p p p")
@@ -100,8 +99,8 @@ else:
     
     for i in range(int(args.sim_length/args.run_length)-1):
         
-        py_lmp.command('run {:d}'.format(args.run_length))
-        
+        py_lmp.command('run {:d} post no'.format(args.run_length))
+            
         success = rods.conformation_Monte_Carlo(mc_moves_per_run)
         
         if not args.silent:
@@ -111,5 +110,5 @@ else:
                     (i+1)*args.run_length, args.sim_length, beta_count, base_count,
                         float(beta_count)/base_count, float(success)/mc_moves_per_run)
             
-    py_lmp.command('run {:d}'.format(args.run_length))
+    py_lmp.command('run {:d} post no'.format(args.run_length))
 
