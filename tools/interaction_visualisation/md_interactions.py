@@ -21,17 +21,19 @@ r_body_sq = r_body**2
 M = None
 r_int = None
 delta_int = None #in terms of r_int
+bulge_out = None
 
 int_range = 1.5*r_body
 
-def set_parameters(num_int_spots, int_bead_r, int_bead_sep):
+def set_parameters(num_int_spots, int_bead_r, int_bead_sep, int_bead_bulge):
     '''
     Sets the "M", "r_int" and "delta_int" global parameters
     '''
-    global M, r_int, delta_int
+    global M, r_int, delta_int, bulge_out
     M = num_int_spots
     r_int = int_bead_r
     delta_int = int_bead_sep
+    bulge_out = int_bead_bulge
 
 def sb_interaction(int_f, r, z, phi):
     '''
@@ -51,7 +53,7 @@ def sb_interaction(int_f, r, z, phi):
             return 0
     
     U = 0
-    r_i = r_body - r_int
+    r_i = r_body - r_int + bulge_out
     R = r_body + r_int
     cutoff = R + int_range
     for i in range(M):
@@ -99,7 +101,7 @@ def bb_interaction(int_f, r, z, theta, phi, psi1 = 0, psi2 = None):
     
     R = 2*r_int
     cutoff = R + int_range
-    r_i = r_j = r_body - r_int
+    r_i = r_j = r_body - r_int + bulge_out
     x_i = c_psi1*r_i
     y_i = s_psi1*r_i
     for i in range(M):

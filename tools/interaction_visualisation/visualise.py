@@ -19,10 +19,12 @@ import md_interactions as md
 from potentials import lj_n_m, gauss, morse
 
 # MD interaction parameters
-M = 6
+M = 8
 r_int = 0.5*md.r_body
-delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
-md.set_parameters(M, r_int, delta_int)
+#delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
+delta_int = 0.2*md.r_body
+bulge_out = 0.1*md.r_body
+md.set_parameters(M, r_int, delta_int, bulge_out)
 
 # interactions
 lj_12_6 = lambda r, sigma, cutoff : lj_n_m(12, 6, r, sigma, cutoff)
@@ -30,6 +32,7 @@ lj_12_4 = lambda r, sigma, cutoff : lj_n_m(12, 4, r, sigma, cutoff)
 gauss_05 = lambda r, sigma, cutoff : gauss(0.5*md.r_body, r, sigma, cutoff)
 gauss_06 = lambda r, sigma, cutoff : gauss(0.6*md.r_body, r, sigma, cutoff)
 morse_275 = lambda r, sigma, cutoff : morse(2.75/md.r_body, r, sigma, cutoff)
+morse_25 = lambda r, sigma, cutoff : morse(2.5/md.r_body, r, sigma, cutoff)
 morse_20 = lambda r, sigma, cutoff : morse(2.0/md.r_body, r, sigma, cutoff)
 
 # plot parameters 
@@ -67,7 +70,7 @@ def draw_models(axes = None, r = 0, z = 0):
         z_i = z + (i - (md.N-1)/2.)*(2 - md.delta_body)*md.r_body 
         axes.add_patch(plt.Circle((z_i,r), md.r_body, fill=True, color='#777777'))
     # the interaction centers
-    r = r + (md.r_body - md.r_int)
+    r = r + (md.r_body - md.r_int + md.bulge_out)
     for i in range(md.M):
         z_i = z + (i - (md.M-1)/2.)*(2 - md.delta_int)*md.r_int 
         axes.add_patch(plt.Circle((z_i,r), md.r_int, fill=True, color='red'))
@@ -217,15 +220,16 @@ def draw_bb(prefix, inf_f):
 # sb_widgets = draw_sb("LJ_12-6", lj_12_6, polar=True)
 # sb_widgets = draw_sb("LJ_12-4", lj_12_4, polar=True)
 # sb_widgets = draw_sb("morse_2.75", morse_275, polar=True)
+sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
 # sb_widgets = draw_sb("morse_2.0", morse_20, polar=True)
 # sb_widgets = draw_sb("gauss_0.5", gauss_05, polar=True)
 # sb_widgets = draw_sb("gauss_0.6", gauss_06, polar=True)
 
 #bb_widgets = draw_bb("LJ_12-6", lj_12_6)
 #bb_widgets = draw_bb("LJ_12-4", lj_12_4)
-bb_widgets = draw_bb("morse_2.75", morse_275)
+#bb_widgets = draw_bb("morse_2.75", morse_275)
 #bb_widgets = draw_bb("morse_2.0", morse_20)
-bb_widgets = draw_bb("gauss_0.5", gauss_05)
+#bb_widgets = draw_bb("gauss_0.5", gauss_05)
 #bb_widgets = draw_bb("gauss_0.6", gauss_06)
 
 plt.show()
