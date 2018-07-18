@@ -47,35 +47,31 @@ if args.seed is None:
     args.seed = int((time.time() % 1)*1000000)
     print "WARNING: no seed given explicitly; using:", args.seed
     
-logfile = os.path.join(args.output_folder, 'lammps.log')
+log_path = os.path.join(args.output_folder, 'lammps.log')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
-py_lmp.log(logfile)
+py_lmp.log(log_path)
 
-max_rod_type = rods.init(py_lmp, args.config_file, args.output_folder, logfile)
+simulation = rods.Simulation(py_lmp, args.config_file, args.output_folder, log_path)
+model = simulation.model
 
 # DEFINE SIMULATION BOX
 py_lmp.boundary("p p p")
 py_lmp.lattice("sc", 1./(args.cell_size**3))
 box_size = float(args.num_cells)
 py_lmp.region("box", "block", -box_size / 2, box_size / 2, -box_size / 2, box_size / 2, -box_size / 2, box_size / 2)
-py_lmp.create_box(max_rod_type, "box")
+py_lmp.create_box(model.max_bead_type, "box")
 
+# CREATE PARTICLES
 # create other particles before rods...
-rods.setup_simulation(args.seed, args.temp, box = None)
+simulation.setup(args.seed, args.temp, box = None)
 
 # DYNAMICS
 py_lmp.fix("thermostat", "all", "langevin", args.temp, args.temp, args.damp, args.seed)#, "zero yes")
-
-rods.set_dynamics("nve")
-
-py_lmp.neigh_modify("every 1 delay 1") #TODO why is this neccessary??
+simulation.set_dynamics("nve")
+py_lmp.neigh_modify("every 1 delay 3")
 
 # OUTPUT
-# py_lmp.dump("mov", "all", "movie", 20, "rods.avi", "type", "type", "view 75 15", "zoom 1.4", "adiam 1.0")
-# py_lmp.dump_modify("mov", "bitrate 5000")
-# py_lmp.dump("dump_cmd", "all", "xyz", args.output_freq,
-#             os.path.join(args.output_folder, os.path.split(args.output_folder)[1]+'.xyz'))
 py_lmp.dump("dump_cmd", "all", "custom", 1, os.path.join(args.output_folder, str(args.seed)+'.dump'), "mol type x y z")
 if (args.output_freq != None):
     py_lmp.dump_modify("dump_cmd", "every", args.output_freq, "sort id", "pad 5")
@@ -89,7 +85,7 @@ if not args.silent:
 
 ### SETUP COMPLETE ###
 
-mc_moves_per_run = int(args.MC_moves * rods.nrods())
+mc_moves_per_run = int(args.MC_moves * simulation.rods_count())
 
 if mc_moves_per_run == 0:
     
@@ -101,11 +97,11 @@ else:
         
         py_lmp.command('run {:d} post no'.format(args.run_length))
             
-        success = rods.conformation_Monte_Carlo(mc_moves_per_run)
+        success = simulation.conformation_Monte_Carlo(mc_moves_per_run)
         
         if not args.silent:
-            base_count = rods.state_count(0)
-            beta_count = rods.state_count(1)
+            base_count = simulation.state_count(0)
+            beta_count = simulation.state_count(1)
             print 'step {:d} / {:d} :  beta-to-base ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
                     (i+1)*args.run_length, args.sim_length, beta_count, base_count,
                         float(beta_count)/base_count, float(success)/mc_moves_per_run)
