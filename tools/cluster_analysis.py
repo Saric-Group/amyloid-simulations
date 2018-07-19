@@ -7,18 +7,18 @@ Created on 16 May 2018
 
 import re
 import os
+import argparse
 
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 
-import lammps_multistate_rods.model as rod_model
-import argparse
+import lammps_multistate_rods
 
 def state_struct_to_name(state_struct):
-    for i in range(rod_model.num_states):
-        if state_struct == rod_model.state_structures[i].replace('|',''):
-            return rod_model.rod_states[i]
+    for i in range(model.num_states):
+        if state_struct == model.state_structures[i].replace('|',''):
+            return model.rod_states[i]
     return None
 
 def wrap_periodic((elem, L)):
@@ -115,15 +115,15 @@ def analyse_snapshot((active_particles, mol_states), box_size):
     return ret
 
 def analyse_dump_file(dump_file, config_file):
-    #get information from the config file
-    rod_model.set_model_params(config_file)
-    global r_body, r_int, cutoff_dist, active_types
-    r_body = rod_model.rod_radius
-    cutoff_dist = 0.5*rod_model.rod_radius #??
-    r_int = rod_model.int_radius
+    #get information about the model/simulation from the config file
+    global model, r_body, r_int, cutoff_dist, active_types
+    model = lammps_multistate_rods.Model(config_file) 
+    r_body = model.rod_radius
+    r_int = model.int_radius
+    cutoff_dist = 0.5*model.rod_radius #??
     active_types = set()
-    for key, value in rod_model.eps.iteritems():
-        if value != rod_model.vx and value > 0:
+    for key, value in model.eps.iteritems():
+        if value != lammps_multistate_rods.model.vx and value > 0:
             active_types.update(key)
     active_types = list(active_types)
 
