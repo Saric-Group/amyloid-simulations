@@ -11,9 +11,17 @@ args=("$@")
 JOB_PBS=${args[0]}
 REPEAT=${args[1]}
 
-./$(dirname "${BASH_SOURCE[0]}")/setup_scripts/get_libs.sh
+PROJECT_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source ~/simulations/venv/bin/activate
+# get the newest version of the library...
+"$PROJECT_HOME"/setup_scripts/get_libs.sh
+
+if [ -d "$PROJECT_HOME/../venv" ]; then
+	source "$PROJECT_HOME"/../venv/bin/activate
+	echo "Virtualenv at $PROJECT_HOME/../venv activated."
+else
+	echo "WARNING: Virtualenv not found/activated !!"
+fi
 
 for ((i=2; i < ${#args[*]}; i++)) do
 	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`

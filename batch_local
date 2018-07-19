@@ -1,10 +1,6 @@
 #!/bin/bash -e
 
-# first argument has to be the PBS script to run
-# second argument has to be the number of times to repeat each job
-# other arguments have to be config file paths (expected to end with .cfg)
-
-# two arguments are passed to the PBS script: "cfg_file_name" and "repeat"
+# Arguments passed to the script have to be config file paths (expected to end with .cfg)
 
 args=("$@")
 
@@ -19,9 +15,9 @@ for ((i=0; i < ${#args[*]}; i++)) do
 
 		SEED=$(( 10#`date +%N` % 900000000 ))
 
-		python programs/simple_nve.py "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED --sim_length 100000 --MC_moves 0 --output_freq 10 --silent
+		python programs/simple_nve.py "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED
 
-		#python tools/cluster_analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${SEED}.dump" --plot
+		#python tools/cluster_analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${SEED}.dump"
 	
 	done
 done
