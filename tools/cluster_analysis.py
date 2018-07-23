@@ -121,11 +121,7 @@ def analyse_dump_file(dump_file, config_file):
     r_body = model.rod_radius
     r_int = model.int_radius
     cutoff_dist = 0.5*model.rod_radius #??
-    active_types = set()
-    for key, value in model.eps.iteritems():
-        if value != lammps_multistate_rods.model.vx and value > 0:
-            active_types.update(key)
-    active_types = list(active_types)
+    active_types = model.active_bead_types
 
     box_size, raw_data = parse_dump_file(dump_file)
     n_snapshots = len(raw_data)

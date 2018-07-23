@@ -27,8 +27,11 @@ parser.add_argument('-M', '--MC_moves', default=1.0, type=float, help='number of
 parser.add_argument('--seed', type=int, help='the seed for random number generators')
 
 parser.add_argument('-o', '--output_freq', type=int, help='''configuration output frequency (in MD steps);
-default behavior is before and after every batch of MC moves''')
-parser.add_argument('-s', '--silent', action='store_true', help="doesn't print anything to stdout and doesn't make a lammps log file")
+default behavior is after every batch of MC moves''')
+parser.add_argument('-s', '--silent', action='store_true', help="doesn't print anything to stdout")
+
+#TODO add option for cluster_tracking
+cluster_tracking = True
 
 args = parser.parse_args()
 
@@ -50,38 +53,45 @@ if args.seed is None:
 log_path = os.path.join(args.output_folder, 'lammps.log')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
-py_lmp.log(log_path)
+model = rods.Model(args.config_file)
+simulation = rods.Simulation(py_lmp, model, args.seed, args.temp, args.output_folder, log_path)
 
-simulation = rods.Simulation(py_lmp, args.config_file, args.output_folder, log_path)
-model = simulation.model
-
-# DEFINE SIMULATION BOX
+# various things to optionally set/define in LAMMPS
+py_lmp.units("lj")
+py_lmp.dimension(3)
 py_lmp.boundary("p p p")
 py_lmp.lattice("sc", 1./(args.cell_size**3))
 box_size = float(args.num_cells)
 py_lmp.region("box", "block", -box_size / 2, box_size / 2, -box_size / 2, box_size / 2, -box_size / 2, box_size / 2)
-py_lmp.create_box(model.max_bead_type, "box")
+
+#TODO show options
+simulation.setup("box")
 
 # CREATE PARTICLES
-# create other particles before rods...
-simulation.setup(args.seed, args.temp, box = None)
+# create other particles (and define their interactions etc.) before rods...
+simulation.create_rods(box = None, cluster_tracking = cluster_tracking, cluster_cutoff = 3.0*model.rod_radius)
 
 # DYNAMICS
 py_lmp.fix("thermostat", "all", "langevin", args.temp, args.temp, args.damp, args.seed)#, "zero yes")
-simulation.set_dynamics("nve")
+simulation.set_rod_dynamics("nve")
+
 py_lmp.neigh_modify("every 1 delay 3")
 
 # OUTPUT
-py_lmp.dump("dump_cmd", "all", "custom", 1, os.path.join(args.output_folder, str(args.seed)+'.dump'), "mol type x y z")
+dump_path = os.path.join(args.output_folder, str(args.seed)+'.dump')
+dump_elems = "id x y z type mol"
+if cluster_tracking:
+    dump_elems += " c_"+simulation.cluster_compute
 if (args.output_freq != None):
-    py_lmp.dump_modify("dump_cmd", "every", args.output_freq, "sort id", "pad 5")
+    py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
+    py_lmp.dump_modify("dump_cmd", "sort id")
 else:
-    py_lmp.variable("output_steps", "equal", "stagger({:d},1)".format(args.run_length))
-    py_lmp.dump_modify("dump_cmd", "every v_output_steps", "first yes", "sort id", "pad 5")
+    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(args.sim_length+1, args.run_length))
+    py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
+    py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 
-if not args.silent:
-    py_lmp.thermo_style("custom", "step atoms", "pe temp")
-    py_lmp.thermo(args.run_length)
+py_lmp.thermo_style("custom", "step atoms", "pe temp")
+py_lmp.thermo(args.run_length)
 
 ### SETUP COMPLETE ###
 
