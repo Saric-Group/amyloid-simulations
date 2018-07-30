@@ -58,7 +58,7 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
         current_cluster_id = None
         current_rod_structure = []
         i = 0
-        max_row = 0
+        min_row = max_row = 0
         for line in dump_file:
             i += 1
             if i == 2:
