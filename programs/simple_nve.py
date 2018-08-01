@@ -81,7 +81,7 @@ simulation.create_rods(box = None)
 py_lmp.fix("thermostat", "all", "langevin", args.temp, args.temp, args.damp, args.seed)#, "zero yes")
 simulation.set_rod_dynamics("nve")
 
-#py_lmp.neigh_modify("every 1 delay 5")
+py_lmp.neigh_modify("every 1 delay 1")
 
 # OUTPUT
 dump_elems = "id x y z type mol"
