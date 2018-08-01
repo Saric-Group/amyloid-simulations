@@ -23,8 +23,10 @@ for i in `seq 1 $repeat`; do
 
 	SEED=$(( 10#`date +%N` % 900000000 ))
 
-	python "$PROJECT_HOME"/programs/__APP__ "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED __PARAMS__
+	python "$PROJECT_HOME"/programs/__APP__ "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED --cell_size $cell_size --num_cells $num_cells --sim_length $sim_length __PARAMS__
+	
+	dumpfile_name="${cell_size}-${num_cells}_${SEED}.dump"
 
-	python "$PROJECT_HOME"/tools/__TOOL__ "${cfg_file_name}.cfg" "${cfg_file_name}/${SEED}.dump"
+	python "$PROJECT_HOME"/tools/__TOOL__ "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}"
 
 done

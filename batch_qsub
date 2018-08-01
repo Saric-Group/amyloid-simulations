@@ -2,6 +2,9 @@
 
 # first argument has to be the PBS script to run
 # second argument has to be the number of times to repeat each job
+# third argument has to be the box size
+# fourth argument has to be the number of cells
+# fifth argument has to be the length of the simulation
 # other arguments have to be config file paths (expected to end with .cfg)
 
 # two arguments are passed to the PBS script: "cfg_file_name" and "repeat"
@@ -10,6 +13,9 @@ args=("$@")
 
 JOB_PBS=${args[0]}
 REPEAT=${args[1]}
+CELL_SIZE=${args[2]}
+NUM_CELLS=${args[3]}
+SIM_LENGTH=${args[4]}
 
 PROJECT_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -23,8 +29,8 @@ else
 	echo "WARNING: Virtualenv not found/activated !!"
 fi
 
-for ((i=2; i < ${#args[*]}; i++)) do
+for ((i=5; i < ${#args[*]}; i++)) do
 	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`
 	mkdir -p "$CFG_FILE_NAME"
-	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat=$REPEAT
+	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat="$REPEAT",cell_size="$CELL_SIZE",num_cells="$NUM_CELLS",sim_length="$SIM_LENGTH"
 done

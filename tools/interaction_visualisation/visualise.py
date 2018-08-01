@@ -19,10 +19,10 @@ import md_interactions as md
 from potentials import lj_n_m, gauss, morse
 
 # MD interaction parameters
-M = 8
+M = 6
 r_int = 0.5*md.r_body
 #delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
-delta_int = 0.2*md.r_body
+delta_int = 0.0*md.r_body
 bulge_out = 0.1*md.r_body
 md.set_parameters(M, r_int, delta_int, bulge_out)
 
@@ -219,7 +219,6 @@ def draw_bb(prefix, inf_f):
 
 # sb_widgets = draw_sb("LJ_12-6", lj_12_6, polar=True)
 # sb_widgets = draw_sb("LJ_12-4", lj_12_4, polar=True)
-# sb_widgets = draw_sb("morse_2.75", morse_275, polar=True)
 sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
 # sb_widgets = draw_sb("morse_2.0", morse_20, polar=True)
 # sb_widgets = draw_sb("gauss_0.5", gauss_05, polar=True)
@@ -227,7 +226,7 @@ sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
 
 #bb_widgets = draw_bb("LJ_12-6", lj_12_6)
 #bb_widgets = draw_bb("LJ_12-4", lj_12_4)
-#bb_widgets = draw_bb("morse_2.75", morse_275)
+bb_widgets = draw_bb("morse_2.5", morse_25)
 #bb_widgets = draw_bb("morse_2.0", morse_20)
 #bb_widgets = draw_bb("gauss_0.5", gauss_05)
 #bb_widgets = draw_bb("gauss_0.6", gauss_06)
