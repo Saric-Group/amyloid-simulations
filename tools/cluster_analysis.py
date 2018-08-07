@@ -128,7 +128,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='''
         Application for the analysis of clusters of lammps_multistate_rods as molecules
         from LAMMPS dump files with the output structure: id x y z type mol c_''' +
-        lammps_multistate_rods.Simulation.cluster_compute)
+        lammps_multistate_rods.Simulation.cluster_compute,
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('config_file', help='path to the "lammps_multistate_rods" model config file')
     parser.add_argument('in_files', nargs='+', help='path(s) of the dump file(s) to analyse')
     args = parser.parse_args()

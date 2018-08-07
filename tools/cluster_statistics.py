@@ -17,8 +17,8 @@ from math import sqrt, ceil
 import cluster_analysis
 
 parser = argparse.ArgumentParser(description='''
-        Application for calculating the statistics of cluster data over multiple simulations
-        ''')
+        Application for calculating the statistics of cluster data over multiple simulations''',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('in_files', nargs='+', help='paths of the *_cluster_data files')
 parser.add_argument('--bin_size', default=1, type=int, help='size of bins for doing cluster size distributions')
 args = parser.parse_args()
@@ -106,15 +106,18 @@ for cluster_type in cluster_types:
         fm_devs[cluster_type][i] = sqrt(np.average((free_mons-fms[cluster_type][i])**2))
         
         biggest_cluster = max(max_sizes)
-        num_bins = int(ceil(float(biggest_cluster)/bin_size))
+        num_bins = int(ceil(float(biggest_cluster-1)/bin_size))+1
         aggregate_occurrences = [None]*num_bins
         for j in range(num_bins):
             aggregate_occurrences[j] = np.zeros(n_simulations)
         for n in range(n_simulations):
             try:
                 for size, occurrences in zip(*cluster_sizes_data[n][i][cluster_type]):
-                    bin_no = int((size-1)/bin_size)
-                    aggregate_occurrences[bin_no][n] += occurrences
+                    bin_no = int((size-2)/bin_size)+1
+                    if bin_no == 0:
+                        aggregate_occurrences[bin_no][n] = occurrences
+                    else:
+                        aggregate_occurrences[bin_no][n] += occurrences/float(bin_size)
                     #all other are 0 by initialisation
             except KeyError:
                 pass
@@ -153,7 +156,8 @@ def draw_cluster_distributions(cluster_type):
     fig.subplots_adjust(bottom=0.20)
 
     plot_data = distributions[cluster_type][-1]
-    sizes = fixed_size_range(len(plot_data[0]), np.average(range(1, bin_size+1)), bin_size)
+    sizes = [1]
+    sizes.extend(fixed_size_range(len(plot_data[0])-1, np.average(range(2, bin_size+2)), bin_size))
     ax.errorbar(sizes, plot_data[0], yerr=plot_data[1], fmt='bo-', capsize=4, linewidth=1)
     avg = avgs[cluster_type][-1]
     dev = avg_devs[cluster_type][-1]
