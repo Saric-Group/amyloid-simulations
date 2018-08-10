@@ -53,7 +53,7 @@ if args.seed is None:
 dump_path = str(args.cell_size)+'-'+str(args.num_cells)+'_'+str(args.seed)+'.dump'
 dump_path = os.path.join(args.output_folder, dump_path)
     
-log_path = os.path.join(args.output_folder, 'lammps.log')
+log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 model = rods.Model(args.config_file)

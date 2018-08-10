@@ -20,7 +20,7 @@ SIM_LENGTH=${args[4]}
 PROJECT_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # get the newest version of the library...
-"$PROJECT_HOME"/setup_scripts/get_libs.sh
+#"$PROJECT_HOME"/setup_scripts/get_libs.sh
 
 if [ -d "$PROJECT_HOME/../venv" ]; then
 	source "$PROJECT_HOME"/../venv/bin/activate
