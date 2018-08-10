@@ -26,9 +26,11 @@ if [ "`which python2.7`" != "$VENVDIR/bin/python2.7" ]; then
 	exit
 fi
 
-pip install scipy numpy matplotlib mpi4py
+pip install scipy numpy pyquaternion matplotlib mpi4py
 
 cd $LAMMPSDIR/python
 python install.py
 
 cd "$STARTDIR"
+
+deactivate
