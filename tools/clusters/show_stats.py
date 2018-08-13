@@ -14,7 +14,7 @@ from matplotlib.widgets import Slider
 
 import numpy as np
 from math import sqrt, ceil
-import cluster_analysis
+import analysis
 
 parser = argparse.ArgumentParser(description='''
         Application for calculating the statistics of cluster data over multiple simulations''',
@@ -33,13 +33,13 @@ cluster_sizes_data = []
 for in_file in args.in_files:
     if data_dir != os.path.dirname(in_file):
         raise Exception('All files should be from the same directory!')
-    _timesteps, raw_data = cluster_analysis.read_raw_data(in_file)
+    _timesteps, raw_data = analysis.read_raw_data(in_file)
     if timesteps == None:
         timesteps = _timesteps
         n_snapshots = len(timesteps)
     elif len(_timesteps) != n_snapshots: #quick, non thorough check
         raise Exception('All files should have the same timesteps!')
-    cluster_sizes_data.append(cluster_analysis.cluster_sizes_by_type(raw_data))
+    cluster_sizes_data.append(analysis.cluster_sizes_by_type(raw_data))
 
 n_simulations = len(cluster_sizes_data)
 

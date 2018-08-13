@@ -14,8 +14,8 @@ from matplotlib.widgets import Slider, RadioButtons
 
 import numpy as np
 
-import mc_interactions as mc
-import md_interactions as md
+from tools.interactions import mc
+from tools.interactions import md
 from potentials import lj_n_m, gauss, morse
 
 # MD interaction parameters

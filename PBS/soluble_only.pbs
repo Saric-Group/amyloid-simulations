@@ -27,6 +27,6 @@ for i in `seq 1 $repeat`; do
 	
 	dumpfile_name="${cell_size}-${num_cells}_${SEED}.dump"
 
-	python "$PROJECT_HOME"/tools/cluster_analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}"
+	python "$PROJECT_HOME"/tools/clusters/analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}"
 	
 done

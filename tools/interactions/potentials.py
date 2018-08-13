@@ -10,8 +10,8 @@ Created on 1 May 2018
 @author: Eugen Rožić
 '''
 
-from math import exp as exp
-from math import sqrt as sqrt
+from math import exp
+from math import sqrt
 
 eps = 1.0
 
