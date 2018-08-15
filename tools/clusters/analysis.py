@@ -40,17 +40,18 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
     
     model : the lammps_multistate_rods.Model class instance which was used to generate the data
     
-    returns : a list of timesteps and a corresponding list of snapshot_data, where "snapshot_data"
-    is a dictionary by cluster ID's whose values are lists of (rod/mol ID, rod state ID) pairs
+    returns : a list of box dimensions, a list of timesteps and a corresponding list of snapshot_data,
+    where "snapshot_data" is a dictionary by cluster ID's whose values are lists of
+    (rod/mol ID, rod state ID) pairs
     
     NOTE: cluster ID's are set to the lowest rod/mol ID of each cluster, not the ones that are in
     the dump file
     '''
     with open(dump_file_path, 'r') as dump_file:
         
+        box_size = []
         timesteps = []
         raw_data = []
-        #box_size = []
         #TODO get info on which column is what, don't force exact format...
         pattern = re.compile(r'(\d+) ([-\+\d\.eE]+) ([-\+\d\.eE]+) ([-\+\d\.eE]+) (\d+) (\d+) (\d+)')
         snapshot_data = {}
@@ -69,10 +70,10 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
                 max_row = 9 + atoms_to_read
                 min_row = 10 + particle_offset
             
-#             elif i in (6,7,8) and len(box_size) < 3:
-#                 l_bound, r_bound = [float(match) for match in re.compile(r'([-\+\d\.eE]+) ([-\+\d\.eE]+)').match(line).groups()]
-#                 box_size.append(r_bound - l_bound)
-            
+            elif i in (6,7,8) and len(box_size) < 3:
+                l_bound, r_bound = [float(match) for match in re.compile(r'([-\+\d\.eE]+) ([-\+\d\.eE]+)').match(line).groups()]
+                box_size.append(r_bound - l_bound)
+               
             elif i >= min_row and i <= max_row:
                 bead_id, x, y, z, bead_type, mol_id, cluster_id = pattern.match(line).groups()
                 mol_id = int(mol_id)
@@ -112,13 +113,14 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
                 current_rod_structure = []
                 i = 0
     
-    return timesteps, raw_data
+    return box_size, timesteps, raw_data
 
-def output_raw_data(timesteps, raw_data, output_path):
+def output_raw_data(box_size, timesteps, raw_data, output_path):
     '''
     Outputs the data returned by "parse_dump_file"
     '''
     with open(output_path, 'w') as out_file:
+        out_file.write('{:f} {:f} {:f}\n'.format(*box_size))
         for timestep, snapshot_data in zip(timesteps, raw_data):
             out_file.write('{:^10d} | {:s}\n'.format(timestep, str(snapshot_data)))
 
@@ -138,8 +140,8 @@ if __name__ == "__main__":
     
     for in_file in args.in_files:
         output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-        timesteps, raw_data = parse_dump_file(in_file, model)
-        output_raw_data(timesteps, raw_data, output_path)
+        box_size, timesteps, raw_data = parse_dump_file(in_file, model)
+        output_raw_data(box_size, timesteps, raw_data, output_path)
 
 def read_raw_data(input_path):
     '''
@@ -152,12 +154,13 @@ def read_raw_data(input_path):
     raw_data = []
     
     with open(input_path, 'r') as in_file:
+        box_size = map(float, in_file.readline().split())
         for line in in_file:
             timestep, snapshot_data = line.split(' | ')
             timesteps.append(int(timestep))
             raw_data.append(eval(snapshot_data))
             
-    return timesteps, raw_data
+    return box_size, timesteps, raw_data
 
 def cluster_sizes_by_type(raw_data):
     '''

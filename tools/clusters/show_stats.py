@@ -21,24 +21,33 @@ parser = argparse.ArgumentParser(description='''
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('in_files', nargs='+', help='paths of the *_cluster_data files')
 parser.add_argument('--bin_size', default=1, type=int, help='size of bins for doing cluster size distributions')
+parser.add_argument('-s', '--save', default=None, type=str, help='if set saves the figures to given location with extensions "_dist.pdf" & "_stat.pdf"')
 args = parser.parse_args()
 data_dir = os.path.dirname(args.in_files[0])
 bin_size = args.bin_size
 
 #get data...
 
+box_size = None
 timesteps = None
 n_snapshots = None
 cluster_sizes_data = []
 for in_file in args.in_files:
     if data_dir != os.path.dirname(in_file):
         raise Exception('All files should be from the same directory!')
-    _timesteps, raw_data = analysis.read_raw_data(in_file)
+    
+    _box_size, _timesteps, raw_data = analysis.read_raw_data(in_file)
+    
+    if box_size == None:
+        box_size = _box_size
+    elif box_size != _box_size:
+        raise Exception('All files should have the same box size!')
     if timesteps == None:
         timesteps = _timesteps
         n_snapshots = len(timesteps)
     elif len(_timesteps) != n_snapshots: #quick, non thorough check
         raise Exception('All files should have the same timesteps!')
+    
     cluster_sizes_data.append(analysis.cluster_sizes_by_type(raw_data))
 
 n_simulations = len(cluster_sizes_data)
@@ -196,8 +205,12 @@ def draw_cluster_distributions(cluster_type):
 
 widgets = []
 for cluster_type in cluster_types:
-    draw_cluster_stats(cluster_type)
-    fig, slider = draw_cluster_distributions(cluster_type)
-    widgets.append(slider)
+    stat_fig = draw_cluster_stats(cluster_type)
+    dist_fig, dist_slider = draw_cluster_distributions(cluster_type)
+    widgets.append(dist_slider)
+    if args.save:
+        print args.save+"_"+str(cluster_type)+"_stat.pdf"
+        stat_fig.savefig(args.save+"_"+str(cluster_type)+"_stat.pdf", dpi=1000, facecolor='white')
+        dist_fig.savefig(args.save+"_"+str(cluster_type)+"_dist.pdf", dpi=1000, facecolor='white')
 
 plt.show()
