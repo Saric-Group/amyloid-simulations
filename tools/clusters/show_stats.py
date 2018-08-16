@@ -124,9 +124,10 @@ for cluster_type in cluster_types:
                 for size, occurrences in zip(*cluster_sizes_data[n][i][cluster_type]):
                     bin_no = int((size-2)/bin_size)+1
                     if bin_no == 0:
-                        aggregate_occurrences[bin_no][n] = occurrences
+                        aggregate_occurrences[bin_no][n] = occurrences #multiply by size?
                     else:
-                        aggregate_occurrences[bin_no][n] += occurrences/float(bin_size)
+                        aggregate_occurrences[bin_no][n] += occurrences/float(bin_size) #multiply by size?
+                    #TODO ? multiply by size ?
                     #all other are 0 by initialisation
             except KeyError:
                 pass
