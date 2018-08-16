@@ -101,12 +101,11 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
                     snapshot_data[current_cluster_id] = [(current_mol_id, current_rod_state)]
                 
                 #switch keys to correspond to lowest mol_id in each cluster
-                temp = snapshot_data.keys()
-                for key in temp:
-                    value = snapshot_data.pop(key)
-                    snapshot_data[value[0][0]] = value
+                new_snapshot_data = {}
+                for value in snapshot_data.values():
+                    new_snapshot_data[value[0][0]] = value
                 
-                raw_data.append(snapshot_data)
+                raw_data.append(new_snapshot_data)
                 snapshot_data = {}
                 current_mol_id = None
                 current_cluster_id = None
@@ -192,6 +191,24 @@ def cluster_sizes_by_type(raw_data):
         i += 1
         
     return ret
+
+def free_monomers(snapshot_data, total=True):
+    '''
+    return : the number of free monomers (of any type) in the snapshot_data. If
+    total=True the total number of monomers is also returned.
+    '''
+    free_monomers = 0
+    total_monomers = 0
+    for cluster in snapshot_data.values():
+        cluster_size = len(cluster)
+        total_monomers += cluster_size
+        if cluster_size == 1:
+            free_monomers += 1
+    
+    if total:
+        return free_monomers, total_monomers
+    else:
+        return free_monomers
 
 #TODO provide more advanced analysis (like changes in clusters between snapshots)
 
