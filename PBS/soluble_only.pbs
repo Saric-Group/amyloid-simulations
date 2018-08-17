@@ -23,9 +23,9 @@ for i in `seq 1 $repeat`; do
 
 	SEED=$(( 10#`date +%N` % 900000000 ))
 	
-	python "$PROJECT_HOME"/programs/simple_nve.py "${cfg_file_name}.cfg" "${cfg_file_name}" --seed $SEED --cell_size $cell_size --num_cells $num_cells --sim_length $sim_length --MC_moves 0 --output_freq 10000 --silent
+	python "$PROJECT_HOME"/programs/init_lattice.py "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED --MC_moves 0 --output_freq 10000 --silent
 	
-	dumpfile_name="${cell_size}-${num_cells}_${SEED}.dump"
+	dumpfile_name="${size}-${num}_${SEED}.dump"
 
 	python "$PROJECT_HOME"/tools/clusters/analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}"
 	
