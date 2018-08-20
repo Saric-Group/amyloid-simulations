@@ -210,7 +210,6 @@ for cluster_type in cluster_types:
     dist_fig, dist_slider = draw_cluster_distributions(cluster_type)
     widgets.append(dist_slider)
     if args.save:
-        print args.save+"_"+str(cluster_type)+"_stat.pdf"
         stat_fig.savefig(args.save+"_"+str(cluster_type)+"_stat.pdf", dpi=1000, facecolor='white')
         dist_fig.savefig(args.save+"_"+str(cluster_type)+"_dist.pdf", dpi=1000, facecolor='white')
 
