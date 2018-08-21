@@ -29,7 +29,7 @@ parser.add_argument('-D', '--damp', default=0.1, type=float, help='viscous dampi
 parser.add_argument('-R', '--run_length', default=200, type=int, help='number of MD steps between MC moves')
 parser.add_argument('--MC_moves', default=1.0, type=float, help='number of MC moves per rod between MD runs')
 
-parser.add_argument('--clusters', default=3.0, type=float, help='the max distance (in rod radii) for two rods to be \
+parser.add_argument('--clusters', default=2.5, type=float, help='the max distance (in rod radii) for two rods to be \
 in the same cluster (put to 0.0 to turn cluster tracking off)')
 
 parser.add_argument('-o', '--output_freq', type=int, help='''configuration output frequency (in MD steps);
