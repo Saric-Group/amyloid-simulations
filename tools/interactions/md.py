@@ -22,18 +22,18 @@ M = None
 r_int = None
 delta_int = None #in terms of r_int
 bulge_out = None
+int_range = None
 
-int_range = 1.5*r_body
-
-def set_parameters(num_int_spots, int_bead_r, int_bead_sep, int_bead_bulge):
+def set_parameters(num_int_spots, int_bead_r, int_bead_overlap, int_bead_bulge, range_of_int):
     '''
     Sets the "M", "r_int" and "delta_int" global parameters
     '''
-    global M, r_int, delta_int, bulge_out
+    global M, r_int, delta_int, bulge_out, int_range
     M = num_int_spots
     r_int = int_bead_r
-    delta_int = int_bead_sep
+    delta_int = int_bead_overlap
     bulge_out = int_bead_bulge
+    int_range = range_of_int
 
 def sb_interaction(int_f, r, z, phi):
     '''

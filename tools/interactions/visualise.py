@@ -16,15 +16,16 @@ import numpy as np
 
 from tools.interactions import mc
 from tools.interactions import md
-from potentials import lj_n_m, gauss, morse
+from potentials import lj_n_m, lj_cos_sq, gauss, morse
 
 # MD interaction parameters
 M = 6
-r_int = 0.5*md.r_body
+r_int = 0.25*md.r_body
 #delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
-delta_int = 0.0*md.r_body
-bulge_out = 0.1*md.r_body
-md.set_parameters(M, r_int, delta_int, bulge_out)
+delta_int = -2.0*md.r_body
+int_range = 1.75*md.r_body
+bulge_out = 0.0*md.r_body
+md.set_parameters(M, r_int, delta_int, bulge_out, int_range)
 
 # interactions
 lj_12_6 = lambda r, sigma, cutoff : lj_n_m(12, 6, r, sigma, cutoff)
@@ -40,11 +41,11 @@ rmin = -0*md.r_body; zero_r = 0
 rmax = 5*md.r_body
 zmin = -0*md.r_body; zero_z = 0
 zmax = 7.5*md.r_body
-point_density = 0.1
+point_density = 0.2
 z_points = int((zmax-zmin)/point_density) + 1
 r_points = int((rmax-rmin)/point_density) + 1
 phi_points = 16#32
-theta_points = 16
+theta_points = 8
 
 # plotting points
 zs = np.linspace(zmin, zmax, z_points)
@@ -86,7 +87,7 @@ def draw_sb(prefix, int_f, polar=True):
     sb_vals['md'] = sb_vals['md'].reshape(theta_points, r_points, z_points)
     md_sb_min = sb_vals['md'].min()
     print "md_sb_vals.min() =", md_sb_min
-    sb_vals['mc'] = np.array([mc.sb_interaction(r, z, phi, eps=-md_sb_min) for phi in thetas for r in rs for z in zs])
+    sb_vals['mc'] = np.array([mc.sb_interaction(r, z, phi, eps=-md_sb_min/2) for phi in thetas for r in rs for z in zs])
     sb_vals['mc'] = sb_vals['mc'].reshape(theta_points, r_points, z_points)
     sb_vals['diff'] = sb_vals['md'] - sb_vals['mc']
     
@@ -150,11 +151,10 @@ def draw_bb(prefix, inf_f):
     bb_vals['md'] = np.array([md.bb_interaction(inf_f, r, z, theta, phi) for phi in phis for theta in thetas for r in rs for z in zs])
     bb_vals['md'] = bb_vals['md'].reshape(phi_points, theta_points, r_points, z_points)
     md_bb_min = bb_vals['md'].min()
-    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=-md_bb_min/1.25) for phi in phis for theta in thetas for r in rs for z in zs])
+    print "md_bb_vals.min() = ", md_bb_min
+    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=-md_bb_min/2) for phi in phis for theta in thetas for r in rs for z in zs])
     bb_vals['mc'] = bb_vals['mc'].reshape(phi_points, theta_points, r_points, z_points)
     bb_vals['diff'] = bb_vals['md'] - bb_vals['mc']
-    mc_bb_min = bb_vals['mc'].min()
-    print "mc_bb_vals.min() =", mc_bb_min, "; md_bb_vals.min() = ", md_bb_min
     
     init_theta_index = 0
     init_phi_index = 0
@@ -219,16 +219,18 @@ def draw_bb(prefix, inf_f):
 
 # sb_widgets = draw_sb("LJ_12-6", lj_12_6, polar=True)
 # sb_widgets = draw_sb("LJ_12-4", lj_12_4, polar=True)
-sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
+# sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
 # sb_widgets = draw_sb("morse_2.0", morse_20, polar=True)
 # sb_widgets = draw_sb("gauss_0.5", gauss_05, polar=True)
 # sb_widgets = draw_sb("gauss_0.6", gauss_06, polar=True)
+sb_widgets = draw_sb("lj/cos_sq", lj_cos_sq, polar=True)
 
-#bb_widgets = draw_bb("LJ_12-6", lj_12_6)
-#bb_widgets = draw_bb("LJ_12-4", lj_12_4)
-bb_widgets = draw_bb("morse_2.5", morse_25)
-#bb_widgets = draw_bb("morse_2.0", morse_20)
-#bb_widgets = draw_bb("gauss_0.5", gauss_05)
-#bb_widgets = draw_bb("gauss_0.6", gauss_06)
+# bb_widgets = draw_bb("LJ_12-6", lj_12_6)
+# bb_widgets = draw_bb("LJ_12-4", lj_12_4)
+# bb_widgets = draw_bb("morse_2.5", morse_25)
+# bb_widgets = draw_bb("morse_2.0", morse_20)
+# bb_widgets = draw_bb("gauss_0.5", gauss_05)
+# bb_widgets = draw_bb("gauss_0.6", gauss_06)
+bb_widgets = draw_bb("LJ/cos_sq", lj_cos_sq)
 
 plt.show()

@@ -77,7 +77,11 @@ for a in (2.5/r_body, 2.0/r_body):
     py_lmp.pair_style("morse", cutoff)
     py_lmp.pair_modify("shift yes")
     py_lmp.pair_coeff("*", "*", eps, a, sigma)
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))                          
+    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
+    
+py_lmp.pair_style("lj/cos_sq", cutoff)
+py_lmp.pair_coeff("*", "*", eps, sigma)
+py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'lj/cos_sq')
     
 
 #########################################################################################
@@ -115,6 +119,8 @@ plt.plot(data[3][1], data[3][2], label=data[3][0], color='green', linewidth=1)
 #morse
 plt.plot(data[4][1], data[4][2], label=data[4][0], color='red', linewidth=2)
 plt.plot(data[5][1], data[5][2], label=data[5][0], color='red', linewidth=1)
+#lj/cos_sq
+plt.plot(data[6][1], data[6][2], label=data[6][0], color='blue', linewidth=2)
 
 # from potentials import *
 # import numpy as np
@@ -128,6 +134,7 @@ plt.xlabel(r'$r$', **axis_font)
 plt.ylabel(r'$E(r)$', rotation='vertical', **axis_font)
 plt.axis(xmin = min_r, xmax = max_r, ymin = -1.05*eps, ymax = 1.05*eps)
 plt.axvline(sigma+r_body, color='black', linestyle='--', linewidth=0.5)
+plt.axvline(2*r_body, color='black', linestyle='--', linewidth=0.5)
 
 
 fig = plt.figure('LAMMPS interactions - forces', figsize=(10,8))
@@ -141,6 +148,8 @@ plt.plot(data[3][1], data[3][3], label=data[3][0], color='green', linewidth=1)
 #morse
 plt.plot(data[4][1], data[4][3], label=data[4][0], color='red', linewidth=2)
 plt.plot(data[5][1], data[5][3], label=data[5][0], color='red', linewidth=1)
+#lj/cos_sq
+plt.plot(data[6][1], data[6][3], label=data[6][0], color='blue', linewidth=2)
 
 
 plt.legend(loc='lower right')
@@ -149,6 +158,7 @@ plt.ylabel(r'$F(r)$', **axis_font)
 force_min = min(data[0][3])
 plt.axis(xmin = min_r, xmax = max_r, ymin = 1.05*force_min, ymax = -1.05*force_min)
 plt.axvline(sigma+r_body, color='black', linestyle='--', linewidth=0.5)
+plt.axvline(2*r_body, color='black', linestyle='--', linewidth=0.5)
 
 #fig.savefig("./LAMMPS_potenatials.pdf", dpi=1000)
 plt.show()
