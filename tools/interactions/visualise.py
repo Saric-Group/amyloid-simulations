@@ -22,7 +22,7 @@ from potentials import lj_n_m, lj_cos_sq, gauss, morse
 M = 6
 r_int = 0.25*md.r_body
 #delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
-delta_int = -2.0*md.r_body
+delta_int = -2.0
 int_range = 1.75*md.r_body
 bulge_out = 0.0*md.r_body
 md.set_parameters(M, r_int, delta_int, bulge_out, int_range)

@@ -24,8 +24,8 @@ else
 	git pull
 fi
 
-#get the lj/cos_sq pair style
-git clone -b master https://github.com/Saric-Group/lammps_pair_lj_cos_sq.git "$LAMMPSDIR"/temp
+#get the cosine/squared pair style
+git clone -b master https://github.com/Saric-Group/lammps_pair_cosine_squared.git "$LAMMPSDIR"/temp
 mv "$LAMMPSDIR"/temp/src/* "$LAMMPSDIR"/src
 rm -rf "$LAMMPSDIR"/temp
 
