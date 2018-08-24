@@ -24,15 +24,14 @@ def lj_n_m(n, m, r, sigma, cutoff, eps=eps):
     co_val = m*(sigma/cutoff)**n - n*(sigma/cutoff)**m
     return eps*(m*(sigma/r)**n - n*(sigma/r)**m - co_val)/(n-m)
 
-def lj_cos_sq(r, sigma, cutoff, eps=eps):
+def cos_sq(r, sigma, cutoff, eps=eps):
     '''
-    A potential with a Lennard-Jones repulsive part and a cosine-squared attractive
-    part connecting points (sigma, -eps) and (cutoff, 0) smoothly. 
+    A potential with a cosine-squared attractive part connecting points (sigma, -eps) and (cutoff, 0) smoothly. 
     '''
     if r >= cutoff:
         return 0.0
     elif r <= sigma:
-        return eps*((sigma/r)**12 - 2*(sigma/r)**6)
+        return -eps
     else:
         return -eps*(cos(pi*(r-sigma)/(2*(cutoff-sigma))))**2
 

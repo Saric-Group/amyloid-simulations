@@ -16,7 +16,7 @@ import numpy as np
 
 from tools.interactions import mc
 from tools.interactions import md
-from potentials import lj_n_m, lj_cos_sq, gauss, morse
+from potentials import lj_n_m, cos_sq, gauss, morse
 
 # MD interaction parameters
 M = 6
@@ -152,7 +152,7 @@ def draw_bb(prefix, inf_f):
     bb_vals['md'] = bb_vals['md'].reshape(phi_points, theta_points, r_points, z_points)
     md_bb_min = bb_vals['md'].min()
     print "md_bb_vals.min() = ", md_bb_min
-    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=-md_bb_min/2) for phi in phis for theta in thetas for r in rs for z in zs])
+    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=-md_bb_min/2.5) for phi in phis for theta in thetas for r in rs for z in zs])
     bb_vals['mc'] = bb_vals['mc'].reshape(phi_points, theta_points, r_points, z_points)
     bb_vals['diff'] = bb_vals['md'] - bb_vals['mc']
     
@@ -223,7 +223,7 @@ def draw_bb(prefix, inf_f):
 # sb_widgets = draw_sb("morse_2.0", morse_20, polar=True)
 # sb_widgets = draw_sb("gauss_0.5", gauss_05, polar=True)
 # sb_widgets = draw_sb("gauss_0.6", gauss_06, polar=True)
-sb_widgets = draw_sb("lj/cos_sq", lj_cos_sq, polar=True)
+sb_widgets = draw_sb("cos_sq", cos_sq, polar=True)
 
 # bb_widgets = draw_bb("LJ_12-6", lj_12_6)
 # bb_widgets = draw_bb("LJ_12-4", lj_12_4)
@@ -231,6 +231,6 @@ sb_widgets = draw_sb("lj/cos_sq", lj_cos_sq, polar=True)
 # bb_widgets = draw_bb("morse_2.0", morse_20)
 # bb_widgets = draw_bb("gauss_0.5", gauss_05)
 # bb_widgets = draw_bb("gauss_0.6", gauss_06)
-bb_widgets = draw_bb("LJ/cos_sq", lj_cos_sq)
+bb_widgets = draw_bb("cos_sq", cos_sq)
 
 plt.show()
