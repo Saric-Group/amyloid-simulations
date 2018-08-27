@@ -23,7 +23,7 @@ for i in `seq 1 $repeat`; do
 
 	SEED=$(( 10#`date +%N` % 900000000 ))
 	
-	python "$PROJECT_HOME"/programs/${program}.py "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED --MC_moves 0 --output_freq 10000 --silent
+	python "$PROJECT_HOME"/programs/run_sim.py "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED --MC_moves 0 --output_freq 10000 --silent
 	
 	dumpfile_name="${size}-${num}_${SEED}.dump"
 

@@ -13,10 +13,9 @@ args=("$@")
 
 JOB_PBS=${args[0]}
 REPEAT=${args[1]}
-PROGRAM=${args[2]}
-SIZE=${args[3]}
-NUM=${args[4]}
-SIM_LEN=${args[5]}
+SIZE=${args[2]}
+NUM=${args[3]}
+SIM_LEN=${args[4]}
 
 PROJECT_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -31,8 +30,8 @@ else
 	exit
 fi
 
-for ((i=6; i < ${#args[*]}; i++)) do
+for ((i=5; i < ${#args[*]}; i++)) do
 	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`
 	mkdir -p "$CFG_FILE_NAME"
-	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat="$REPEAT",program="$PROGRAM",size="$SIZE",num="$NUM",sim_len="$SIM_LEN"
+	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat="$REPEAT",size="$SIZE",num="$NUM",sim_len="$SIM_LEN"
 done

@@ -30,14 +30,14 @@ py_lmp.create_box(3, "box")
 py_lmp.mass("*", 1)
 
 # general potential parameters
-eps = 1.0
+eps = 1.0*1.2
 try:
     r_body = float(sys.argv[1])
 except:
     r_body = 1.0
-r_int = 0.5*r_body
+r_int = 1.0*r_body
 sigma = r_int + r_int
-cutoff = sigma + 1.5*r_body
+cutoff = sigma + 1.75*r_body
 
 # output parameters
 output_filename = "interactions.dat"
@@ -54,7 +54,7 @@ max_r = cutoff
 
 for i in (6, 4):
     py_lmp.pair_style("nm/cut", cutoff)
-    py_lmp.pair_modify("shift yes")
+    #py_lmp.pair_modify("shift yes")
     py_lmp.pair_coeff("*", "*", eps, sigma, 12, i)
     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
     
@@ -66,20 +66,20 @@ for i in (6, 4):
 #     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Buckingham-'+str(alpha)) 
 
 # Gaussian
-for std_dev in (0.5*r_body, 0.6*r_body):
+for std_dev in (0.5*r_body, 0.43*r_body):
     py_lmp.pair_style("gauss/cut", cutoff)
-    py_lmp.pair_modify("shift yes")
+    #py_lmp.pair_modify("shift yes")
     py_lmp.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
       
 # Morse
-for a in (2.5/r_body, 2.0/r_body):
+for a in (2.62/r_body, 2.0/r_body):
     py_lmp.pair_style("morse", cutoff)
-    py_lmp.pair_modify("shift yes")
+    #py_lmp.pair_modify("shift yes")
     py_lmp.pair_coeff("*", "*", eps, a, sigma)
     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
     
-py_lmp.pair_style("lj/cos_sq", cutoff)
+py_lmp.pair_style("cosine/squared", cutoff)
 py_lmp.pair_coeff("*", "*", eps, sigma)
 py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'lj/cos_sq')
     
