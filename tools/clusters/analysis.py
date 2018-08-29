@@ -34,7 +34,7 @@ def wrap_periodic((elem, L)):
         elem += L
     return elem
 
-def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
+def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset=0):
     '''
     Reads the dump file given by the path and extracts data from it.
     
@@ -58,11 +58,27 @@ def parse_dump_file(dump_file_path, model, particle_offset=0, type_offset=0):
         current_mol_id = None
         current_cluster_id = None
         current_rod_structure = []
-        i = 0
+        count = 0
+        skip = False
         min_row = max_row = 0
+        i = 0
         for line in dump_file:
             i += 1
-            if i == 2:
+            
+            if skip and i != 1:
+                if i == max_row:
+                    i = 0
+                continue
+            
+            if i == 1:
+                count += 1
+                if (count-1) % every != 0:
+                    skip = True
+                    continue
+                else:
+                    skip = False
+                    
+            elif i == 2:
                 timesteps.append(int(line))
             
             elif i == 4:
@@ -126,20 +142,24 @@ def output_raw_data(box_size, timesteps, raw_data, output_path):
 # if called as a program just parses and outputs raw rod cluster data from the given dump files
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='''
-        Application for the analysis of clusters of lammps_multistate_rods as molecules
+    parser = argparse.ArgumentParser(description=
+        '''Application for the analysis of clusters of lammps_multistate_rods as molecules
         from LAMMPS dump files with the output structure: id x y z type mol c_''' +
         lammps_multistate_rods.Simulation.cluster_compute,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('config_file', help='path to the "lammps_multistate_rods" model config file')
-    parser.add_argument('in_files', nargs='+', help='path(s) of the dump file(s) to analyse')
+    parser.add_argument('config_file',
+                        help='path to the "lammps_multistate_rods" model config file')
+    parser.add_argument('in_files', nargs='+',
+                        help='path(s) of the dump file(s) to analyse')
+    parser.add_argument('-n', '--every', type=int, default=1,
+                        help='every which snapshot to analyse')
     args = parser.parse_args()
     
     model = lammps_multistate_rods.Model(args.config_file)
     
     for in_file in args.in_files:
         output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-        box_size, timesteps, raw_data = parse_dump_file(in_file, model)
+        box_size, timesteps, raw_data = parse_dump_file(in_file, args.every, model)
         output_raw_data(box_size, timesteps, raw_data, output_path)
 
 def read_raw_data(input_path):
@@ -170,8 +190,7 @@ def cluster_sizes_by_type(raw_data):
     homogeneous, otherwise -1) whose values are pairs of (cluster_sizes, occurrences) lists 
     '''
     ret = [None]*len(raw_data)
-    i = 0
-    
+    i = 0 
     for snapshot_data in raw_data:
         cluster_sizes = {}
         for cluster in snapshot_data.values():
@@ -192,23 +211,31 @@ def cluster_sizes_by_type(raw_data):
         
     return ret
 
-def free_monomers(snapshot_data, total=True):
+def free_monomers(raw_data, total=True):
     '''
-    return : the number of free monomers (of any type) in the snapshot_data. If
-    total=True the total number of monomers is also returned.
-    '''
-    free_monomers = 0
-    total_monomers = 0
-    for cluster in snapshot_data.values():
-        cluster_size = len(cluster)
-        total_monomers += cluster_size
-        if cluster_size == 1:
-            free_monomers += 1
+    raw_data : a list of "snapshot_data", dictionaries by cluster ID whose values are lists of
+    (rod/mol ID, rod state ID) pairs
     
-    if total:
-        return free_monomers, total_monomers
-    else:
-        return free_monomers
+    return : a list of numbers of free monomers (of any type) in each of snapshot_data. If
+    total=True a list of (free monomers, total monomers) pairs is returned instead
+    '''
+    ret = [None]*len(raw_data)
+    i = 0
+    for snapshot_data in raw_data:
+        free_monomers = 0
+        total_monomers = 0
+        for cluster in snapshot_data.values():
+            cluster_size = len(cluster)
+            total_monomers += cluster_size
+            if cluster_size == 1:
+                free_monomers += 1
+        if total:
+            ret[i] = (free_monomers, total_monomers)
+        else:
+            ret[i] = free_monomers
+        i += 1
+    
+    return ret
 
 #TODO provide more advanced analysis (like changes in clusters between snapshots)
 

@@ -19,12 +19,22 @@ import analysis
 parser = argparse.ArgumentParser(description='''
         Application for calculating the statistics of cluster data over multiple simulations''',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('in_files', nargs='+', help='paths of the *_cluster_data files')
-parser.add_argument('--bin_size', default=1, type=int, help='size of bins for doing cluster size distributions')
-parser.add_argument('-s', '--save', default=None, type=str, help='if set saves the figures to given location with extensions "_dist.pdf" & "_stat.pdf"')
+parser.add_argument('in_files', nargs='+', 
+                    help='paths of the *_cluster_data files')
+parser.add_argument('--overall', action='store_true',
+                    help='whether to plot the overall cluster statistics')
+parser.add_argument('--pdf', type=str, 
+                    help='''"i" to plot an interactive cluster PDF, or an int <N> to plot a
+                    static cluster PDF averaged over the last N timesteps''')
+parser.add_argument('--bin_size', type=int, default=1, 
+                    help='size of bins for doing cluster PDFs')
+parser.add_argument('-s', '--save', type=str,
+                    help='saves the figures to the given directory')
 args = parser.parse_args()
 data_dir = os.path.dirname(args.in_files[0])
 bin_size = args.bin_size
+
+#TODO use args.overall and args.pdf ... 
 
 #get data...
 
@@ -62,7 +72,7 @@ fms = {}
 fm_devs = {}
 distributions = {}
 
-#this is a "hack", a fair and strong assumption really so I can skip exhaustive search...
+#this is a "hack", but based on a fair and strong assumption really, so I can skip exhaustive search...
 cluster_types = set()
 for sim_data in cluster_sizes_data:
     cluster_types.update(sim_data[0].keys())
@@ -128,6 +138,7 @@ for cluster_type in cluster_types:
                     else:
                         aggregate_occurrences[bin_no][n] += occurrences/float(bin_size) #multiply by size?
                     #TODO ? multiply by size ?
+                    #TODO average over a lot of timesteps - how many? & how exactly??
                     #all other are 0 by initialisation
             except KeyError:
                 pass

@@ -30,7 +30,7 @@ py_lmp.create_box(3, "box")
 py_lmp.mass("*", 1)
 
 # general potential parameters
-eps = 1.0*1.2
+eps = 1.0
 try:
     r_body = float(sys.argv[1])
 except:

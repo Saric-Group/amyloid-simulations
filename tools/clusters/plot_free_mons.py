@@ -24,12 +24,13 @@ parser = argparse.ArgumentParser(description='''
         Application for plotting the free monomer concentrations''',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('in_files', nargs='+', help='paths of the *_cluster_data files')
-parser.add_argument('-s', '--save', default=None, type=str, help='saves the figure to the given location')
+parser.add_argument('-n', '--avg_over', type=int, default=10, help='last how many timesteps to average over')
+parser.add_argument('-s', '--save', type=str, default=None, help='saves the figure to the given location')
 args = parser.parse_args()
 
 data_dir = os.path.dirname(args.in_files[0])
 data_len = len(args.in_files)
-avg_over = 10 #TODO make this a parameter to set...
+avg_over = args.avg_over
 
 xs = np.zeros(data_len)
 ys = np.zeros(data_len)
@@ -41,8 +42,10 @@ for n in range(data_len):
     box_size, timesteps, raw_data = analysis.read_raw_data(args.in_files[n])
     volume = reduce(lambda x,y: x*y, box_size)
     
-    for i in range(avg_over):
-        free_monomers, total_monomers = analysis.free_monomers(raw_data[-1-i])
+    analyse_from = len(raw_data)-avg_over
+    results = analysis.free_monomers(raw_data[analyse_from:])
+    
+    for free_monomers, total_monomers in results:
         if xs[n] == 0:
             xs[n] = total_monomers 
         elif total_monomers != xs[n]:
