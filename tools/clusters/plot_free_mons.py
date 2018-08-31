@@ -56,13 +56,17 @@ for n in range(data_len):
     xs[n] = concentration(xs[n], volume)
     ys[n] = concentration(ys[n], volume)
     
+xs = np.log(xs)
+ys = np.log(ys)
+    
 fig = plt.figure(data_dir)
 
-plt.plot(np.log(xs), np.log(ys), 'bo')
+plt.plot(xs, xs, 'k-')
+plt.plot(xs, ys, 'bo')
     
 plt.xlabel(r'$\ln\left(c_{total}\;/\;M\right)$')
 plt.ylabel(r'$\ln\left(c_{free}\;/\;M\right)$', rotation='vertical')
-plt.axis(ymin=-11, ymax=-5.5, xmin=-11, xmax=-5.5)
+plt.axis(ymin=min(xs)-0.5, ymax=max(xs)+0.5, xmin=min(xs)-0.5, xmax=max(xs)+0.5)
 plt.grid(True)
 
 if args.save:

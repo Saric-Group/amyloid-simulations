@@ -166,8 +166,9 @@ def read_raw_data(input_path):
     '''
     Reads what was output with "output_raw_data"
     
-    returns : a list of timesteps and a corresponding list of snapshot_data, where "snapshot_data"
-    is a dictionary by cluster ID's whose values are lists of (rod/mol ID, rod state ID) pairs
+    returns : a box size triplet, a list of timesteps and a corresponding list of snapshot_data,
+    where "snapshot_data" is a dictionary by cluster ID's whose values are lists of 
+    (rod/mol ID, rod state ID) pairs.
     '''
     timesteps = []
     raw_data = []
@@ -187,10 +188,12 @@ def cluster_sizes_by_type(raw_data):
     (rod/mol ID, rod state ID) pairs
     
     return : a list of "cluster_sizes", dictionaries by cluster type (same as rod state ID if
-    homogeneous, otherwise -1) whose values are pairs of (cluster_sizes, occurrences) lists 
+    homogeneous, otherwise -1) whose values are pairs of (cluster_sizes, occurrences) lists, and
+    a number equal to the maximum cluster size across all timesteps and types.
     '''
     ret = [None]*len(raw_data)
-    i = 0 
+    max_size = 0
+    i = 0
     for snapshot_data in raw_data:
         cluster_sizes = {}
         for cluster in snapshot_data.values():
@@ -198,10 +201,15 @@ def cluster_sizes_by_type(raw_data):
             for rod_id, rod_state in cluster:
                 if rod_state != cluster_type:
                     cluster_type = -1
+            
+            cluster_size = len(cluster)
             try:
-                cluster_sizes[cluster_type].append(len(cluster))
+                cluster_sizes[cluster_type].append(cluster_size)
             except KeyError:
-                cluster_sizes[cluster_type] = [len(cluster)]
+                cluster_sizes[cluster_type] = [cluster_size]
+            
+            if cluster_size > max_size:
+                max_size = cluster_size
     
         for cluster_type, value in cluster_sizes.iteritems():
             cluster_sizes[cluster_type] = np.unique(value, return_counts=True)
@@ -209,7 +217,7 @@ def cluster_sizes_by_type(raw_data):
         ret[i] = cluster_sizes
         i += 1
         
-    return ret
+    return ret, max_size
 
 def free_monomers(raw_data, total=True):
     '''
