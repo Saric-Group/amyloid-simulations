@@ -52,36 +52,34 @@ max_r = cutoff
 ### interaction definitions #############################################################
 #########################################################################################
 
-for i in (6, 4):
+py_lmp.pair_style("lj/cut", cutoff)
+#py_lmp.pair_modify("shift yes")
+py_lmp.pair_coeff("*", "*", eps, sigma/math.pow(2, 1./6))
+py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-6')
+
+for i in (9,):
     py_lmp.pair_style("nm/cut", cutoff)
     #py_lmp.pair_modify("shift yes")
     py_lmp.pair_coeff("*", "*", eps, sigma, 12, i)
     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
+#      
+# # Gaussian
+# for std_dev in (0.5*r_body, 0.43*r_body):
+#     py_lmp.pair_style("gauss/cut", cutoff)
+#     #py_lmp.pair_modify("shift yes")
+#     py_lmp.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
+#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
+#       
+# # Morse
+# for a in (2.62/r_body, 2.0/r_body):
+#     py_lmp.pair_style("morse", cutoff)
+#     #py_lmp.pair_modify("shift yes")
+#     py_lmp.pair_coeff("*", "*", eps, a, sigma)
+#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
     
-# # Buckingham
-# for alpha in (8, ):
-#     py_lmp.pair_style("buck", cutoff)
-#     py_lmp.pair_modify("shift yes")
-#     py_lmp.pair_coeff("*", "*", 6*eps*math.exp(alpha)/(alpha-6), sigma/alpha, eps*alpha*sigma**6/(alpha-6))
-#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Buckingham-'+str(alpha)) 
-
-# Gaussian
-for std_dev in (0.5*r_body, 0.43*r_body):
-    py_lmp.pair_style("gauss/cut", cutoff)
-    #py_lmp.pair_modify("shift yes")
-    py_lmp.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
-      
-# Morse
-for a in (2.62/r_body, 2.0/r_body):
-    py_lmp.pair_style("morse", cutoff)
-    #py_lmp.pair_modify("shift yes")
-    py_lmp.pair_coeff("*", "*", eps, a, sigma)
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
-    
-py_lmp.pair_style("cosine/squared", cutoff)
-py_lmp.pair_coeff("*", "*", eps, sigma)
-py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'lj/cos_sq')
+# py_lmp.pair_style("cosine/squared", cutoff)
+# py_lmp.pair_coeff("*", "*", eps, sigma)
+# py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos_sq')
     
 
 #########################################################################################
@@ -110,17 +108,8 @@ with open(output_filename, 'r') as data_file:
 axis_font = {'size':12}
 fig = plt.figure('LAMMPS interactions - energies', figsize=(10,8))
 
-#LJ
 plt.plot(data[0][1], data[0][2], label=data[0][0], color='black', linewidth=2)
-plt.plot(data[1][1], data[1][2], label=data[1][0], color='black', linewidth=1)
-#gauss
-plt.plot(data[2][1], data[2][2], label=data[2][0], color='green', linewidth=2)
-plt.plot(data[3][1], data[3][2], label=data[3][0], color='green', linewidth=1)
-#morse
-plt.plot(data[4][1], data[4][2], label=data[4][0], color='red', linewidth=2)
-plt.plot(data[5][1], data[5][2], label=data[5][0], color='red', linewidth=1)
-#lj/cos_sq
-plt.plot(data[6][1], data[6][2], label=data[6][0], color='blue', linewidth=2)
+plt.plot(data[1][1], data[1][2], label=data[1][0], color='green', linewidth=1)
 
 # from potentials import *
 # import numpy as np
@@ -139,18 +128,8 @@ plt.axvline(2*r_body, color='black', linestyle='--', linewidth=0.5)
 
 fig = plt.figure('LAMMPS interactions - forces', figsize=(10,8))
 
-#LJ
 plt.plot(data[0][1], data[0][3], label=data[0][0], color='black', linewidth=2)
-plt.plot(data[1][1], data[1][3], label=data[1][0], color='black', linewidth=1)
-#gauss
-plt.plot(data[2][1], data[2][3], label=data[2][0], color='green', linewidth=2)
-plt.plot(data[3][1], data[3][3], label=data[3][0], color='green', linewidth=1)
-#morse
-plt.plot(data[4][1], data[4][3], label=data[4][0], color='red', linewidth=2)
-plt.plot(data[5][1], data[5][3], label=data[5][0], color='red', linewidth=1)
-#lj/cos_sq
-plt.plot(data[6][1], data[6][3], label=data[6][0], color='blue', linewidth=2)
-
+plt.plot(data[1][1], data[1][3], label=data[1][0], color='green', linewidth=1)
 
 plt.legend(loc='lower right')
 plt.xlabel(r'$r$', **axis_font)

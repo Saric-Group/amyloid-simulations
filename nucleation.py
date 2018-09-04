@@ -1,11 +1,9 @@
 # encoding: utf-8
 '''
-This application does an NVE+Langevin LAMMPS simulation of spherocylinder-like rods
-(defined in a .cfg file) using the "lammps_multistate_rods" library, with some rods
-preassembled in a fibril (using "tools/prepare_fibril.py).
-The initial locations of the rods are at SC lattice points defined by the input params,
-excluding the fibril region, and their orientations are randomly determined at each
-insertion point.
+This application does a simple NVE+Langevin LAMMPS simulation of spherocylinder-like rods
+(defined in a .cfg file) using the "lammps_multistate_rods" library.
+The initial locations of the rods are at SC lattice points defined by the input params, and
+their orientations are randomly determined at each insertion point.
 
 Created on 16 Mar 2018
 
@@ -15,8 +13,8 @@ Created on 16 Mar 2018
 import argparse
 
 parser = argparse.ArgumentParser(description=
-                                 'Program for NVE+Langevin hybrid LAMMPS simulation of\
-spherocylinder-like rods, with a preassembled fibril.',
+                                 'Program for NVE+Langevin hybrid LAMMPS simulation of spherocylinder-like\
+rods using the "lammps_multistate_rods" library.',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('config_file',
@@ -27,22 +25,13 @@ parser.add_argument('cell_size', type=float,
                     help='size of an SC cell (i.e. room for one rod)')
 parser.add_argument('num_cells', type=float,
                     help='the number of cells per dimension')
-parser.add_argument('phi', type=float,
-                    help='fibril azimuth angle (from y-axis); in degrees [0-360>')
-parser.add_argument('theta', type=float,
-                    help='fibril elevation angle (from x-y plane); in degrees [-90,90]')
 parser.add_argument('sim_length', type=int,
                     help='the total number of MD steps to simulate')
 
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
 
-parser.add_argument('--r0', nargs=3, type=float, default=[0.,0.,0.],
-                    help='the location of the center of the fibril')
-parser.add_argument('--N', type=int, default=20,
-                    help='number of monomers in the fibril')
-
-parser.add_argument('-T', '--temp', default=5.0, type=float,
+parser.add_argument('-T', '--temp', default=4.0, type=float,
                     help='the temperature of the system (e.g. for Langevin)')
 parser.add_argument('-D', '--damp', default=0.1, type=float,
                     help='viscous damping (for Langevin)')
@@ -73,7 +62,6 @@ if not os.path.exists(args.output_folder):
 #from mpi4py import MPI #TODO make MPI work...
 from lammps import PyLammps
 import lammps_multistate_rods as rods
-from tools.prepare_fibril import prepare_fibril
 
 if args.seed is None:
     import time
@@ -82,70 +70,22 @@ if args.seed is None:
     
 dump_path = str(args.cell_size)+'-'+str(args.num_cells)+'_'+str(args.seed)+'.dump'
 dump_path = os.path.join(args.output_folder, dump_path)
-
-fibril_path = os.path.join(args.output_folder, 'fibril.dat')
     
 log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 model = rods.Model(args.config_file)
-box_size = args.num_cells * args.cell_size
 simulation = rods.Simulation(py_lmp, model, args.seed, args.temp, args.output_folder,
                              log_path, clusters=args.clusters)
 py_lmp.units("lj")
 py_lmp.dimension(3)
 py_lmp.boundary("p p p")
 py_lmp.lattice("sc", 1/(args.cell_size**3))
-py_lmp.region("box", "block",
-              -args.num_cells / 2, args.num_cells / 2,
-              -args.num_cells / 2, args.num_cells / 2,
-              -args.num_cells / 2, args.num_cells / 2)
+py_lmp.region("box", "block", -args.num_cells / 2, args.num_cells / 2,
+                              -args.num_cells / 2, args.num_cells / 2,
+                              -args.num_cells / 2, args.num_cells / 2)
 simulation.setup("box")
-
-# create fibril
-fibril_edges = prepare_fibril(model, args.N, args.phi, args.theta, args.r0, fibril_path)
-simulation.create_rods(state_ID=model.num_states-1, file=fibril_path)
-# create other rods
-xmin = fibril_edges[0][0] - model.rod_length / 2
-xmax = fibril_edges[0][1] + model.rod_length / 2
-ymin = fibril_edges[1][0] - model.rod_length / 2
-ymax = fibril_edges[1][1] + model.rod_length / 2
-zmin = fibril_edges[2][0] - model.rod_length / 2
-zmax = fibril_edges[2][1] + model.rod_length / 2
-py_lmp.region("fibril", "block", xmin, xmax, ymin, ymax, zmin, zmax, "units box")
-#TODO py_lmp.region("box_minus_fibril", "subtract", 2, "box", "fibril")
-py_lmp.region("left", "block",
-              -box_size/2, xmin,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-              "units box")
-py_lmp.region("right", "block",
-               xmax, box_size / 2,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-              "units box")
-py_lmp.region("front", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, ymin,
-              -box_size / 2, box_size / 2,
-              "units box")
-py_lmp.region("back", "block",
-              -box_size / 2, box_size / 2,
-               ymax, box_size / 2,
-              -box_size / 2, box_size / 2,
-              "units box")
-py_lmp.region("down", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, zmin,
-              "units box")
-py_lmp.region("up", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-               zmax, box_size / 2,
-              "units box")
-py_lmp.region("box_minus_fibril", "union", 6, "up", "down", "front", "back", "left", "right")
-simulation.create_rods(region = "box_minus_fibril")
+simulation.create_rods(box = None)
 
 # DYNAMICS
 py_lmp.fix("thermostat", "all", "langevin", args.temp, args.temp, args.damp, args.seed)#, "zero yes")
