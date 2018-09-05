@@ -177,7 +177,7 @@ def plot_aggregate_pdf(pdf_data):
     dev_occurrences = [sqrt(np.average((pdf_data[j] - avg_occurrences[j])**2))
                        for j in range(max_cluster_size)]
         
-    #TODO make this just a subplot of a figure...
+    #TODO make this a subplot of a figure...
     fig = plt.figure('Cluster type {} aggregate size distributions ({})'.format(cluster_type, data_dir))
 
     sizes = range(1, max_cluster_size+1)

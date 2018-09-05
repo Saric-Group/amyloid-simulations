@@ -32,12 +32,14 @@ data_dir = os.path.dirname(args.in_files[0])
 data_len = len(args.in_files)
 avg_over = args.avg_over
 
-xs = np.zeros(data_len)
-ys = np.zeros(data_len)
+labels = [os.path.basename(os.path.dirname(args.in_files[0]))]
+data = [[]]
 
 for n in range(data_len):
-    if data_dir != os.path.dirname(args.in_files[n]):
-        raise Exception('All files should be from the same directory!') #??
+    label = os.path.basename(os.path.dirname(args.in_files[n]))
+    if (label != labels[-1]):
+        labels.append(label)
+        data.append([])
     
     box_size, timesteps, raw_data = analysis.read_raw_data(args.in_files[n])
     volume = reduce(lambda x,y: x*y, box_size)
@@ -45,33 +47,50 @@ for n in range(data_len):
     analyse_from = len(raw_data)-avg_over
     results = analysis.free_monomers(raw_data[analyse_from:])
     
+    temp_x = temp_y = 0.0
     for free_monomers, total_monomers in results:
-        if xs[n] == 0:
-            xs[n] = total_monomers 
-        elif total_monomers != xs[n]:
+        if temp_x == 0.0:
+            temp_x = total_monomers 
+        elif total_monomers != temp_x:
             raise Exception('Total number of monomers is not constant!') #??
-        ys[n] += free_monomers
-    ys[n] = ys[n] / avg_over
-    
-    xs[n] = concentration(xs[n], volume)
-    ys[n] = concentration(ys[n], volume)
-    
-xs = np.log(xs)
-ys = np.log(ys)
-    
-fig = plt.figure(data_dir)
+        temp_y += free_monomers
+    temp_y /= avg_over
 
-plt.plot(xs, xs, 'k-')
-plt.plot(xs, ys, 'bo')
+    data[-1].append((concentration(temp_x, volume),concentration(temp_y, volume)))
+
+fig = plt.figure()
+
+colors = ['b','g','r','c','m','y']
+# cmap = plt.cm.colors.ListedColormap(plt.cm.jet(np.random.shuffle(np.linspace(0,1,256))))
+
+xmax = -np.infty
+xmin = np.infty
+for i in range(len(labels)):
     
+    data[i].sort(key=lambda i: i[0])
+    
+    xs, ys = zip(*data[i])
+    xs = np.log(np.array(xs))
+    ys = np.log(np.array(ys))
+
+    temp_max = xs.max()
+    if temp_max > xmax:
+        xmax = temp_max
+    temp_min = xs.min()
+    if temp_min < xmin:
+        xmin = temp_min
+
+    plt.plot(xs, xs, 'k-')
+    plt.plot(xs, ys, label=labels[i], c=colors[i], marker='o', lw=1.0)
+
+plt.legend(loc='upper left')
 plt.xlabel(r'$\ln\left(c_{total}\;/\;M\right)$')
 plt.ylabel(r'$\ln\left(c_{free}\;/\;M\right)$', rotation='vertical')
-plt.axis(ymin=min(xs)-0.5, ymax=max(xs)+0.5, xmin=min(xs)-0.5, xmax=max(xs)+0.5)
+plt.axis(ymin=xmin-0.5, ymax=xmax+0.5, xmin=xmin-0.5, xmax=xmax+0.5)
 plt.grid(True)
 
 if args.save:
     fig.savefig(args.save, dpi=1000, facecolor='white')
 
 plt.show()
-    
-    
+
