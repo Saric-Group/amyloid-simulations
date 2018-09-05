@@ -27,16 +27,16 @@ parser.add_argument('cell_size', type=float,
                     help='size of an SC cell (i.e. room for one rod)')
 parser.add_argument('num_cells', type=float,
                     help='the number of cells per dimension')
-parser.add_argument('phi', type=float,
-                    help='fibril azimuth angle (from y-axis); in degrees [0-360>')
-parser.add_argument('theta', type=float,
-                    help='fibril elevation angle (from x-y plane); in degrees [-90,90]')
 parser.add_argument('sim_length', type=int,
                     help='the total number of MD steps to simulate')
 
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
 
+parser.add_argument('--phi', type=float, default=45.0,
+                    help='fibril azimuth angle (from y-axis); in degrees [0-360>')
+parser.add_argument('--theta', type=float, default=35.0,
+                    help='fibril elevation angle (from x-y plane); in degrees [-90,90]')
 parser.add_argument('--r0', nargs=3, type=float, default=[0.,0.,0.],
                     help='the location of the center of the fibril')
 parser.add_argument('--N', type=int, default=20,

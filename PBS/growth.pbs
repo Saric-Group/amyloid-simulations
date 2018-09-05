@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N standard
+#PBS -N growth
 #PBS -q batch
 #PBS -l nodes=1:ppn=1
 #PBS -l pmem=1024M
@@ -23,10 +23,10 @@ for i in `seq 1 $repeat`; do
 
 	SEED=$(( 10#`date +%N` % 900000000 ))
 	
-	python "$PROJECT_HOME"/nucleation.py "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED -o 1000 --silent
+	python "$PROJECT_HOME"/growth.py "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED -o 1000 --silent
 	
 	dumpfile_name="${size}-${num}_${SEED}.dump"
 
-	python "$PROJECT_HOME"/tools/clusters/analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}" --every 10
+	python "$PROJECT_HOME"/tools/clusters/analysis.py "${cfg_file_name}.cfg" "${cfg_file_name}/${dumpfile_name}"
 	
 done
