@@ -58,14 +58,17 @@ for n in range(data_len):
 
     data[-1].append((concentration(temp_x, volume),concentration(temp_y, volume)))
 
+n = len(labels)
+
 fig = plt.figure()
 
-colors = ['b','g','r','c','m','y']
-# cmap = plt.cm.colors.ListedColormap(plt.cm.jet(np.random.shuffle(np.linspace(0,1,256))))
+cmap = plt.cm.get_cmap('nipy_spectral')
+colors = [cmap((i+1.0)/(n+1)) for i in range(n)]
+#colors = ['b','g','r','c','m','y']
 
 xmax = -np.infty
 xmin = np.infty
-for i in range(len(labels)):
+for i in range(n):
     
     data[i].sort(key=lambda i: i[0])
     
@@ -80,8 +83,9 @@ for i in range(len(labels)):
     if temp_min < xmin:
         xmin = temp_min
 
-    plt.plot(xs, xs, 'k-')
     plt.plot(xs, ys, label=labels[i], c=colors[i], marker='o', lw=1.0)
+
+plt.plot((xmin, xmax), (xmin, xmax), 'k--', lw=1.0)
 
 plt.legend(loc='upper left')
 plt.xlabel(r'$\ln\left(c_{total}\;/\;M\right)$')
