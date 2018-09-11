@@ -10,7 +10,6 @@ Created on 30 Apr 2018
 import os
 import matplotlib.pyplot as plt
 import math
-import numpy as np
 
 from lammps import PyLammps
 import sys
@@ -30,14 +29,14 @@ py_lmp.create_box(3, "box")
 py_lmp.mass("*", 1)
 
 # general potential parameters
-eps = 1.0
+eps = 4.5
 try:
     r_body = float(sys.argv[1])
 except:
     r_body = 1.0
-r_int = 1.0*r_body
-sigma = r_int + r_int
-cutoff = sigma + 1.75*r_body
+r_int = 0.25*r_body
+sigma = r_body + r_body
+cutoff = sigma + 1.0*r_body
 
 # output parameters
 output_filename = "interactions.dat"
@@ -45,41 +44,42 @@ if os.path.isfile(output_filename):
     os.remove(output_filename)
 
 num_points = 1000
-min_r = 0.5*sigma
-max_r = cutoff
+min_r = 0.1*sigma
+max_r = 5
 
 #########################################################################################
 ### interaction definitions #############################################################
 #########################################################################################
 
-py_lmp.pair_style("lj/cut", cutoff)
+py_lmp.pair_style("lj/cut", max_r)
 #py_lmp.pair_modify("shift yes")
-py_lmp.pair_coeff("*", "*", eps, sigma/math.pow(2, 1./6))
+py_lmp.pair_coeff("*", "*", eps, sigma/math.pow(2, 1./6), cutoff)
 py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-6')
 
-for i in (9,):
-    py_lmp.pair_style("nm/cut", cutoff)
-    #py_lmp.pair_modify("shift yes")
-    py_lmp.pair_coeff("*", "*", eps, sigma, 12, i)
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
-#      
-# # Gaussian
-# for std_dev in (0.5*r_body, 0.43*r_body):
-#     py_lmp.pair_style("gauss/cut", cutoff)
+# for i in (9,):
+#     py_lmp.pair_style("nm/cut", max_r)
+#     #py_lmp.pair_modify("shift yes")
+#     py_lmp.pair_coeff("*", "*", eps, sigma, 12, i, cutoff)
+#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
+      
+# for std_dev in (0.5, 0.6):
+#     std_dev *= r_body
+#     py_lmp.pair_style("gauss/cut", max_r)
 #     #py_lmp.pair_modify("shift yes")
 #     py_lmp.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
 #     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
-#       
-# # Morse
-# for a in (2.62/r_body, 2.0/r_body):
-#     py_lmp.pair_style("morse", cutoff)
-#     #py_lmp.pair_modify("shift yes")
-#     py_lmp.pair_coeff("*", "*", eps, a, sigma)
-#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
-    
-# py_lmp.pair_style("cosine/squared", cutoff)
-# py_lmp.pair_coeff("*", "*", eps, sigma)
-# py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos_sq')
+       
+for a in (2.5,):
+    a /= r_body
+    py_lmp.pair_style("morse", max_r)
+    #py_lmp.pair_modify("shift yes")
+    py_lmp.pair_coeff("*", "*", eps, a, sigma, cutoff)
+    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
+
+for reach in (1.0,):
+    py_lmp.pair_style("cosine/squared", max_r, "wca yes")
+    py_lmp.pair_coeff("*", "*", eps, sigma, sigma + reach*r_body)
+    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos_sq_'+str(reach))
     
 
 #########################################################################################
@@ -103,42 +103,37 @@ with open(output_filename, 'r') as data_file:
             rs.append(float(parts[1]))
             Es.append(float(parts[2]))
             Fs.append(float(parts[3]))
-        line = data_file.readline()
+        line = data_file.readline()    
+n = len(data)
 
 axis_font = {'size':12}
-fig = plt.figure('LAMMPS interactions - energies', figsize=(10,8))
+cmap = plt.cm.get_cmap('nipy_spectral')
+colors = [cmap((i+1.0)/(n+1)) for i in range(n)]
+#colors = ['b','g','r','c','m','y']
 
-plt.plot(data[0][1], data[0][2], label=data[0][0], color='black', linewidth=2)
-plt.plot(data[1][1], data[1][2], label=data[1][0], color='green', linewidth=1)
+E_fig, E_axes = plt.subplots(num='LAMMPS interactions - energies', figsize=(10,8))
+F_fig, F_axes = plt.subplots(num='LAMMPS interactions - forces', figsize=(10,8))
 
-# from potentials import *
-# import numpy as np
-# rs = np.linspace(min_r, max_r, num_points)
-# plt.plot(rs, [lj_n_m(12, 4, r, sigma, eps) for r in rs], 'k-', label='LJ_12-4')
-# plt.plot(rs, [gauss(0.5, r, sigma, eps) for r in rs], 'g-', label='Gauss_0.5')
-# plt.plot(rs, [morse(3, r, sigma, eps) for r in rs], 'r-', label='Morse_3')
+for i in range(n):
+    E_axes.plot(data[i][1], data[i][2], label=data[i][0], color=colors[i], lw=1.5)
+    F_axes.plot(data[i][1], data[i][3], label=data[i][0], color=colors[i], lw=1.5)
 
-plt.legend(loc='lower right')
-plt.xlabel(r'$r$', **axis_font)
-plt.ylabel(r'$E(r)$', rotation='vertical', **axis_font)
-plt.axis(xmin = min_r, xmax = max_r, ymin = -1.05*eps, ymax = 1.05*eps)
-plt.axvline(sigma+r_body, color='black', linestyle='--', linewidth=0.5)
-plt.axvline(2*r_body, color='black', linestyle='--', linewidth=0.5)
+E_axes.legend(loc='lower right')
+E_axes.set_xlabel(r'$r$', **axis_font)
+E_axes.set_ylabel(r'$E(r)$', rotation='vertical', **axis_font)
+E_axes.axis(xmin = 0, xmax = 4.5, ymin = -15, ymax = 5)
+E_axes.axvline(sigma+1.0*r_body, color='black', linestyle='--', linewidth=0.5)
+E_axes.axvline(sigma+1.5*r_body, color='black', linestyle='--', linewidth=0.5)
+E_axes.grid(True)
 
-
-fig = plt.figure('LAMMPS interactions - forces', figsize=(10,8))
-
-plt.plot(data[0][1], data[0][3], label=data[0][0], color='black', linewidth=2)
-plt.plot(data[1][1], data[1][3], label=data[1][0], color='green', linewidth=1)
-
-plt.legend(loc='lower right')
-plt.xlabel(r'$r$', **axis_font)
-plt.ylabel(r'$F(r)$', **axis_font)
+F_axes.legend(loc='lower right')
+F_axes.set_xlabel(r'$r$', **axis_font)
+F_axes.set_ylabel(r'$F(r)$', **axis_font)
 force_min = min(data[0][3])
-plt.axis(xmin = min_r, xmax = max_r, ymin = 1.05*force_min, ymax = -1.05*force_min)
-plt.axvline(sigma+r_body, color='black', linestyle='--', linewidth=0.5)
-plt.axvline(2*r_body, color='black', linestyle='--', linewidth=0.5)
+F_axes.axis(xmin = 0, xmax = 4.5, ymin = 1.05*force_min, ymax = -0.2*force_min)
+F_axes.axvline(sigma+1.0*r_body, color='black', linestyle='--', linewidth=0.5)
+F_axes.axvline(sigma+1.5*r_body, color='black', linestyle='--', linewidth=0.5)
+F_axes.grid(True)
 
-#fig.savefig("./LAMMPS_potenatials.pdf", dpi=1000)
 plt.show()
 
