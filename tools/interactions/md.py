@@ -9,33 +9,80 @@ Created on 12 Apr 2018
 @author: Eugen Rožić
 '''
 
+import potentials
 import numpy as np
 
-N = 7
-r_body = 1.0
-delta_body = 1.0 #in terms of r_body
+N = None
+r_body = None
+r_body_sq = None
+delta_body = None #in terms of r_body
 
-r_body_sq = r_body**2
-
-# these have to be set from outside
 M = None
 r_int = None
 delta_int = None #in terms of r_int
 bulge_out = None
-int_range = None
 
-def set_parameters(num_int_spots, int_bead_r, int_bead_overlap, int_bead_bulge, range_of_int):
-    '''
-    Sets the "M", "r_int" and "delta_int" global parameters
-    '''
-    global M, r_int, delta_int, bulge_out, int_range
-    M = num_int_spots
-    r_int = int_bead_r
-    delta_int = int_bead_overlap
-    bulge_out = int_bead_bulge
-    int_range = range_of_int
+sol_active = None
+beta_active = None
 
-def sb_interaction(int_f, r, z, phi):
+int_potentials = {}
+
+def int_f(int_type, R, eps):
+    if int_type[0] == 'lj/cut':
+        return lambda r: potentials.lj_n_m(12, 6, r, R, R + int_type[1], eps)
+    elif int_type[0] == 'cosine/squared':
+        return lambda r: potentials.cos_sq(r, R, R + int_type[1], eps)
+    elif int_type[0] == 'nm/cut':
+        return lambda r: potentials.lj_n_m(int_type[1], int_type[2], r, R, R + int_type[3], eps)
+    elif int_type[0] == 'morse':
+        return lambda r: potentials.morse(int_type[1], r, R, R + int_type[2], eps)
+    elif int_type[0] == 'gauss/cut':
+        return lambda r: potentials.gauss(int_type[1], r, R, R + int_type[2], eps)
+    else:
+        raise Exception('Unknown/invalid int_type parameter: '+ str(int_type))
+
+def setup(model):
+    '''
+    model : a lammps_multistate_rods.Model instance
+    sb : a list of "model.eps" entries/keys that constitute soluble-beta interaction
+    bb : a list of "model.eps" entries/keys that constitute beta-beta interaction
+    '''
+    global sol_active, beta_active
+    sol_active = filter(lambda x: x in model.active_bead_types,
+           [int(bead_type) for bead_type in model.state_structures[0].replace('|','')])[0]
+    beta_active= filter(lambda x: x in model.active_bead_types,
+           [int(bead_type) for bead_type in model.state_structures[1].replace('|','')])
+    
+    global N, r_body, r_body_sq, delta_body
+    N = model.body_beads
+    r_body = model.rod_radius
+    r_body_sq = r_body**2
+    delta_body = model.body_bead_overlap / r_body
+    
+    global M, r_int, delta_int, bulge_out
+    M = model.int_sites
+    r_int = model.int_radius
+    delta_int = model.int_bead_overlap / r_int
+    bulge_out = model.int_bulge_out
+    
+    beta_types = sorted(set(beta_active))
+    for i in range(len(beta_types)):
+        R = r_body + r_int
+        (eps, int_type_key) = model.eps[(sol_active, beta_types[i])]
+        int_type = model.int_types[int_type_key]
+        
+        int_potentials[(sol_active, beta_types[i])] = int_f(int_type, R, eps)
+        
+        for j in range(i, len(beta_types)):
+            R = 2*r_int
+            (eps, int_type_key) = model.eps[(beta_types[i], beta_types[j])]
+            int_type = model.int_types[int_type_key]
+        
+            int_potentials[(beta_types[i], beta_types[j])] = \
+                int_potentials[(beta_types[j], beta_types[i])] = int_f(int_type, R, eps)
+    
+
+def sb_interaction(r, z, phi):
     '''
     Interaction between a rod centered at (0,0) and extending along the
     z-axis and an interaction site at (r,z), which represents the center
@@ -54,26 +101,24 @@ def sb_interaction(int_f, r, z, phi):
     
     U = 0
     r_i = r_body - r_int + bulge_out
-    R = r_body + r_int
-    cutoff = R + int_range
     for i in range(M):
         z_i = (i - (M-1)/2.)*(2 - delta_int)*r_int
         dist = np.sqrt(r**2 + r_i**2 - 2*r_i*r*np.cos(phi) + (z-z_i)**2)
-        U += int_f(dist, R, cutoff)
+        U += int_potentials[(sol_active, beta_active[i])](dist)
     return U
 
-def bb_interaction(int_f, r, z, theta, phi, psi1 = 0, psi2 = None):
+def bb_interaction(r, z, theta, phi, psi1 = 0, psi2 = None):
     '''
     Inter-rod beta-beta interaction. The interaction is relative to a rod
     centered at (0,0) and extending along the z-axis.
     
     int_f : the point-point interaction function with signature (r, sigma), where
         "r" is the distance between points and "sigma" is the minimum of the interaction
-    theta, phi : the direction of the rod at point (r.z)
+    theta, phi : the direction of the rod at point (r,z)
     psi1 : the direction of the patch vector of the rod at (0,0)
     psi2 : the direction of the patch vector of the rod at (r,z)
     
-    NOTE: if psi2 is not given it will be set so that the "patch" on the rod at
+    NOTE: if psi2 is not given it will be set so that the "patch" of the rod at
         (r-z) points as much as possible toward the rod at (0,0)
     '''
     U = 0
@@ -99,8 +144,6 @@ def bb_interaction(int_f, r, z, theta, phi, psi1 = 0, psi2 = None):
             if ((r + x_j)**2 + (y_j)**2 + (z + z_j - z_i)**2 < 4*r_body_sq):
                 return 0
     
-    R = 2*r_int
-    cutoff = R + int_range
     r_i = r_j = r_body - r_int + bulge_out
     x_i = c_psi1*r_i
     y_i = s_psi1*r_i
@@ -112,5 +155,5 @@ def bb_interaction(int_f, r, z, theta, phi, psi1 = 0, psi2 = None):
             y_j = r_j*(c_psi2*s_phi*c_theta + s_psi2*c_phi) + z_j*s_phi*s_theta
             z_j = -r_j*c_psi2*s_theta + z_j*c_theta
             dist = np.sqrt((r + x_j - x_i)**2 + (y_j - y_i)**2 + (z + z_j - z_i)**2)
-            U += int_f(dist, R, cutoff)
+            U += int_potentials[(beta_active[i], beta_active[j])](dist)
     return U

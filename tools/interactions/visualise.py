@@ -14,55 +14,9 @@ from matplotlib.widgets import Slider, RadioButtons
 
 import numpy as np
 
-from tools.interactions import mc
-from tools.interactions import md
-import potentials
-
-md.N = 6
-md.delta_body = 0.8
-# MD interaction parameters
-M = 3
-r_int = 0.25*md.r_body
-#delta_int = 2 - ((md.N - 2)*(2 - md.delta_body)*md.r_body)/((M - 1)*r_int)
-delta_int = -7.6
-int_range = 1.75*md.r_body
-bulge_out = 0.0*md.r_body
-md.set_parameters(M, r_int, delta_int, bulge_out, int_range)
-
-# interactions
-eps = 1.0
-
-lj_12_6 = lambda r, sigma, cutoff : potentials.lj_n_m(12, 6, r, sigma, cutoff, eps)
-lj_12_4 = lambda r, sigma, cutoff : potentials.lj_n_m(12, 4, r, sigma, cutoff, eps)
-gauss_05 = lambda r, sigma, cutoff : potentials.gauss(0.5*md.r_body, r, sigma, cutoff, eps)
-gauss_06 = lambda r, sigma, cutoff : potentials.gauss(0.6*md.r_body, r, sigma, cutoff, eps)
-morse_275 = lambda r, sigma, cutoff : potentials.morse(2.75/md.r_body, r, sigma, cutoff, eps)
-morse_25 = lambda r, sigma, cutoff : potentials.morse(2.5/md.r_body, r, sigma, cutoff, eps)
-morse_20 = lambda r, sigma, cutoff : potentials.morse(2.0/md.r_body, r, sigma, cutoff, eps)
-cos_sq = lambda r, sigma, cutoff : potentials.cos_sq(r, sigma, cutoff, eps)
-
-# plot parameters 
-rmin = -0*md.r_body; zero_r = 0
-rmax = 5*md.r_body
-zmin = -0*md.r_body; zero_z = 0
-zmax = 7.5*md.r_body
-point_density = 0.2
-z_points = int((zmax-zmin)/point_density) + 1
-r_points = int((rmax-rmin)/point_density) + 1
-phi_points = 16#32
-theta_points = 8
-
-# plotting points
-zs = np.linspace(zmin, zmax, z_points)
-rs = np.linspace(rmin, rmax, r_points)
-phis = np.linspace(0, 2*np.pi, phi_points)
-thetas = np.linspace(0, np.pi, theta_points)
-
-# figure parameters
-axis_font = {'size':12}
-cmap = plt.get_cmap("RdBu") #coolwarm, seismic, viridis
-widget_color = 'lightgoldenrodyellow'
-
+from lammps_multistate_rods import Model
+import mc
+import md
 
 def draw_models(axes = None, r = 0, z = 0):
     if axes is None :
@@ -84,15 +38,16 @@ def draw_models(axes = None, r = 0, z = 0):
     axes.plot([-mc.L_patch/2, mc.L_patch/2], [0, 0], color='red', linestyle='-', linewidth=5)
 
 
-def draw_sb(prefix, int_f, polar=True):
+def draw_sb(prefix, polar=True):
     
     # calculate soluble-beta interaction values
     sb_vals = {}
-    sb_vals['md'] = np.array([md.sb_interaction(int_f, r, z, phi)  for phi in thetas for r in rs for z in zs])
+    sb_vals['md'] = np.array([md.sb_interaction(r, z, phi)  for phi in thetas for r in rs for z in zs])
     sb_vals['md'] = sb_vals['md'].reshape(theta_points, r_points, z_points)
     md_sb_min = sb_vals['md'].min()
     print "md_sb_vals.min() =", md_sb_min
-    sb_vals['mc'] = np.array([mc.sb_interaction(r, z, phi, eps=eps) for phi in thetas for r in rs for z in zs])
+    sb_vals['mc'] = np.array([mc.sb_interaction(r, z, phi, eps=-md_sb_min*sb_factor)
+                              for phi in thetas for r in rs for z in zs])
     sb_vals['mc'] = sb_vals['mc'].reshape(theta_points, r_points, z_points)
     sb_vals['diff'] = sb_vals['md'] - sb_vals['mc']
     
@@ -149,15 +104,16 @@ def draw_sb(prefix, int_f, polar=True):
     return theta_slider, data_chooser
 
 
-def draw_bb(prefix, inf_f):
+def draw_bb(prefix):
     
     # calculate beta-beta interaction values
     bb_vals = {}
-    bb_vals['md'] = np.array([md.bb_interaction(inf_f, r, z, theta, phi) for phi in phis for theta in thetas for r in rs for z in zs])
+    bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi) for phi in phis for theta in thetas for r in rs for z in zs])
     bb_vals['md'] = bb_vals['md'].reshape(phi_points, theta_points, r_points, z_points)
     md_bb_min = bb_vals['md'].min()
     print "md_bb_vals.min() = ", md_bb_min
-    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=eps) for phi in phis for theta in thetas for r in rs for z in zs])
+    bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, eps=-md_bb_min*bb_factor)
+                              for phi in phis for theta in thetas for r in rs for z in zs])
     bb_vals['mc'] = bb_vals['mc'].reshape(phi_points, theta_points, r_points, z_points)
     bb_vals['diff'] = bb_vals['md'] - bb_vals['mc']
     
@@ -222,20 +178,39 @@ def draw_bb(prefix, inf_f):
         
     return theta_slider, phi_slider, data_chooser
 
-# sb_widgets = draw_sb("LJ_12-6", lj_12_6, polar=True)
-# sb_widgets = draw_sb("LJ_12-4", lj_12_4, polar=True)
-# sb_widgets = draw_sb("morse_2.5", morse_25, polar=True)
-# sb_widgets = draw_sb("morse_2.0", morse_20, polar=True)
-# sb_widgets = draw_sb("gauss_0.5", gauss_05, polar=True)
-# sb_widgets = draw_sb("gauss_0.6", gauss_06, polar=True)
-sb_widgets = draw_sb("cos_sq", cos_sq, polar=True)
+import os.path
 
-# bb_widgets = draw_bb("LJ_12-6", lj_12_6)
-# bb_widgets = draw_bb("LJ_12-4", lj_12_4)
-# bb_widgets = draw_bb("morse_2.5", morse_25)
-# bb_widgets = draw_bb("morse_2.0", morse_20)
-# bb_widgets = draw_bb("gauss_0.5", gauss_05)
-# bb_widgets = draw_bb("gauss_0.6", gauss_06)
-# bb_widgets = draw_bb("cos_sq", cos_sq)
+cfg_filename = '6-3_cos-sq_0.25_1.75.cfg'
+model = Model(os.path.join('./test cases/',cfg_filename))
+mc.setup(model)
+md.setup(model)
 
+# plot parameters 
+rmin = -0*md.r_body; zero_r = 0
+rmax = 5*md.r_body
+zmin = -0*md.r_body; zero_z = 0
+zmax = 7.5*md.r_body
+point_density = 0.2
+z_points = int((zmax-zmin)/point_density) + 1
+r_points = int((rmax-rmin)/point_density) + 1
+phi_points = 16#32
+theta_points = 8
+
+# plotting points
+zs = np.linspace(zmin, zmax, z_points)
+rs = np.linspace(rmin, rmax, r_points)
+phis = np.linspace(0, 2*np.pi, phi_points)
+thetas = np.linspace(0, np.pi, theta_points)
+
+# figure parameters
+axis_font = {'size':12}
+cmap = plt.get_cmap("RdBu") #coolwarm, seismic, viridis
+widget_color = 'lightgoldenrodyellow'
+
+sb_factor = 1/2.0
+bb_factor = 1/3.0
+
+# drawing...
+sb_widgets = draw_sb(cfg_filename, polar=True)
+bb_widgets = draw_bb(cfg_filename)
 plt.show()

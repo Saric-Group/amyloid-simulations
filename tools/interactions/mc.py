@@ -13,11 +13,20 @@ import numpy as np
 
 nugget = 10**(-4)
 
-sigma = 2.
-L_patch = 0.7*3*sigma # 4*sigma is the length of the rod
+sigma = None
+L_patch = None
+aux1 = None
+aux2 = None
 
-aux1 = L_patch/2
-aux2 = aux1**2
+def setup(model):
+    '''
+    model : a lammps_multistate_rods.Model instance
+    '''
+    global sigma, L_patch, aux1, aux2
+    sigma = 2*model.rod_radius
+    L_patch = 0.7*3*sigma # 4*sigma is the length of the rod
+    aux1 = L_patch/2
+    aux2 = aux1**2
 
 def min_patch_dist(r, z, theta, phi):
     e1e2 = np.cos(theta)
