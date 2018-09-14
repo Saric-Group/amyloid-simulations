@@ -107,7 +107,7 @@ def sb_interaction(r, z, phi):
         U += int_potentials[(sol_active, beta_active[i])](dist)
     return U
 
-def bb_interaction(r, z, theta, phi, psi1 = 0, psi2 = None):
+def bb_interaction(r, z, theta, phi, psi1, psi2 = None):
     '''
     Inter-rod beta-beta interaction. The interaction is relative to a rod
     centered at (0,0) and extending along the z-axis.
