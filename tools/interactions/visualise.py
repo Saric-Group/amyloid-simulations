@@ -40,7 +40,7 @@ def draw_models(axes = None, r = 0, z = 0):
 
 def draw_sb_2D(sb_vals, md_sb_min, prefix = ''):
     
-    fig_2D, ax_2D = plt.subplots(num=prefix+" soluble-beta interactions (side 2D)", figsize=(11,7))
+    fig_2D, ax_2D = plt.subplots(num=prefix+" soluble-beta interaction (side 2D)", figsize=(11,7))
     fig_2D.subplots_adjust(left=0.13, bottom=0.13, right=0.99, top=0.99) #0.86 x 0.86
     
     img = ax_2D.imshow(sb_vals['md'][0], extent=[zmin, zmax, rmin, rmax],
@@ -52,27 +52,26 @@ def draw_sb_2D(sb_vals, md_sb_min, prefix = ''):
     ax_2D.set_ylabel(r'$r$', **axis_font)
     ax_2D.axis([zmin, zmax, rmin, rmax])
     
-    theta_slider_axes = fig_2D.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
-    theta_slider = Slider(theta_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
+    phi_slider_axes = fig_2D.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
+    phi_slider = Slider(phi_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
     
     data_chooser_axes = fig_2D.add_axes([0.01, 0.45, 0.05, 0.1], facecolor=widget_color)
     data_chooser = RadioButtons(data_chooser_axes, sb_vals.keys())
     
     def update_img(val):
-        curr_theta_index = theta_index(theta_slider.val)
+        curr_theta_index = theta_index(phi_slider.val)
         curr_data = data_chooser.value_selected
         img.set_data(sb_vals[curr_data][curr_theta_index])
         fig_2D.canvas.draw_idle()
     
-    theta_slider.on_changed(update_img)
+    phi_slider.on_changed(update_img)
     data_chooser.on_clicked(update_img)
     
-    return theta_slider, data_chooser
+    return phi_slider, data_chooser
 
 def draw_sb_z_slice(sb_vals, md_sb_min, prefix = ''):
-    
     # 1D r-E plot
-    fig_r, ax_r = plt.subplots(num=prefix+" soluble-beta interactions (z-slice)", figsize=(9,5))
+    fig_r, ax_r = plt.subplots(num=prefix+" soluble-beta interaction (z-slice)", figsize=(9,5))
     fig_r.subplots_adjust(left=0.18, bottom=0.2, right=0.97, top=0.97) #0.86 x 0.86
     
     lines = ax_r.plot(rs, sb_vals['md'][0].T[zero_z], 'r-', lw=1.0)
@@ -84,8 +83,8 @@ def draw_sb_z_slice(sb_vals, md_sb_min, prefix = ''):
     ax_r.set_ylabel(r'$E$', **axis_font)
     ax_r.axis([rmin, rmax, 1.05*md_sb_min, -1.05*md_sb_min])
     
-    theta_slider_axes = fig_r.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
-    theta_slider = Slider(theta_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
+    phi_slider_axes = fig_r.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
+    phi_slider = Slider(phi_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
     
     z_slider_axes = fig_r.add_axes([0.41, 0.06, 0.35, 0.03], facecolor=widget_color)
     z_slider = Slider(z_slider_axes, 'z', zs[0], zs[-1], valinit=zs[zero_z])
@@ -95,21 +94,20 @@ def draw_sb_z_slice(sb_vals, md_sb_min, prefix = ''):
     
     def update_plot(val):
         curr_z_index = z_index(z_slider.val)
-        curr_theta_index = theta_index(theta_slider.val)
+        curr_theta_index = theta_index(phi_slider.val)
         curr_data = data_chooser.value_selected
         lines[0].set_ydata(sb_vals[curr_data][curr_theta_index].T[curr_z_index])
         fig_r.canvas.draw_idle()
     
     z_slider.on_changed(update_plot)
-    theta_slider.on_changed(update_plot)
+    phi_slider.on_changed(update_plot)
     data_chooser.on_clicked(update_plot)
     
-    return z_slider, theta_slider, data_chooser
+    return z_slider, phi_slider, data_chooser
 
 def draw_sb_r_slice(sb_vals, md_sb_min, prefix = ''):
-    
     # 1D z-E plot
-    fig_z, ax_z = plt.subplots(num=prefix+" soluble-beta interactions (r-slice)", figsize=(11,5))
+    fig_z, ax_z = plt.subplots(num=prefix+" soluble-beta interaction (r-slice)", figsize=(11,5))
     fig_z.subplots_adjust(left=0.18, bottom=0.2, right=0.97, top=0.97) #0.86 x 0.86
     
     lines = ax_z.plot(zs, sb_vals['md'][0][zero_r], 'r-', lw=1.0)
@@ -121,8 +119,8 @@ def draw_sb_r_slice(sb_vals, md_sb_min, prefix = ''):
     ax_z.set_ylabel(r'$E$', **axis_font)
     ax_z.axis([zmin, zmax, 1.05*md_sb_min, -1.05*md_sb_min])
     
-    theta_slider_axes = fig_z.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
-    theta_slider = Slider(theta_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
+    phi_slider_axes = fig_z.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
+    phi_slider = Slider(phi_slider_axes, 'phi', thetas[0], thetas[-1], valinit=thetas[0])
     
     r_slider_axes = fig_z.add_axes([0.41, 0.06, 0.35, 0.03], facecolor=widget_color)
     r_slider = Slider(r_slider_axes, 'r', rs[0], rs[-1], valinit=rs[zero_r])
@@ -132,20 +130,21 @@ def draw_sb_r_slice(sb_vals, md_sb_min, prefix = ''):
     
     def update_plot(val):
         curr_r_index = r_index(r_slider.val)
-        curr_theta_index = theta_index(theta_slider.val)
+        curr_theta_index = theta_index(phi_slider.val)
         curr_data = data_chooser.value_selected
         lines[0].set_ydata(sb_vals[curr_data][curr_theta_index][curr_r_index])
         fig_z.canvas.draw_idle()
     
     r_slider.on_changed(update_plot)
-    theta_slider.on_changed(update_plot)
+    phi_slider.on_changed(update_plot)
     data_chooser.on_clicked(update_plot)
     
-    return r_slider, theta_slider, data_chooser
+    return r_slider, phi_slider, data_chooser
 
-def draw_bb_2D(bb_vals, md_bb_min, theta = None, phi = None, psi = None, prefix = ''):
+
+def draw_bb_2D(bb_vals, md_bb_min, prefix = ''):
     
-    fig, ax = plt.subplots(num=prefix+" beta-beta interactions", figsize=(10,7))
+    fig, ax = plt.subplots(num=prefix+" beta-beta interaction", figsize=(10,7))
     fig.subplots_adjust(left=0.14, bottom=0.24, right=0.99, top=0.99) #0.88 x 0.88
     
     img = ax.imshow(bb_vals['md'][0][0][0],
@@ -159,51 +158,159 @@ def draw_bb_2D(bb_vals, md_bb_min, theta = None, phi = None, psi = None, prefix 
     
     theta_slider = phi_slider = psi_slider = None
     
-    if theta == None:
-        theta_slider_axes = fig.add_axes([0.38, 0.07, 0.35, 0.03], facecolor=widget_color)
-        theta_slider = Slider(theta_slider_axes, 'Theta', thetas[0], thetas[-1], valinit=thetas[0])
+    if len(bb_vals['md']) > 1:
+        psi_slider_axes = fig.add_axes([0.38, 0.10, 0.35, 0.03], facecolor=widget_color)
+        psi_slider = Slider(psi_slider_axes, 'Psi', thetas[0], thetas[-1], valinit=thetas[0])
         
-    if phi == None:
+    if len(bb_vals['md'][0]) > 1:
         phi_slider_axes = fig.add_axes([0.38, 0.02, 0.35, 0.03], facecolor=widget_color)
         phi_slider = Slider(phi_slider_axes, 'Phi', phis[0], phis[-1], valinit=phis[0])
     
-    if psi == None:
-        psi_slider_axes = fig.add_axes([0.38, 0.12, 0.35, 0.03], facecolor=widget_color)
-        psi_slider = Slider(psi_slider_axes, 'Psi', thetas[0], thetas[-1], valinit=thetas[0])
+    if len(bb_vals['md'][0][0]) > 1:
+        theta_slider_axes = fig.add_axes([0.38, 0.06, 0.35, 0.03], facecolor=widget_color)
+        theta_slider = Slider(theta_slider_axes, 'Theta', thetas[0], thetas[-1], valinit=thetas[0])
     
     data_chooser_axes = fig.add_axes([0.01, 0.45, 0.05, 0.1], facecolor=widget_color)
     data_chooser = RadioButtons(data_chooser_axes, bb_vals.keys())
     
     def update_img(val):
         curr_phi_index = curr_psi_index = curr_theta_index = 0
-        if psi == None:
+        if psi_slider != None:
             curr_psi_index = theta_index(psi_slider.val)
-        if phi == None:
+        if phi_slider != None:
             curr_phi_index = phi_index(phi_slider.val)
-        if theta == None:
+        if theta_slider != None:
             curr_theta_index = theta_index(theta_slider.val)
         curr_data = data_chooser.value_selected
         
         img.set_data(bb_vals[curr_data][curr_psi_index][curr_phi_index][curr_theta_index])
         fig.canvas.draw_idle()
     
-    if theta == None:
+    if theta_slider != None:
         theta_slider.on_changed(update_img)
-    if phi == None:
+    if phi_slider != None:
         phi_slider.on_changed(update_img)
-    if psi == None:
+    if psi_slider != None:
         psi_slider.on_changed(update_img)
     data_chooser.on_clicked(update_img)
         
     return theta_slider, phi_slider, psi_slider, data_chooser
 
-def draw_bb_z_slice(bb_vals, md_bb_min, theta = None, phi = None, psi = None, prefix = ''):
-    #TODO - maybe forget about theta & phi for now (just put them to 0)
-    pass
+def draw_bb_z_slice(bb_vals, md_bb_min, prefix = ''):
+    # 1D r-E plot
+    fig_r, ax_r = plt.subplots(num=prefix+" beta-beta interaction (z-slice)", figsize=(9,6))
+    fig_r.subplots_adjust(left=0.14, bottom=0.28, right=0.99, top=0.99) #0.86 x 0.86
+    
+    lines = ax_r.plot(rs, bb_vals['md'][0][0][0].T[zero_z], 'r-', lw=1.0)
+    ax_r.axvline(2.0*md.r_body, color='black', linestyle='-', lw=1.0)
+    ax_r.axvline(3.0*md.r_body, color='black', linestyle='--', lw=0.5)
+    ax_r.grid()
+    
+    ax_r.set_xlabel(r'$r$', **axis_font)
+    ax_r.set_ylabel(r'$E$', **axis_font)
+    ax_r.axis([rmin, rmax, 1.05*md_bb_min, -1.05*md_bb_min])
+    
+    theta_slider = phi_slider = psi_slider = None
+    
+    if len(bb_vals['md']) > 1:
+        psi_slider_axes = fig_r.add_axes([0.38, 0.10, 0.35, 0.03], facecolor=widget_color)
+        psi_slider = Slider(psi_slider_axes, 'Psi', thetas[0], thetas[-1], valinit=thetas[0])
+        
+    if len(bb_vals['md'][0]) > 1:
+        phi_slider_axes = fig_r.add_axes([0.38, 0.02, 0.35, 0.03], facecolor=widget_color)
+        phi_slider = Slider(phi_slider_axes, 'Phi', phis[0], phis[-1], valinit=phis[0])
+    
+    if len(bb_vals['md'][0][0]) > 1:
+        theta_slider_axes = fig_r.add_axes([0.38, 0.06, 0.35, 0.03], facecolor=widget_color)
+        theta_slider = Slider(theta_slider_axes, 'Theta', thetas[0], thetas[-1], valinit=thetas[0])
+    
+    z_slider_axes = fig_r.add_axes([0.38, 0.14, 0.35, 0.03], facecolor=widget_color)
+    z_slider = Slider(z_slider_axes, 'z', zs[0], zs[-1], valinit=zs[zero_z])
+    
+    data_chooser_axes = fig_r.add_axes([0.01, 0.45, 0.05, 0.1], facecolor=widget_color)
+    data_chooser = RadioButtons(data_chooser_axes, bb_vals.keys())
+    
+    def update_plot(val):
+        curr_phi_index = curr_psi_index = curr_theta_index = 0
+        if psi_slider != None:
+            curr_psi_index = theta_index(psi_slider.val)
+        if phi_slider != None:
+            curr_phi_index = phi_index(phi_slider.val)
+        if theta_slider != None:
+            curr_theta_index = theta_index(theta_slider.val)
+        curr_z_index = z_index(z_slider.val)
+        curr_data = data_chooser.value_selected
+        lines[0].set_ydata(bb_vals[curr_data][curr_psi_index][curr_phi_index][curr_theta_index].T[curr_z_index])
+        fig_r.canvas.draw_idle()
+    
+    if psi_slider != None:
+        psi_slider.on_changed(update_plot)
+    if phi_slider != None:
+        phi_slider.on_changed(update_plot)
+    if theta_slider != None:
+        theta_slider.on_changed(update_plot)
+    z_slider.on_changed(update_plot)
+    data_chooser.on_clicked(update_plot)
+        
+    return psi_slider, phi_slider, theta_slider, z_slider, data_chooser
 
 def draw_bb_r_slice(bb_vals, md_bb_min, theta = None, phi = None, psi = None, prefix = ''):
-    #TODO - maybe forget about theta & phi for now (just put them to 0)
-    pass
+    # 1D r-E plot
+    fig_z, ax_z = plt.subplots(num=prefix+" beta-beta interaction (r-slice)", figsize=(9,6))
+    fig_z.subplots_adjust(left=0.14, bottom=0.28, right=0.99, top=0.99) #0.86 x 0.86
+    
+    lines = ax_z.plot(zs, bb_vals['md'][0][0][0][zero_r], 'r-', lw=1.0)
+    ax_z.axvline(3.0*md.r_body, color='black', linestyle='--', lw=1.0)
+    ax_z.axvline(4.0*md.r_body, color='black', linestyle='--', lw=0.5)
+    ax_z.grid()
+    
+    ax_z.set_xlabel(r'$z$', **axis_font)
+    ax_z.set_ylabel(r'$E$', **axis_font)
+    ax_z.axis([zmin, zmax, 1.05*md_bb_min, -1.05*md_bb_min])
+    
+    theta_slider = phi_slider = psi_slider = None
+    
+    if len(bb_vals['md']) > 1:
+        psi_slider_axes = fig_z.add_axes([0.38, 0.10, 0.35, 0.03], facecolor=widget_color)
+        psi_slider = Slider(psi_slider_axes, 'Psi', thetas[0], thetas[-1], valinit=thetas[0])
+        
+    if len(bb_vals['md'][0]) > 1:
+        phi_slider_axes = fig_z.add_axes([0.38, 0.02, 0.35, 0.03], facecolor=widget_color)
+        phi_slider = Slider(phi_slider_axes, 'Phi', phis[0], phis[-1], valinit=phis[0])
+    
+    if len(bb_vals['md'][0][0]) > 1:
+        theta_slider_axes = fig_z.add_axes([0.38, 0.06, 0.35, 0.03], facecolor=widget_color)
+        theta_slider = Slider(theta_slider_axes, 'Theta', thetas[0], thetas[-1], valinit=thetas[0])
+    
+    r_slider_axes = fig_z.add_axes([0.38, 0.14, 0.35, 0.03], facecolor=widget_color)
+    r_slider = Slider(r_slider_axes, 'r', rs[0], rs[-1], valinit=rs[zero_z])
+    
+    data_chooser_axes = fig_z.add_axes([0.01, 0.45, 0.05, 0.1], facecolor=widget_color)
+    data_chooser = RadioButtons(data_chooser_axes, bb_vals.keys())
+    
+    def update_plot(val):
+        curr_phi_index = curr_psi_index = curr_theta_index = 0
+        if psi_slider != None:
+            curr_psi_index = theta_index(psi_slider.val)
+        if phi_slider != None:
+            curr_phi_index = phi_index(phi_slider.val)
+        if theta_slider != None:
+            curr_theta_index = theta_index(theta_slider.val)
+        curr_r_index = r_index(r_slider.val)
+        curr_data = data_chooser.value_selected
+        lines[0].set_ydata(bb_vals[curr_data][curr_psi_index][curr_phi_index][curr_theta_index][curr_r_index])
+        fig_z.canvas.draw_idle()
+    
+    if psi_slider != None:
+        psi_slider.on_changed(update_plot)
+    if phi_slider != None:
+        phi_slider.on_changed(update_plot)
+    if theta_slider != None:
+        theta_slider.on_changed(update_plot)
+    r_slider.on_changed(update_plot)
+    data_chooser.on_clicked(update_plot)
+        
+    return psi_slider, phi_slider, theta_slider, r_slider, data_chooser
 
 #======================================================================================
 
@@ -234,7 +341,7 @@ def calculate_bb(theta = None, phi = None, psi = None):
         if phi != None:
             bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, 0)
                                           for phi in [phi] for theta in [theta] for r in rs for z in zs])
-            bb_vals['mc'] = bb_vals['mc'].reshape(1, 1, r_points, z_points)
+            bb_vals['mc'] = bb_vals['mc'].reshape(1, 1, 1, r_points, z_points)
             if psi != None:
                 bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi, psi)
                                           for psi in [psi] for phi in [phi] for theta in [theta] for r in rs for z in zs])
@@ -244,11 +351,11 @@ def calculate_bb(theta = None, phi = None, psi = None):
                                           for psi in thetas for phi in [phi] for theta in [theta] for r in rs for z in zs])
                 bb_vals['md'] = bb_vals['md'].reshape(theta_points, 1, 1, r_points, z_points)
 
-                bb_vals['mc'] = np.array([bb_vals['mc'] for psi in thetas]) # so MC data has the same "shape"
+                bb_vals['mc'] = np.array([bb_vals['mc'][0] for psi in thetas]) # so MC data has the same "shape"
         else:
             bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, 0)
                                           for phi in phis for theta in [theta] for r in rs for z in zs])
-            bb_vals['mc'] = bb_vals['mc'].reshape(phi_points, 1, r_points, z_points)
+            bb_vals['mc'] = bb_vals['mc'].reshape(1, phi_points, 1, r_points, z_points)
             if psi != None:
                 bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi, psi)
                                           for psi in [psi] for phi in phis for theta in [theta] for r in rs for z in zs])
@@ -258,12 +365,12 @@ def calculate_bb(theta = None, phi = None, psi = None):
                                           for psi in thetas for phi in phis for theta in [theta] for r in rs for z in zs])
                 bb_vals['md'] = bb_vals['md'].reshape(theta_points, phi_points, 1, r_points, z_points)
                 
-                bb_vals['mc'] = np.array([bb_vals['mc'] for psi in thetas]) # so MC data has the same "shape"
+                bb_vals['mc'] = np.array([bb_vals['mc'][0] for psi in thetas]) # so MC data has the same "shape"
     else:
         if phi != None:
-            bb_vals['mc'] = np.array([md.bb_interaction(r, z, theta, phi, 0)
+            bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, 0)
                                           for phi in [phi] for theta in thetas for r in rs for z in zs])
-            bb_vals['mc'] = bb_vals['mc'].reshape(1, theta_points, r_points, z_points)
+            bb_vals['mc'] = bb_vals['mc'].reshape(1, 1, theta_points, r_points, z_points)
             if psi != None:
                 bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi, psi)
                                           for psi in [psi] for phi in [phi] for theta in thetas for r in rs for z in zs])
@@ -273,11 +380,11 @@ def calculate_bb(theta = None, phi = None, psi = None):
                                           for psi in thetas for phi in [phi] for theta in thetas for r in rs for z in zs])
                 bb_vals['md'] = bb_vals['md'].reshape(theta_points, 1, theta_points, r_points, z_points)
                 
-                bb_vals['mc'] = np.array([bb_vals['mc'] for psi in thetas]) # so MC data has the same "shape"
+                bb_vals['mc'] = np.array([bb_vals['mc'][0] for psi in thetas]) # so MC data has the same "shape"
         else:
-            bb_vals['mc'] = np.array([md.bb_interaction(r, z, theta, phi, 0)
+            bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi, 0)
                                           for phi in phis for theta in thetas for r in rs for z in zs])
-            bb_vals['mc'] = bb_vals['mc'].reshape(phi_points, theta_points, r_points, z_points)
+            bb_vals['mc'] = bb_vals['mc'].reshape(1, phi_points, theta_points, r_points, z_points)
             if psi != None:
                 bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi, psi)
                                           for psi in [psi] for phi in phis for theta in thetas for r in rs for z in zs])
@@ -287,12 +394,12 @@ def calculate_bb(theta = None, phi = None, psi = None):
                                           for psi in thetas for phi in phis for theta in thetas for r in rs for z in zs])
                 bb_vals['md'] = bb_vals['md'].reshape(theta_points, phi_points, theta_points, r_points, z_points)
                 
-                bb_vals['mc'] = np.array([bb_vals['mc'] for psi in thetas]) # so MC data has the same "shape"
+                bb_vals['mc'] = np.array([bb_vals['mc'][0] for psi in thetas]) # so MC data has the same "shape"
     
     md_bb_min = bb_vals['md'].min()
     print "md_bb_vals.min() = ", md_bb_min
     
-    bb_vals['mc'] *= md_bb_min*bb_factor
+    bb_vals['mc'] *= -md_bb_min*bb_factor
     
     bb_vals['diff'] = bb_vals['md'] - bb_vals['mc']
     
@@ -343,14 +450,20 @@ sb_factor = 1/2.0
 bb_factor = 1/3.0
 
 widgets = []
-#calculating & drawing soluble-beta
-# sb_vals, md_sb_min = calculate_sb()
-# widgets.append(draw_sb_2D(sb_vals, md_sb_min, prefix=cfg_filename))
-# widgets.append(draw_sb_z_slice(sb_vals, md_sb_min, prefix=cfg_filename))
-# widgets.append(draw_sb_r_slice(sb_vals, md_sb_min, prefix=cfg_filename))
 
-#calculating & drawing beta-beta
-bb_vals, md_bb_min = calculate_bb(theta=0, phi=0)
-widgets.append(draw_bb_2D(bb_vals, md_bb_min, theta=0, phi=0, prefix=cfg_filename))
+draw = 'bb'
+
+if draw == 'sb':
+    sb_vals, md_sb_min = calculate_sb()
+    widgets.append(draw_sb_2D(sb_vals, md_sb_min, prefix=cfg_filename))
+    widgets.append(draw_sb_z_slice(sb_vals, md_sb_min, prefix=cfg_filename))
+    widgets.append(draw_sb_r_slice(sb_vals, md_sb_min, prefix=cfg_filename))
+elif draw == 'bb':
+    bb_vals, md_bb_min = calculate_bb(phi=0, theta=0)
+    widgets.append(draw_bb_2D(bb_vals, md_bb_min, prefix=cfg_filename))
+    widgets.append(draw_bb_z_slice(bb_vals, md_bb_min, prefix=cfg_filename))
+    widgets.append(draw_bb_r_slice(bb_vals, md_bb_min, prefix=cfg_filename))
+else:
+    raise Exception('You have to choose something!')
 
 plt.show()
