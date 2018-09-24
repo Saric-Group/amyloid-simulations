@@ -407,7 +407,7 @@ def calculate_bb(theta = None, phi = None, psi = None):
 
 #=======================================================================================
 
-cfg_filename = '6-3_cos-sq_0.25.cfg'
+cfg_filename = '9-4.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
@@ -451,14 +451,14 @@ bb_factor = 1/3.0
 
 widgets = []
 
-draw = 'bb'
+draw = ['sb', 'bb']
 
-if draw == 'sb':
+if 'sb' in draw:
     sb_vals, md_sb_min = calculate_sb()
     widgets.append(draw_sb_2D(sb_vals, md_sb_min, prefix=cfg_filename))
     widgets.append(draw_sb_z_slice(sb_vals, md_sb_min, prefix=cfg_filename))
     widgets.append(draw_sb_r_slice(sb_vals, md_sb_min, prefix=cfg_filename))
-elif draw == 'bb':
+elif 'bb' in draw:
     bb_vals, md_bb_min = calculate_bb(phi=0, theta=0)
     widgets.append(draw_bb_2D(bb_vals, md_bb_min, prefix=cfg_filename))
     widgets.append(draw_bb_z_slice(bb_vals, md_bb_min, prefix=cfg_filename))

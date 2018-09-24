@@ -176,7 +176,7 @@ if mc_moves_per_run == 0:
 else:
     for i in range(int(args.sim_length/args.run_length)-1):   
         py_lmp.command('run {:d} post no'.format(args.run_length))
-        success = simulation.conformation_Monte_Carlo(mc_moves_per_run)
+        success = simulation.state_change_MC(mc_moves_per_run)
         if not args.silent:
             base_count = simulation.state_count(0)
             beta_count = simulation.state_count(1)
