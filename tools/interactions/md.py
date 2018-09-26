@@ -12,15 +12,18 @@ Created on 12 Apr 2018
 import potentials
 import numpy as np
 
-N = None
-r_body = None
-r_body_sq = None
-delta_body = None #in terms of r_body
+model = None
 
-M = None
-r_int = None
-delta_int = None #in terms of r_int
-bulge_out = None
+N = None # num of body beads
+K = None # num of patches
+M = None # nums of patch beads by patch
+
+r_rod_sq = None
+
+body_z = None
+patch_z = None
+patch_r = None
+patch_phi = None
 
 sol_active = None
 beta_active = None
@@ -41,46 +44,65 @@ def int_f(int_type, R, eps):
     else:
         raise Exception('Unknown/invalid int_type parameter: '+ str(int_type))
 
-def setup(model):
+def setup(rod_model):
     '''
-    model : a lammps_multistate_rods.Model instance
-    sb : a list of "model.eps" entries/keys that constitute soluble-beta interaction
-    bb : a list of "model.eps" entries/keys that constitute beta-beta interaction
+    rod_model : a lammps_multistate_rods.Model instance
     '''
-    global sol_active, beta_active
-    sol_active = filter(lambda x: x in model.active_bead_types,
-           [int(bead_type) for bead_type in model.state_structures[0].replace('|','')])[0]
-    beta_active= filter(lambda x: x in model.active_bead_types,
-           [int(bead_type) for bead_type in model.state_structures[1].replace('|','')])
+    global model
+    model = rod_model
     
-    global N, r_body, r_body_sq, delta_body
+    global N, K, M, r_rod_sq
     N = model.body_beads
-    r_body = model.rod_radius
-    r_body_sq = r_body**2
-    delta_body = model.body_bead_overlap / r_body
+    K = model.num_patches
+    M = model.patch_beads
+    r_rod_sq = model.rod_radius**2
     
-    global M, r_int, delta_int, bulge_out
-    M = model.int_sites
-    r_int = model.int_radius
-    delta_int = model.int_bead_overlap / r_int
-    bulge_out = model.int_bulge_out
+    global body_z, patch_z, patch_r, patch_phi
+    body_z = [(i - (N-1)/2.)*(2*model.rod_radius - model.body_bead_overlap)
+              for i in range(N)]
+    patch_z = [[(i - (M[k]-1)/2.)*(2*model.patch_bead_radii[k] + model.patch_bead_sep[k])
+                for i in range(M[k])] for k in range(K)]
+    patch_r = [model.rod_radius - model.patch_bead_radii[k] + model.patch_bulge_out[k]
+               for k in range(K)]
+    patch_phi = [model.patch_angles[k]*2*np.pi/360
+                 for k in range(K)]
     
-    beta_types = sorted(set(beta_active))
-    for i in range(len(beta_types)):
-        R = r_body + r_int
-        (eps, int_type_key) = model.eps[(sol_active, beta_types[i])]
-        int_type = model.int_types[int_type_key]
-        
-        int_potentials[(sol_active, beta_types[i])] = int_f(int_type, R, eps)
-        
-        for j in range(i, len(beta_types)):
-            R = 2*r_int
-            (eps, int_type_key) = model.eps[(beta_types[i], beta_types[j])]
+    global sol_active, beta_active
+    # assumption that there is only one active body bead type (the tip)
+    sol_active = filter(lambda x: x in model.active_bead_types, model.body_bead_types)[0]
+    # assumption that only patch beads are active, and all of them
+    beta_active = [filter(lambda x: x in model.active_bead_types,
+                          [int(bead_type) for bead_type in patch])
+                   for patch in model.state_structures[1].split('|')[1:]]
+    
+    for k1 in range(K):
+        k1_patch_types = sorted(set(beta_active[k1]))
+        for i in range(len(k1_patch_types)):
+            R = model.rod_radius + model.patch_bead_radii[k1]
+            (eps, int_type_key) = model.eps[tuple(sorted([sol_active, k1_patch_types[i]]))]
             int_type = model.int_types[int_type_key]
         
-            int_potentials[(beta_types[i], beta_types[j])] = \
-                int_potentials[(beta_types[j], beta_types[i])] = int_f(int_type, R, eps)
-    
+            int_potentials[(sol_active, k1_patch_types[i])] = \
+            int_potentials[(k1_patch_types[i], sol_active)] = int_f(int_type, R, eps)
+        
+            for j in range(i, len(k1_patch_types)):
+                R = 2*model.patch_bead_radii[k1]
+                (eps, int_type_key) = model.eps[(k1_patch_types[i], k1_patch_types[j])]
+                int_type = model.int_types[int_type_key]
+        
+                int_potentials[(k1_patch_types[i], k1_patch_types[j])] = \
+                int_potentials[(k1_patch_types[j], k1_patch_types[i])] = int_f(int_type, R, eps)
+            
+            for k2 in range(k1+1, K):
+                k2_patch_types = list(set(beta_active[k2]))
+                for j in range(len(k2_patch_types)):
+                    R = model.patch_bead_radii[k1] + model.patch_bead_radii[k2]
+                    (eps, int_type_key) = model.eps[tuple(sorted([k1_patch_types[i], k2_patch_types[j]]))]
+                    int_type = model.int_types[int_type_key]
+        
+                    int_potentials[(k1_patch_types[i], k2_patch_types[j])] = \
+                    int_potentials[(k2_patch_types[j], k1_patch_types[i])] = int_f(int_type, R, eps)
+
 
 def sb_interaction(r, z, phi):
     '''
@@ -90,21 +112,23 @@ def sb_interaction(r, z, phi):
     
     int_f : the point-point interaction function with signature (r, sigma), where
         "r" is the distance between points and "sigma" is the minimum of the interaction
-    phi : the orientation of the interaction sites of the rod at (0,0) 
+    phi : the orientation of the rod at (0,0) 
     '''
     # check for body overlap
     r_sq = r**2
     for i in range(N):
-        z_i = (i - (N-1)/2.)*(2 - delta_body)*r_body
-        if (r_sq + (z - z_i)**2 < 4*r_body_sq):
+        if (r_sq + (z - body_z[i])**2 < 4*r_rod_sq):
             return 0
     
     U = 0
-    r_i = r_body - r_int + bulge_out
-    for i in range(M):
-        z_i = (i - (M-1)/2.)*(2 - delta_int)*r_int
-        dist = np.sqrt(r**2 + r_i**2 - 2*r_i*r*np.cos(phi) + (z-z_i)**2)
-        U += int_potentials[(sol_active, beta_active[i])](dist)
+    for k in range(K):
+        r_i = patch_r[k]
+        phi_i = phi + patch_phi[k]
+        ort_part = r**2 + r_i**2 - 2*r_i*r*np.cos(phi_i)
+        for i in range(M[k]):
+            z_i = patch_z[k][i]
+            dist = np.sqrt(ort_part + (z - z_i)**2)
+            U += int_potentials[(sol_active, beta_active[k][i])](dist)
     return U
 
 def bb_interaction(r, z, theta, phi, psi1, psi2 = None):
@@ -121,39 +145,53 @@ def bb_interaction(r, z, theta, phi, psi1, psi2 = None):
     NOTE: if psi2 is not given it will be set so that the "patch" of the rod at
         (r-z) points as much as possible toward the rod at (0,0)
     '''
-    U = 0
     if psi2 is None:
         psi2 = np.pi - phi # turn maximally towards the patch at (0,0)
     c_theta = np.cos(theta)
     s_theta = np.sin(theta)
     c_phi = np.cos(phi)
     s_phi = np.sin(phi)
-    c_psi1 = np.cos(psi1)
-    s_psi1 = np.sin(psi1)
-    c_psi2 = np.cos(psi2)
-    s_psi2 = np.sin(psi2)
     
     # check for body overlap
     for i in range(N):
-        z_i = (i - (N-1)/2.)*(2 - delta_body)*r_body
         for j in range(N):
-            z_j = (j - (N-1)/2.)*(2 - delta_body)*r_body
-            x_j = z_j*c_phi*s_theta
-            y_j = z_j*s_phi*s_theta
-            z_j = z_j*c_theta
-            if ((r + x_j)**2 + (y_j)**2 + (z + z_j - z_i)**2 < 4*r_body_sq):
+            temp = body_z[j]*s_theta
+            x_j = c_phi*temp
+            y_j = s_phi*temp
+            z_j = body_z[j]*c_theta
+            if ((r + x_j)**2 + (y_j)**2 + (z + z_j - body_z[i])**2 < 4*r_rod_sq):
                 return 0
     
-    r_i = r_j = r_body - r_int + bulge_out
-    x_i = c_psi1*r_i
-    y_i = s_psi1*r_i
-    for i in range(M):
-        z_i = (i - (M-1)/2.)*(2 - delta_int)*r_int
-        for j in range(M):
-            z_j = (j - (M-1)/2.)*(2 - delta_int)*r_int
-            x_j = r_j*(c_psi2*c_phi*c_theta - s_psi2*s_phi) + z_j*c_phi*s_theta
-            y_j = r_j*(c_psi2*s_phi*c_theta + s_psi2*c_phi) + z_j*s_phi*s_theta
-            z_j = -r_j*c_psi2*s_theta + z_j*c_theta
-            dist = np.sqrt((r + x_j - x_i)**2 + (y_j - y_i)**2 + (z + z_j - z_i)**2)
-            U += int_potentials[(beta_active[i], beta_active[j])](dist)
+    x1 = [0.0]*K
+    y1 = [0.0]*K
+    z1 = patch_z
+    x2 = [None]*K
+    y2 = [None]*K
+    z2 = [None]*K
+    for k in range(K):
+        psi1_k = psi1 + patch_phi[k]
+        c_psi1 = np.cos(psi1_k)
+        s_psi1 = np.sin(psi1_k)
+        psi2_k = psi2 + patch_phi[k]
+        c_psi2 = np.cos(psi2_k)
+        s_psi2 = np.sin(psi2_k)
+        r1 = r2 = patch_r[k]
+        x1[k] = r1*c_psi1
+        y1[k] = r1*s_psi1
+        x2[k] = [0.0]*M[k]
+        y2[k] = [0.0]*M[k]
+        z2[k] = [0.0]*M[k]
+        for i in range(M[k]):
+            x2[k][i] = r2*(c_psi2*c_phi*c_theta - s_psi2*s_phi) + patch_z[k][i]*c_phi*s_theta
+            y2[k][i] = r2*(c_psi2*s_phi*c_theta + s_psi2*c_phi) + patch_z[k][i]*s_phi*s_theta
+            z2[k][i] = -r2*c_psi2*s_theta + patch_z[k][i]*c_theta
+    U = 0
+    for k1 in range(K):
+        for i in range(M[k1]):        
+            for k2 in range(K):
+                for j in range(M[k2]):
+                    dist = np.sqrt((r + x2[k2][j] - x1[k1])**2 + 
+                                   (y2[k2][j] - y1[k1])**2 +
+                                   (z + z2[k2][j] - z1[k1][i])**2)
+                    U += int_potentials[(beta_active[k1][i], beta_active[k2][j])](dist)
     return U
