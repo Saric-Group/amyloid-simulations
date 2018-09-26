@@ -39,18 +39,17 @@ def draw_models(axes = None, r = 0, z = 0, phi = 0, old = []):
     for i in range(md.N):
         new.append(
             axes.add_patch(plt.Circle((z + md.body_z[i], r), r_body, fill=True, color='#777777')))
+        
+    # the MC model patch axis
+    new.append(
+        axes.add_patch(plt.Rectangle((r - mc.L_patch/2, z - 0.02), mc.L_patch, 0.04, color='black')))
     
     # the MD model interaction centers (patches)
-    #TODO rotation by phi
     for k in range(md.K):
         r_k = r + md.patch_r[k]*np.cos(md.patch_phi[k] + phi)
         for i in range(md.M[k]):
             new.append(
                 axes.add_patch(plt.Circle((z + md.patch_z[k][i], r_k), r_int[k], fill=True, color='red')))
-    
-    # the MC model patch axis
-    new.append(
-        axes.add_patch(plt.Rectangle((r - mc.L_patch/2, z - 0.02), mc.L_patch, 0.04, color='black')))
     
     return new
 
@@ -77,8 +76,8 @@ def draw_sb_2D(sb_vals, md_sb_min, prefix = ''):
     def update_img(_):
         curr_theta_index = theta_index(phi_slider.val)
         curr_data = data_chooser.value_selected
-        img.set_data(sb_vals[curr_data][curr_theta_index])
         draw_models(ax_2D, phi = phi_slider.val, old = model_patches)
+        img.set_data(sb_vals[curr_data][curr_theta_index])
         fig_2D.canvas.draw_idle()
     
     phi_slider.on_changed(update_img)
@@ -425,7 +424,7 @@ def calculate_bb(theta = None, phi = None, psi = None):
 
 #=======================================================================================
 
-cfg_filename = '9-4_side_patches.cfg'
+cfg_filename = '9-4.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
@@ -469,7 +468,7 @@ bb_factor = 1/3.0
 
 widgets = []
 
-draw = ['bb']
+draw = ['sb', 'bb']
 
 if 'sb' in draw:
     sb_vals, md_sb_min = calculate_sb()
