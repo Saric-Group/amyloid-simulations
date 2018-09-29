@@ -9,7 +9,7 @@ BASEDIR="$(pwd)"
 mkdir -p "libs"
 LIBSDIR="$BASEDIR/libs"
 
-git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBSDIR/temp"
+git clone -b master https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBSDIR/temp"
 
 rm -rf "$LIBSDIR/lammps_multistate_rods"
 mv "$LIBSDIR/temp/lammps_multistate_rods" "$LIBSDIR/lammps_multistate_rods"

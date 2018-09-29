@@ -424,21 +424,21 @@ def calculate_bb(theta = None, phi = None, psi = None):
 
 #=======================================================================================
 
-cfg_filename = '9-4.cfg'
+cfg_filename = '7-4_side_patches.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
 
 # plot parameters 
 rmin = -0*model.rod_radius; zero_r = 0
-rmax = 5*model.rod_radius
+rmax = 4.0*model.rod_radius
 zmin = -0*model.rod_radius; zero_z = 0
-zmax = 7.5*model.rod_radius
+zmax = 7.0*model.rod_radius
 point_density = 0.1
 z_points = int((zmax-zmin)/point_density) + 1
 r_points = int((rmax-rmin)/point_density) + 1
-phi_points = 12 + 1 # 30 deg slices
-theta_points = 6 + 1 # 30 deg slices
+phi_points = 8 + 1 # 45 deg slices
+theta_points = 4 + 1 # 45 deg slices
 
 # plotting points
 zs = np.linspace(zmin, zmax, z_points)
@@ -476,7 +476,7 @@ if 'sb' in draw:
     widgets.append(draw_sb_z_slice(sb_vals, md_sb_min, prefix=cfg_filename))
     widgets.append(draw_sb_r_slice(sb_vals, md_sb_min, prefix=cfg_filename))
 if 'bb' in draw:
-    bb_vals, md_bb_min = calculate_bb(phi=0, theta=0)
+    bb_vals, md_bb_min = calculate_bb()#phi=0, theta=0)
     widgets.append(draw_bb_2D(bb_vals, md_bb_min, prefix=cfg_filename))
     widgets.append(draw_bb_z_slice(bb_vals, md_bb_min, prefix=cfg_filename))
     widgets.append(draw_bb_r_slice(bb_vals, md_bb_min, prefix=cfg_filename))
