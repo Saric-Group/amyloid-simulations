@@ -131,7 +131,7 @@ def sb_interaction(r, z, phi):
             U += int_potentials[(sol_active, beta_active[k][i])](dist)
     return U
 
-def bb_interaction(r, z, theta, phi, psi1, psi2 = None):
+def bb_interaction(r, z, theta, phi, psi1, psi2):
     '''
     Inter-rod beta-beta interaction. The interaction is relative to a rod
     centered at (0,0) and extending along the z-axis.
@@ -140,13 +140,11 @@ def bb_interaction(r, z, theta, phi, psi1, psi2 = None):
         "r" is the distance between points and "sigma" is the minimum of the interaction
     theta, phi : the direction of the rod at point (r,z)
     psi1 : the direction of the patch vector of the rod at (0,0)
-    psi2 : the direction of the patch vector of the rod at (r,z)
-    
-    NOTE: if psi2 is not given it will be set so that the "patch" of the rod at
-        (r-z) points as much as possible toward the rod at (0,0)
+    psi2 : the direction of the patch vector of the rod at (r,z); the patch starts facing
+        down and turns in the opposite direction to psi1 (as if the rods are mirror images)
     '''
-    if psi2 is None:
-        psi2 = np.pi - phi # turn maximally towards the patch at (0,0)
+    psi2 = np.pi - phi - psi2
+    
     c_theta = np.cos(theta)
     s_theta = np.sin(theta)
     c_phi = np.cos(phi)
