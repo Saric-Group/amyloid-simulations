@@ -33,5 +33,7 @@ fi
 for ((i=5; i < ${#args[*]}; i++)) do
 	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`
 	mkdir -p "$CFG_FILE_NAME"
-	qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",repeat="$REPEAT",size="$SIZE",num="$NUM",sim_len="$SIM_LEN"
+	for i in `seq 1 $REPREAT`; do
+		qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",size="$SIZE",num="$NUM",sim_len="$SIM_LEN"
+	done
 done

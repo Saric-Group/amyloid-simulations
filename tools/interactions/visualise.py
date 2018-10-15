@@ -381,7 +381,7 @@ def calculate_bb(theta = 0, phi = 0):
 
 #=======================================================================================
 
-cfg_filename = '7-4_side_patches.cfg'
+cfg_filename = '7-4_3p.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
@@ -414,7 +414,7 @@ bb_factor = 1/3.0
 
 widgets = []
 
-draw = ['bb']
+draw = ['sb']
 
 if 'sb' in draw:
     sb_vals, md_sb_min = calculate_sb()
