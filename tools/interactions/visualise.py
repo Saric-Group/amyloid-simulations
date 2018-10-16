@@ -381,7 +381,7 @@ def calculate_bb(theta = 0, phi = 0):
 
 #=======================================================================================
 
-cfg_filename = '7-4_3p.cfg'
+cfg_filename = '7-545.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)

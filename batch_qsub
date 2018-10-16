@@ -1,17 +1,17 @@
 #!/bin/bash -e
 
-# first argument has to be the PBS script to run
+# first argument has to be the job script to run
 # second argument has to be the number of times to repeat each job
 # third argument has to be the box size (total for random or of one cell for lattice)
 # fourth argument has to be the number of cells (for lattice) or number of rods (for random)
 # fifth argument has to be the length of the simulation
 # other arguments have to be config file paths (expected to end with .cfg)
 
-# two arguments are passed to the PBS script: "cfg_file_name" and "repeat"
+# four arguments are passed to the job script: "cfg_file_name", "size", "num" and "sim_len"
 
 args=("$@")
 
-JOB_PBS=${args[0]}
+JOB=${args[0]}
 REPEAT=${args[1]}
 SIZE=${args[2]}
 NUM=${args[3]}
@@ -34,6 +34,6 @@ for ((i=5; i < ${#args[*]}; i++)) do
 	CFG_FILE_NAME=`echo ${args[i]} | sed 's|\(.*\)\.cfg$|\1|'`
 	mkdir -p "$CFG_FILE_NAME"
 	for i in `seq 1 $REPREAT`; do
-		qsub "$JOB_PBS" -v cfg_file_name="$CFG_FILE_NAME",size="$SIZE",num="$NUM",sim_len="$SIM_LEN"
+		qsub -v cfg_file_name="$CFG_FILE_NAME",size="$SIZE",num="$NUM",sim_len="$SIM_LEN" "$PROJECT_HOME/job_scripts/$JOB"
 	done
 done
