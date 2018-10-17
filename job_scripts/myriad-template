@@ -20,7 +20,7 @@ PROJECT_HOME="/home/ucapero/simulations/amyloids"
 PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
 export PYTHONPATH
 
-SEED=$(( 10#"${JOB_ID}" % 900000000 ))
+SEED=$(( 10#${JOB_ID} % 900000000 ))
 
 python "$PROJECT_HOME"/<script> "${cfg_file_name}.cfg" "${cfg_file_name}" $size $num $sim_len --seed $SEED <options>
 
