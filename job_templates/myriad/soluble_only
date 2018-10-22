@@ -1,0 +1,35 @@
+#!/bin/bash -l
+#$ -S /bin/bash
+
+#$ -N sol_only
+
+#$ -l h_rt=<walltime>
+#$ -l mem=<memory>
+#$ -l tmpfs=0
+
+#$ -M eugen.rozic.17@ucl.ac.uk
+#$ -m ae
+
+#$ -cwd
+
+#$ -o "<out_folder>/${JOB_ID}.out"
+#$ -j yes
+
+PROJECT_HOME="/home/ucapero/simulations/amyloids"
+
+PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
+export PYTHONPATH
+
+if [ -d "$PROJECT_HOME/../venv" ]; then
+	source "$PROJECT_HOME"/../venv/bin/activate
+	echo "Virtualenv at $PROJECT_HOME/../venv activated."
+else
+	echo "ERROR: Virtualenv not found/activated !!"
+	exit
+fi
+
+SEED=$(( 10#${JOB_ID} % 900000000 ))
+
+python "$PROJECT_HOME"/nucleation.py <cfg_file> <out_folder> <cell_size> <num_cells> <sim_length> --seed $SEED --MC_moves 0 --silent <args>
+
+python "$PROJECT_HOME"/tools/clusters/analysis.py <cfg_file> <dump_file>

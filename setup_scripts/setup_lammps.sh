@@ -2,6 +2,7 @@
 
 # Will download (or just update) and (re)install the latest LAMMPS stable version
 # to a desired location (in a "lammps-stable" folder).
+# It will build the serial version, both the executable and the library.
 # It will also create a "lammps-stable" link in "~/.local/bin" to the serial version
 # of the installed LAMMPS.
 

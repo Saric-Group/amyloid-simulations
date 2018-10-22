@@ -1,6 +1,8 @@
 #!/bin/bash -e
 
-# Will download the latest necessary libs to the "libs" folder in the project root folder.
+# Will download the latest necessary libraries to the "libs" folder in
+# the project root folder. These are currently:
+#  - lammps_multistate_rods
 
 STARTDIR="$(pwd)"
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."

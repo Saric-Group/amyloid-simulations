@@ -1,9 +1,10 @@
 #!/bin/bash -e
 
 # Will install "virtualenv" to a desired location (in a "venv" folder).
-# The virtualenv will have scipy, numpy, matplotlib and mpi4py.
+# The virtualenv will have scipy, numpy, matplotlib, mpi4py & pyquaternion.
 # The script assumes there is a "lammps-stable" exe link on the system which
-# points a LAMMPS (serial) application in a "src" folder of a LAMMPS installation.
+# points to a LAMMPS (serial) application in a "src" folder of a LAMMPS
+# installation (i.e. exactly the kind produced by "setup_lammps.sh")
 
 STARTDIR="$(pwd)"
 
