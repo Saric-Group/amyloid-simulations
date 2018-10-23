@@ -7,9 +7,6 @@
 #PBS -l pmem=<memory>
 #PBS -l nodes=1:ppn=1
 
-#PBS -M eugen.rozic.17@ucl.ac.uk
-#PBS -m aef
-
 #PBS -o "<out_folder>/${PBS_JOBID}.out"
 #PBS -j oe
 

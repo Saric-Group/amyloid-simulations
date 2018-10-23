@@ -8,12 +8,14 @@ Created on 16 Oct 2018
 '''
 
 import argparse
-import os, re
+import os, re, sys
 import subprocess
+import traceback
 
 #----------------------------------------------------------------------------------------
 
-parser = argparse.ArgumentParser(description='TODO',
+parser = argparse.ArgumentParser(description='An application for generating and submitting \
+simulation jobs with "qsub"',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('job_template', type=str,
@@ -68,7 +70,12 @@ for cfg_file in job_args.cfgs:
                 job_script.write(fill_template(line))
     
     for n in range(job_args.repeat):
-        subprocess.call(['qsub', 'temp_job_script'])
+        try:
+            subprocess.call(['qsub', 'temp_job_script'])
+        except:
+            traceback.print_exc()
+            os.remove(temp_script_path)
+            quit()
     
 os.remove(temp_script_path)
 

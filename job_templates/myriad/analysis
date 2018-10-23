@@ -7,9 +7,6 @@
 #$ -l mem=<memory>
 #$ -l tmpfs=0
 
-#$ -M eugen.rozic.17@ucl.ac.uk
-#$ -m ae
-
 #$ -cwd
 
 #$ -o "<out_folder>/$JOB_ID.out"

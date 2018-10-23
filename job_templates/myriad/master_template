@@ -7,8 +7,8 @@
 #$ -l mem=<memory>
 #$ -l tmpfs=0
 
-#$ -M eugen.rozic.17@ucl.ac.uk
-#$ -m ae
+# $ -M eugen.rozic.17@ucl.ac.uk
+# $ -m ae
 
 #$ -cwd
 
