@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N NAME
+#PBS -N analysis
 #PBS -q batch
 
 #PBS -l walltime=<walltime>
@@ -28,8 +28,4 @@ else
 	exit
 fi
 
-SEED=$(( 10#${PBS_JOBID} % 900000000 ))
-
-python "$PROJECT_HOME"/SCRIPT "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED FIXED_ARGS <args>
-
-python "$PROJECT_HOME"/tools/clusters/analysis.py "<cfg_file>" "<out_folder>/<cell_size>-<num_cells>_${SEED}.dump" --every N
+python "$PROJECT_HOME"/tools/clusters/analysis.py "<cfg_file>" <out_folder>/*.dump <args>

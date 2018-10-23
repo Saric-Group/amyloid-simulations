@@ -12,7 +12,7 @@
 
 #$ -cwd
 
-#$ -o "<out_folder>/${JOB_ID}.out"
+#$ -o "<out_folder>/$JOB_ID.out"
 #$ -j yes
 
 PROJECT_HOME="/home/ucapero/simulations/amyloids"
@@ -28,4 +28,4 @@ else
 	exit
 fi
 
-python "$PROJECT_HOME"/tools/clusters/analysis.py <cfg_file> <out_folder>/*.dump <args>
+python "$PROJECT_HOME"/tools/clusters/analysis.py "<cfg_file>" <out_folder>/*.dump <args>
