@@ -8,7 +8,7 @@ Created on 16 Oct 2018
 '''
 
 import argparse
-import os, re, sys
+import os, re
 import subprocess
 import traceback
 
@@ -60,7 +60,7 @@ args = job_args.args
 temp_script_path = 'temp_job_script'
 
 for cfg_file in job_args.cfgs:
-    out_folder = os.path.dirname(cfg_file)
+    out_folder = os.path.splitext(cfg_file)[0]
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
     
