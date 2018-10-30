@@ -77,7 +77,7 @@ def draw_sb_2D(sb_vals, md_sb_min, prefix = ''):
     def update_img(_):
         curr_phi_index = int(phi_slider.val)
         curr_phi_val = thetas[curr_phi_index]
-        phi_slider.valtext.set_text(phi_slider.valfmt % (curr_phi_val*180/np.pi))
+        phi_slider.valtext.set_text(phi_slider.valfmt % (np.rad2deg(curr_phi_val)))
         curr_data = data_chooser.value_selected
         draw_models(ax_2D, phi = curr_phi_val, old = model_patches)
         img.set_data(sb_vals[curr_data][curr_phi_index])
@@ -96,7 +96,7 @@ def draw_sb_z_slice(sb_vals, md_sb_min, prefix = ''):
     lines = []
     for i in range(theta_points):
         lines.append(ax_r.plot(rs, sb_vals['md'][i].T[zero_z], 'r-', lw=1.0,
-                               label=r'$\phi = {:1.1f}^\circ$'.format(thetas[i]*180/np.pi),
+                               label=r'$\phi = {:1.1f}^\circ$'.format(np.rad2deg(thetas[i])),
                                color = plot_cmap((i+1.0)/(theta_points+1))))
     ax_r.axvline(2.0*model.rod_radius, color='black', linestyle='-', lw=1.0)
     ax_r.axvline(3.0*model.rod_radius, color='black', linestyle='--', lw=0.5)
@@ -134,10 +134,11 @@ def draw_sb_r_slice(sb_vals, md_sb_min, prefix = ''):
     fig_z, ax_z = plt.subplots(num=prefix+" soluble-beta interaction (r-slice)", figsize=(11,5))
     fig_z.subplots_adjust(left=0.18, bottom=0.15, right=0.97, top=0.97) #0.86 x 0.86
     
+    r_init = int(model.rod_radius*2/point_density)
     lines = []
     for i in range(theta_points):
-        lines.append(ax_z.plot(zs, sb_vals['md'][i][zero_r], 'r-', lw=1.0,
-                               label=r'$\phi = {:1.1f}^\circ$'.format(thetas[i]*180/np.pi),
+        lines.append(ax_z.plot(zs, sb_vals['md'][i][r_init], 'r-', lw=1.0,
+                               label=r'$\phi = {:1.1f}^\circ$'.format(np.rad2deg(thetas[i])),
                                color = plot_cmap((i+1.0)/(theta_points+1))))
     ax_z.axvline(3.0*model.rod_radius, color='black', linestyle='--', lw=1.0)
     ax_z.axvline(4.0*model.rod_radius, color='black', linestyle='--', lw=0.5)
@@ -149,8 +150,9 @@ def draw_sb_r_slice(sb_vals, md_sb_min, prefix = ''):
     ax_z.axis([zmin, zmax, 1.05*md_sb_min, -1.05*md_sb_min])
     
     r_slider_axes = fig_z.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
-    r_slider = Slider(r_slider_axes, r'$r$', 0, r_points-1, valinit=zero_r,
+    r_slider = Slider(r_slider_axes, r'$r$', 0, r_points-1, valinit=r_init,
                       valstep=1, valfmt = '%1.2f')
+    r_slider.valtext.set_text(r_slider.valfmt % (r_init*point_density))
     
     data_chooser_axes = fig_z.add_axes([0.01, 0.45, 0.07, 0.15], facecolor=widget_color)
     data_chooser = RadioButtons(data_chooser_axes, sb_vals.keys())
@@ -206,12 +208,12 @@ def draw_bb_2D(bb_vals, md_bb_min, prefix = ''):
         if psi1_slider != None:
             curr_psi1_index = int(psi1_slider.val)
             curr_psi1_val = thetas[curr_psi1_index]
-            psi1_slider.valtext.set_text(psi1_slider.valfmt % (curr_psi1_val*180/np.pi))
+            psi1_slider.valtext.set_text(psi1_slider.valfmt % (np.rad2deg(curr_psi1_val)))
             draw_models(ax_2D, phi = curr_psi1_val, old = model_patches)
         if psi2_slider != None:
             curr_psi2_index = int(psi2_slider.val)
             curr_psi2_val = phis[curr_psi2_index]
-            psi2_slider.valtext.set_text(psi2_slider.valfmt % (curr_psi2_val*180/np.pi))
+            psi2_slider.valtext.set_text(psi2_slider.valfmt % (np.rad2deg(curr_psi2_val)))
         curr_data = data_chooser.value_selected
         
         img.set_data(bb_vals[curr_data][curr_psi2_index][curr_psi1_index])
@@ -233,7 +235,7 @@ def draw_bb_z_slice(bb_vals, md_bb_min, prefix = ''):
     lines = []
     for i in range(theta_points):
         lines.append(ax_r.plot(rs, bb_vals['md'][zero_phi][i].T[zero_z], 'r-', lw=1.0,
-                               label=r'$\psi_1 = {:1.1f}^\circ$'.format(thetas[i]*180/np.pi),
+                               label=r'$\psi_1 = {:1.1f}^\circ$'.format(np.rad2deg(thetas[i])),
                                    color = plot_cmap((i+1.0)/(theta_points+1))))
     ax_r.axvline(2.0*model.rod_radius, color='black', linestyle='-', lw=1.0)
     ax_r.axvline(3.0*model.rod_radius, color='black', linestyle='--', lw=0.5)
@@ -263,7 +265,7 @@ def draw_bb_z_slice(bb_vals, md_bb_min, prefix = ''):
         if psi2_slider != None:
             curr_psi2_index = int(psi2_slider.val)
             curr_psi2_val = phis[curr_psi2_index]
-            psi2_slider.valtext.set_text(psi2_slider.valfmt % (curr_psi2_val*180/np.pi))
+            psi2_slider.valtext.set_text(psi2_slider.valfmt % (np.rad2deg(curr_psi2_val)))
         curr_z_index = int(z_slider.val)
         curr_z_val = zs[curr_z_index]
         z_slider.valtext.set_text(z_slider.valfmt % curr_z_val)
@@ -285,10 +287,15 @@ def draw_bb_r_slice(bb_vals, md_bb_min, prefix = ''):
     fig_z, ax_z = plt.subplots(num=prefix+" beta-beta interaction (r-slice)", figsize=(9,6))
     fig_z.subplots_adjust(left=0.14, bottom=0.20, right=0.99, top=0.99) #0.86 x 0.86
     
+    if len(bb_vals['md']) > 1:
+        psi2_init = zero_phi
+    else:
+        psi2_init = 0
+    r_init = int(model.rod_radius*2/point_density)
     lines = []
     for i in range(theta_points):
-        lines.append(ax_z.plot(zs, bb_vals['md'][zero_phi][i][zero_r], 'r-', lw=1.0,
-                               label=r'$\psi_1 = {:1.1f}^\circ$'.format(thetas[i]*180/np.pi),
+        lines.append(ax_z.plot(zs, bb_vals['md'][psi2_init][i][r_init], 'r-', lw=1.0,
+                               label=r'$\psi_1 = {:1.1f}^\circ$'.format(np.rad2deg(thetas[i])),
                                    color = plot_cmap((i+1.0)/(theta_points+1))))
     ax_z.axvline(3.0*model.rod_radius, color='black', linestyle='--', lw=1.0)
     ax_z.axvline(4.0*model.rod_radius, color='black', linestyle='--', lw=0.5)
@@ -308,8 +315,9 @@ def draw_bb_r_slice(bb_vals, md_bb_min, prefix = ''):
         psi2_slider.valtext.set_text(psi2_slider.valfmt % 0.0)
     
     r_slider_axes = fig_z.add_axes([0.38, 0.02, 0.35, 0.03], facecolor=widget_color)
-    r_slider = Slider(r_slider_axes, r'$r$', 0, r_points-1, valinit=zero_r,
+    r_slider = Slider(r_slider_axes, r'$r$', 0, r_points-1, valinit=r_init,
                       valstep=1, valfmt = '%1.2f')
+    r_slider.valtext.set_text(r_slider.valfmt % (r_init*point_density))
     
     data_chooser_axes = fig_z.add_axes([0.01, 0.45, 0.05, 0.1], facecolor=widget_color)
     data_chooser = RadioButtons(data_chooser_axes, bb_vals.keys())
@@ -318,9 +326,11 @@ def draw_bb_r_slice(bb_vals, md_bb_min, prefix = ''):
         if psi2_slider != None:
             curr_psi2_index = int(psi2_slider.val)
             curr_psi2_val = phis[curr_psi2_index]
-            psi2_slider.valtext.set_text(psi2_slider.valfmt % (curr_psi2_val*180/np.pi))
+            psi2_slider.valtext.set_text(psi2_slider.valfmt % (np.rad2deg(curr_psi2_val)))
+        else:
+            curr_psi2_index = 0
         curr_r_index = int(r_slider.val)
-        curr_r_val = zs[curr_r_index]
+        curr_r_val = rs[curr_r_index]
         r_slider.valtext.set_text(r_slider.valfmt % curr_r_val)
         curr_data = data_chooser.value_selected
         
@@ -352,23 +362,29 @@ def calculate_sb():
     
     return sb_vals, md_sb_min
     
-def calculate_bb(theta = 0, phi = 0):
+def calculate_bb(theta = 0, phi = 0, psi2 = None):
     '''
     Calculates beta-beta interaction values...
     theta : polar angle of rod at (r,z)
     phi : azimuthal angle of rod at (r,z)
-    psi1 : angle of patch of rod at (0,0); if "None" calculated for psi1 in [0,2pi>
-    psi1 : angle of patch of rod at (r,z); if "None" calculated for psi2 in [0,2pi>
+    psi2 : angle of patch of rod at (r,z); if "None" calculated for psi2 in [-pi,pi>
     '''
+    if psi2 != None:
+        psi2s = [psi2]
+        psi2_points = 1
+    else:
+        psi2s = phis
+        psi2_points = phi_points
+    
     bb_vals = {}
     
     bb_vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi) for r in rs for z in zs])
     bb_vals['mc'] = bb_vals['mc'].reshape(r_points, z_points)
-    bb_vals['mc'] = np.array([[bb_vals['mc'] for psi1 in thetas] for psi2 in phis]) # so MC data has the same "shape"
+    bb_vals['mc'] = np.array([[bb_vals['mc'] for psi1 in thetas] for psi2 in psi2s]) # so MC data has the same "shape"
     
     bb_vals['md'] = np.array([md.bb_interaction(r, z, theta, phi, psi1, psi2)
-                              for psi2 in phis for psi1 in thetas for r in rs for z in zs])
-    bb_vals['md'] = bb_vals['md'].reshape(phi_points, theta_points, r_points, z_points)
+                              for psi2 in psi2s for psi1 in thetas for r in rs for z in zs])
+    bb_vals['md'] = bb_vals['md'].reshape(psi2_points, theta_points, r_points, z_points)
     
     md_bb_min = bb_vals['md'].min()
     print "md_bb_vals.min() = ", md_bb_min
@@ -381,7 +397,7 @@ def calculate_bb(theta = 0, phi = 0):
 
 #=======================================================================================
 
-cfg_filename = '7-545.cfg'
+cfg_filename = '3p.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
@@ -414,7 +430,7 @@ bb_factor = 1/3.0
 
 widgets = []
 
-draw = ['sb']
+draw = ['sb', 'bb']
 
 if 'sb' in draw:
     sb_vals, md_sb_min = calculate_sb()
@@ -422,7 +438,7 @@ if 'sb' in draw:
     widgets.append(draw_sb_z_slice(sb_vals, md_sb_min, prefix=cfg_filename))
     widgets.append(draw_sb_r_slice(sb_vals, md_sb_min, prefix=cfg_filename))
 if 'bb' in draw:
-    bb_vals, md_bb_min = calculate_bb(theta = 0, phi = 0)
+    bb_vals, md_bb_min = calculate_bb(theta = 0, phi = 0)#, psi2 = np.deg2rad(0))
     widgets.append(draw_bb_2D(bb_vals, md_bb_min, prefix=cfg_filename))
     widgets.append(draw_bb_z_slice(bb_vals, md_bb_min, prefix=cfg_filename))
     widgets.append(draw_bb_r_slice(bb_vals, md_bb_min, prefix=cfg_filename))
