@@ -42,7 +42,7 @@ parser.add_argument('--r0', nargs=3, type=float, default=[0.,0.,0.],
 parser.add_argument('--N', type=int, default=20,
                     help='number of monomers in the fibril')
 
-parser.add_argument('-T', '--temp', default=4.0, type=float,
+parser.add_argument('-T', '--temp', default=1.0, type=float,
                     help='the temperature of the system (e.g. for Langevin)')
 parser.add_argument('-D', '--damp', default=0.1, type=float,
                     help='viscous damping (for Langevin)')
@@ -90,8 +90,8 @@ log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 model = rods.Model(args.config_file)
 box_size = args.num_cells * args.cell_size
-simulation = rods.Simulation(py_lmp, model, args.seed, args.temp, args.output_folder,
-                             log_path, clusters=args.clusters)
+simulation = rods.Simulation(py_lmp, model, args.seed, args.output_folder,
+                             log_path=log_path, clusters=args.clusters)
 py_lmp.units("lj")
 py_lmp.dimension(3)
 py_lmp.boundary("p p p")

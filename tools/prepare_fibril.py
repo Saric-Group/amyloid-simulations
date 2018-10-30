@@ -49,14 +49,14 @@ def prepare_fibril(model, N, phi, theta, r0, output):
 
     for i in range(N):
         if i % 2 == 0:
-            locations[i] = np.array([0, (i-N/2)*rod_radius, -rod_radius+0.27692])
+            locations[i] = np.array([0, (i-N/2)*rod_radius, -rod_radius])#+0.27692])
             locations[i] = R_tot.rotate(locations[i]) + r0
             if R_tot.angle == 0.0:
                 rotations[i] = (R_tot.angle, [1.0, 0.0, 0.0])
             else:
                 rotations[i] = (R_tot.angle, R_tot.axis)
         else:
-            locations[i] = np.array([0, (i-N/2)*rod_radius, +rod_radius-0.27692])
+            locations[i] = np.array([0, (i-1-N/2)*rod_radius, +rod_radius])#-0.27692])
             locations[i] = R_tot.rotate(locations[i]) + r0
             if R_tot_inv.angle == 0.0:
                 rotations[i] = (R_tot_inv.angle, [1.0, 0.0, 0.0])
@@ -66,7 +66,7 @@ def prepare_fibril(model, N, phi, theta, r0, output):
         for j in range(3):
             if locations[i][j] > maxs[j]:
                 maxs[j] = locations[i][j]
-            elif locations[i][j] < mins[j]:
+            if locations[i][j] < mins[j]:
                 mins[j] = locations[i][j]
 
     with open(output, 'w') as output_file:
@@ -110,42 +110,43 @@ if __name__ == '__main__':
     
     from lammps import PyLammps
     
-    py_lmp = PyLammps(cmdargs=['-screen','none'])
     seed = 12345
-    temp = 4.0
+    T = 1.0
     damp = 0.1
     output_dir = os.path.dirname(args.output)
     log_path = os.path.join(output_dir, "prepare_fibril.log")
-    simulation = rods.Simulation(py_lmp, model, seed, temp, output_dir, log_path=log_path)
+    output_freq = 10
+    dump_path = os.path.join(output_dir, 'prepare_fibril.dump')
+    
+    py_lmp = PyLammps(cmdargs=['-screen','none'])
+    simulation = rods.Simulation(py_lmp, model, seed, output_dir, log_path=log_path)
 
     py_lmp.units("lj")
     py_lmp.dimension(3)
     py_lmp.boundary("p p p")
     
-    xmin = fibril_edges[0][0] - model.rod_length / 2
-    xmax = fibril_edges[0][1] + model.rod_length / 2
-    ymin = fibril_edges[1][0] - model.rod_length / 2
-    ymax = fibril_edges[1][1] + model.rod_length / 2
-    zmin = fibril_edges[2][0] - model.rod_length / 2
-    zmax = fibril_edges[2][1] + model.rod_length / 2
+    xmin = fibril_edges[0][0] - model.rod_length
+    xmax = fibril_edges[0][1] + model.rod_length
+    ymin = fibril_edges[1][0] - model.rod_length
+    ymax = fibril_edges[1][1] + model.rod_length
+    zmin = fibril_edges[2][0] - model.rod_length
+    zmax = fibril_edges[2][1] + model.rod_length
     py_lmp.region("box", "block", xmin, xmax, ymin, ymax, zmin, zmax)
     simulation.setup("box")
 
     simulation.create_rods(state_ID=model.num_states-1, file=args.output)
 
-    py_lmp.fix("thermostat", "all", "langevin", temp, temp, damp, seed)
+    py_lmp.fix("thermostat", "all", "langevin", T, T, damp, seed)
     simulation.set_rod_dynamics("nve")
 
     py_lmp.neigh_modify("every 1 delay 1")
 
     # OUTPUT
-    output_freq = 1000
-    dump_path = os.path.join(output_dir, 'prepare_fibril.dump')
     dump_elems = "id x y z type mol c_"+simulation.cluster_compute
     py_lmp.dump("dump_cmd", "all", "custom", output_freq, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "sort id")
     py_lmp.thermo_style("custom", "step atoms", "pe temp")
-    py_lmp.thermo(output_freq)
+    py_lmp.thermo(1000)
 
     py_lmp.command('run {:d}'.format(args.test))
 
