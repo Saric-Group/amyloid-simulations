@@ -178,7 +178,11 @@ def draw_bb_2D(bb_vals, md_bb_min, prefix = ''):
     fig_2D, ax_2D = plt.subplots(num=prefix+" beta-beta interaction", figsize=(10,7))
     fig_2D.subplots_adjust(left=0.14, bottom=0.20, right=0.99, top=0.99) #0.88 x 0.88
     
-    img = ax_2D.imshow(bb_vals['md'][zero_phi][zero_theta],
+    if len(bb_vals['md']) > 1:
+        psi2_init = zero_phi
+    else:
+        psi2_init = 0
+    img = ax_2D.imshow(bb_vals['md'][psi2_init][zero_theta],
                     extent=[zmin, zmax, rmin, rmax], vmin=md_bb_min, vmax=-md_bb_min,
                     origin="lower", interpolation='bilinear', cmap=img_cmap)
     model_patches = draw_models(ax_2D)
@@ -232,9 +236,13 @@ def draw_bb_z_slice(bb_vals, md_bb_min, prefix = ''):
     fig_r, ax_r = plt.subplots(num=prefix+" beta-beta interaction (z-slice)", figsize=(9,6))
     fig_r.subplots_adjust(left=0.14, bottom=0.20, right=0.99, top=0.99) #0.86 x 0.86
     
+    if len(bb_vals['md']) > 1:
+        psi2_init = zero_phi
+    else:
+        psi2_init = 0
     lines = []
     for i in range(theta_points):
-        lines.append(ax_r.plot(rs, bb_vals['md'][zero_phi][i].T[zero_z], 'r-', lw=1.0,
+        lines.append(ax_r.plot(rs, bb_vals['md'][psi2_init][i].T[zero_z], 'r-', lw=1.0,
                                label=r'$\psi_1 = {:1.1f}^\circ$'.format(np.rad2deg(thetas[i])),
                                    color = plot_cmap((i+1.0)/(theta_points+1))))
     ax_r.axvline(2.0*model.rod_radius, color='black', linestyle='-', lw=1.0)
@@ -266,6 +274,8 @@ def draw_bb_z_slice(bb_vals, md_bb_min, prefix = ''):
             curr_psi2_index = int(psi2_slider.val)
             curr_psi2_val = phis[curr_psi2_index]
             psi2_slider.valtext.set_text(psi2_slider.valfmt % (np.rad2deg(curr_psi2_val)))
+        else:
+            curr_psi2_index = 0
         curr_z_index = int(z_slider.val)
         curr_z_val = zs[curr_z_index]
         z_slider.valtext.set_text(z_slider.valfmt % curr_z_val)
@@ -430,7 +440,7 @@ bb_factor = 1/3.0
 
 widgets = []
 
-draw = ['sb', 'bb']
+draw = ['sb']#, 'bb']
 
 if 'sb' in draw:
     sb_vals, md_sb_min = calculate_sb()
