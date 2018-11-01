@@ -11,6 +11,7 @@ Created on 12 Apr 2018
 
 import potentials
 import numpy as np
+import lammps_multistate_rods
 
 model = None
 
@@ -87,7 +88,10 @@ def setup(rod_model):
         
             for j in range(i, len(k1_patch_types)):
                 R = 2*model.patch_bead_radii[k1]
-                (eps, int_type_key) = model.eps[(k1_patch_types[i], k1_patch_types[j])]
+                try:
+                    (eps, int_type_key) = model.eps[(k1_patch_types[i], k1_patch_types[j])]
+                except:
+                    (eps, int_type_key) = (0.0, lammps_multistate_rods.model.vx)
                 int_type = model.int_types[int_type_key]
         
                 int_potentials[(k1_patch_types[i], k1_patch_types[j])] = \
@@ -97,7 +101,10 @@ def setup(rod_model):
                 k2_patch_types = list(set(beta_active[k2]))
                 for j in range(len(k2_patch_types)):
                     R = model.patch_bead_radii[k1] + model.patch_bead_radii[k2]
-                    (eps, int_type_key) = model.eps[tuple(sorted([k1_patch_types[i], k2_patch_types[j]]))]
+                    try:
+                        (eps, int_type_key) = model.eps[tuple(sorted([k1_patch_types[i], k2_patch_types[j]]))]
+                    except:
+                        (eps, int_type_key) = (0.0, lammps_multistate_rods.model.vx)
                     int_type = model.int_types[int_type_key]
         
                     int_potentials[(k1_patch_types[i], k2_patch_types[j])] = \
