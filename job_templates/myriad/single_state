@@ -1,18 +1,18 @@
-#!/bin/bash
+#!/bin/bash -l
+#$ -S /bin/bash
 
-#PBS -N sol_only
-#PBS -q batch
+#$ -N single_state
 
-#PBS -l walltime=<walltime>
-#PBS -l pmem=<memory>
-#PBS -l nodes=1:ppn=1
+#$ -l h_rt=<walltime>
+#$ -l mem=<memory>
+#$ -l tmpfs=0
 
-#PBS -o "<out_folder>/${PBS_JOBID}.out"
-#PBS -j oe
+#$ -cwd
 
-cd $PBS_O_WORKDIR # where qsub is called from
+#$ -o "<out_folder>/$JOB_ID.out"
+#$ -j yes
 
-PROJECT_HOME="/storage/users/erozic/simulations/amyloids"
+PROJECT_HOME="/home/ucapero/simulations/amyloids"
 
 PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
 export PYTHONPATH
@@ -25,7 +25,7 @@ else
 	exit
 fi
 
-SEED=$(( 10#${PBS_JOBID} % 900000000 ))
+SEED=$(( 10#$JOB_ID % 900000000 ))
 
 python "$PROJECT_HOME"/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --MC_moves 0 --silent <args>
 
