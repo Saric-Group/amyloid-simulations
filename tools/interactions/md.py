@@ -72,8 +72,7 @@ def setup(rod_model):
     # assumption that there is only one active body bead type (the tip)
     sol_active = filter(lambda x: x in model.active_bead_types, model.body_bead_types)[0]
     # assumption that only patch beads are active, and all of them
-    beta_active = [filter(lambda x: x in model.active_bead_types,
-                          [int(bead_type) for bead_type in patch])
+    beta_active = [filter(lambda x: x in model.active_bead_types, map(int, patch.split('-')))
                    for patch in model.state_structures[1].split('|')[1:]]
     
     for k1 in range(K):
