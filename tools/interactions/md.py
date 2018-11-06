@@ -72,14 +72,17 @@ def setup(rod_model):
     # assumption that there is only one active body bead type (the tip)
     sol_active = filter(lambda x: x in model.active_bead_types, model.body_bead_types)[0]
     # assumption that only patch beads are active, and all of them
-    beta_active = [filter(lambda x: x in model.active_bead_types, map(int, patch.split('-')))
-                   for patch in model.state_structures[1].split('|')[1:]]
+    beta_active = [filter(lambda x: x in model.active_bead_types, patch)
+                   for patch in model.state_structures[1][1:]]
     
     for k1 in range(K):
         k1_patch_types = sorted(set(beta_active[k1]))
         for i in range(len(k1_patch_types)):
             R = model.rod_radius + model.patch_bead_radii[k1]
-            (eps, int_type_key) = model.eps[tuple(sorted([sol_active, k1_patch_types[i]]))]
+            try:
+                (eps, int_type_key) = model.eps[tuple(sorted([sol_active, k1_patch_types[i]]))]
+            except:
+                (eps, int_type_key) = (0.0, lammps_multistate_rods.model.vx)
             int_type = model.int_types[int_type_key]
         
             int_potentials[(sol_active, k1_patch_types[i])] = \

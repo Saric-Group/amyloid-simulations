@@ -407,7 +407,7 @@ def calculate_bb(theta = 0, phi = 0, psi2 = None):
 
 #=======================================================================================
 
-cfg_filename = '3p_hetero.cfg'
+cfg_filename = '4p.cfg'
 model = Model(os.path.join('./test cases/',cfg_filename))
 mc.setup(model)
 md.setup(model)
@@ -419,9 +419,9 @@ point_density = 0.1
 z_points = int((zmax-zmin)/point_density) + 1; zero_z = 0
 r_points = int((rmax-rmin)/point_density) + 1; zero_r = 0
 phimin = -np.pi; phimax = np.pi
-phi_points = 8; zero_phi = 4 # 45 deg slices
+phi_points = 12; zero_phi = 6 # 30 deg slices
 thetamin = 0; thetamax = np.pi
-theta_points = 4 + 1; zero_theta = 0 # 45 deg slices
+theta_points = 6 + 1; zero_theta = 0 # 30 deg slices
 
 # plotting points
 zs = np.linspace(zmin, zmax, z_points)
