@@ -114,7 +114,7 @@ def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset
                     current_cluster_id = cluster_id
             
             if i == max_row:
-                current_rod_state = state_types_to_id(current_rod, model)
+                current_rod_state = state_types_to_id(current_rod)
                 try:
                     snapshot_data[current_cluster_id].append((current_mol_id, current_rod_state))
                 except KeyError:
