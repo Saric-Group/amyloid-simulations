@@ -15,15 +15,6 @@ import numpy as np
 
 import lammps_multistate_rods
 
-def state_struct_to_id(state_struct, model):
-    '''
-    Returns rod state id from its structure (list of atom types)
-    '''
-    for i in range(model.num_states):
-        if state_struct == model.state_structures[i].replace('|',''):
-            return i
-    return None
-
 def wrap_periodic((elem, L)):
     '''
     Wraps position (distance) along a periodic boundary.
@@ -47,6 +38,19 @@ def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset
     NOTE: cluster ID's are set to the lowest rod/mol ID of each cluster, not the ones that are in
     the dump file
     '''
+    states_types = [ [ elem + type_offset 
+                        for patch in state_struct for elem in patch]
+                            for state_struct in model.state_structures]
+    
+    def state_types_to_id(state_types):
+        '''
+        Returns rod state id from its structure (list of atom types)
+        '''
+        for i in range(model.num_states):
+            if state_types == states_types[i]:
+                return i
+        return None
+    
     with open(dump_file_path, 'r') as dump_file:
         
         box_size = []
@@ -57,7 +61,7 @@ def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset
         snapshot_data = {}
         current_mol_id = None
         current_cluster_id = None
-        current_rod_structure = []
+        current_rod = []
         count = 0
         skip = False
         min_row = max_row = 0
@@ -97,20 +101,20 @@ def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset
                 if current_mol_id is None:
                     current_mol_id = mol_id
                 elif mol_id != current_mol_id:
-                    current_rod_state = state_struct_to_id(''.join(bead_type for bead_type in current_rod_structure), model)
+                    current_rod_state = state_types_to_id(current_rod)
                     try:
                         snapshot_data[current_cluster_id].append((current_mol_id, current_rod_state))
                     except KeyError:
                         snapshot_data[current_cluster_id] = [(current_mol_id, current_rod_state)]
                     current_mol_id = mol_id
                     current_cluster_id = 0
-                    current_rod_structure = []
-                current_rod_structure.append(str(int(bead_type)-type_offset))
+                    current_rod = []
+                current_rod.append(int(bead_type))
                 if cluster_id > current_cluster_id:
                     current_cluster_id = cluster_id
             
             if i == max_row:
-                current_rod_state = state_struct_to_id(''.join(bead_type for bead_type in current_rod_structure), model)
+                current_rod_state = state_types_to_id(current_rod, model)
                 try:
                     snapshot_data[current_cluster_id].append((current_mol_id, current_rod_state))
                 except KeyError:
@@ -125,7 +129,7 @@ def parse_dump_file(dump_file_path, every, model, particle_offset=0, type_offset
                 snapshot_data = {}
                 current_mol_id = None
                 current_cluster_id = None
-                current_rod_structure = []
+                current_rod = []
                 i = 0
     
     return box_size, timesteps, raw_data
