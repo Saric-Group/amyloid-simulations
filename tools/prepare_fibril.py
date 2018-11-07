@@ -119,7 +119,7 @@ if __name__ == '__main__':
     dump_path = os.path.join(output_dir, 'prepare_fibril.dump')
     
     py_lmp = PyLammps(cmdargs=['-screen','none'])
-    simulation = rods.Simulation(py_lmp, model, seed, output_dir, log_path=log_path)
+    simulation = rods.Simulation(py_lmp, model, seed, output_dir, log_path=log_path, clusters=1.0)
 
     py_lmp.units("lj")
     py_lmp.dimension(3)
@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     # OUTPUT
     dump_elems = "id x y z type mol c_"+simulation.cluster_compute
-    py_lmp.dump("dump_cmd", "all", "custom", output_freq, dump_path, dump_elems)
+    py_lmp.dump("dump_cmd", "all", "custom", output_freq, '"'+dump_path+'"', dump_elems)
     py_lmp.dump_modify("dump_cmd", "sort id")
     py_lmp.thermo_style("custom", "step atoms", "pe temp")
     py_lmp.thermo(1000)
