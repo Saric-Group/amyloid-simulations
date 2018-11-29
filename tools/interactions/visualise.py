@@ -10,9 +10,7 @@ Created on 23 Apr 2018
 '''
 
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, RadioButtons
-
-from matplotlib.widgets import AxesWidget
+from matplotlib.widgets import Slider, RadioButtons, AxesWidget
 import six
 
 class VertSlider(AxesWidget):
@@ -202,23 +200,23 @@ def draw_models(axes = None, r = 0, z = 0, phi = 0, old = []):
     new = old
     
     # the MD model body
-    for i in range(md.N): 
+    for i in range(md.M[0]): 
         new.append(
-            axes.add_patch(plt.Circle((z + md.body_z[i], r), 2*r_body, fill=True, color='#DDDDDD', alpha=0.7)))
-    for i in range(md.N):
+            axes.add_patch(plt.Circle((z + md.bead_z[0][i], r), 2*r_body, fill=True, color='#DDDDDD', alpha=0.7)))
+    for i in range(md.M[0]):
         new.append(
-            axes.add_patch(plt.Circle((z + md.body_z[i], r), r_body, fill=True, color='#777777')))
+            axes.add_patch(plt.Circle((z + md.bead_z[0][i], r), r_body, fill=True, color='#777777')))
         
     # the MC model patch axis
     new.append(
         axes.add_patch(plt.Rectangle((r - mc.L_patch_half, z - 0.02), mc.L_patch, 0.04, color='black')))
     
     # the MD model interaction centers (patches)
-    for k in range(md.K):
+    for k in range(1, md.K):
         r_k = r + md.patch_r[k]*np.cos(md.patch_phi[k] + phi)
         for i in range(md.M[k]):
             new.append(
-                axes.add_patch(plt.Circle((z + md.patch_z[k][i], r_k), r_int[k], fill=True, color='red')))
+                axes.add_patch(plt.Circle((z + md.bead_z[k][i], r_k), r_int[k-1], fill=True, color='red')))
     
     return new
 
