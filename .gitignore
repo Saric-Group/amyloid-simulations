@@ -4,15 +4,15 @@
 .pydevproject
 .settings
 
-*.pyc
-
-data/*
-
-libs/*
-
 *.log
 *.lammps
 *.dat
 *.dump
+
+*.pyc
+
+data/*
+libs/*
+tools/interactions/test-cases/
 
 TODO
