@@ -13,6 +13,9 @@ Created on 1 May 2018
 from math import pi, exp, sqrt, cos
 
 def vx(r, sigma):
+    '''
+    Hard volume exclusion potential: infinity for r<sigma, else 0
+    '''
     if r < sigma:
         return float("inf")
     else:
@@ -36,16 +39,21 @@ def lj_n_m(n, m, r, sigma, cutoff, eps, shift = True):
     else:
         return eps*(m*(sigma/r)**n - n*(sigma/r)**m)/(n-m)
 
-def cos_sq(r, sigma, cutoff, eps):
+def cos_sq(r, sigma, cutoff, eps, wca = False):
     '''
-    A potential with a cosine-squared attractive part connecting points (sigma, -eps) and (cutoff, 0) smoothly. 
+    A potential with a cosine-squared attractive part connecting points (sigma, -eps) and (cutoff, 0) smoothly.
+    
+    If wca == True then returns infinity for r < sigma (volume exclusion). 
     '''
     if cutoff <= sigma:
         raise Exception("cos_sq has to have cutoff > sigma!")
     if r >= cutoff:
         return 0.0
-    elif r <= sigma:
-        return -eps
+    elif r < sigma:
+        if wca:
+            return float("inf")
+        else:
+            return -eps
     else:
         return -eps*(cos(pi*(r-sigma)/(2*(cutoff-sigma))))**2
 
