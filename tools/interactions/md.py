@@ -65,7 +65,7 @@ def setup(rod_model):
                 for i in range(M[k])] for k in range(K)]
     patch_r = [model.rod_radius - model.patch_bead_radii[k] + model.patch_bulge_out[k]
                for k in range(K)]
-    patch_phi = [model.patch_angles[k]*2*np.pi/360
+    patch_phi = [np.deg2rad(model.patch_angles[k])
                  for k in range(K)]
     
     global sol_active, beta_active
@@ -113,7 +113,7 @@ def setup(rod_model):
                     int_potentials[(k2_patch_types[j], k1_patch_types[i])] = int_f(int_type, R, eps)
 
 
-def sb_interaction(r, z, phi):
+def point_rod_int(bead_type, rod_state, r, z, phi):
     '''
     Interaction between a rod centered at (0,0) and extending along the
     z-axis and an interaction site at (r,z), which represents the center
@@ -140,7 +140,7 @@ def sb_interaction(r, z, phi):
             U += int_potentials[(sol_active, beta_active[k][i])](dist)
     return U
 
-def bb_interaction(r, z, theta, phi, psi1, psi2):
+def rod_rod_int(rod1_state, rod2_state, r, z, theta, phi, psi1, psi2):
     '''
     Inter-rod beta-beta interaction. The interaction is relative to a rod
     centered at (0,0) and extending along the z-axis.
@@ -152,7 +152,12 @@ def bb_interaction(r, z, theta, phi, psi1, psi2):
     psi2 : the direction of the patch vector of the rod at (r,z); the patch starts facing
         down and turns in the opposite direction to psi1 (as if the rods are mirror images)
     '''
-    psi2 = np.pi - phi - psi2
+    if theta < 0 or theta > np.pi:
+        raise Exception("Theta has to be in interval [0, pi]")
+    elif theta < np.pi/2:
+        psi2 = np.pi - phi - psi2
+    else:
+        psi2 = phi + psi2
     
     c_theta = np.cos(theta)
     s_theta = np.sin(theta)

@@ -12,7 +12,7 @@ Created on 1 May 2018
 
 from math import pi, exp, sqrt, cos
 
-def lj_n_m(n, m, r, sigma, cutoff, eps, shift = False):
+def lj_n_m(n, m, r, sigma, cutoff, eps, shift = True):
     '''
     A generalised Lennard-Jones potential with repulsive exponent "n" and
     attractive exponent "m", and a minimum at (sigma, -eps)
@@ -36,7 +36,7 @@ def cos_sq(r, sigma, cutoff, eps):
     else:
         return -eps*(cos(pi*(r-sigma)/(2*(cutoff-sigma))))**2
 
-def gauss(std_dev, r, sigma, cutoff, eps, shift = False):
+def gauss(std_dev, r, sigma, cutoff, eps, shift = True):
     '''
     A Gaussian potential with standard deviation "std_dev" centered at (sigma, -eps)
     '''
@@ -48,7 +48,7 @@ def gauss(std_dev, r, sigma, cutoff, eps, shift = False):
     else:
         return -eps*exp(-((r-sigma)/(sqrt(2)*std_dev))**2)
 
-def morse(a, r, sigma, cutoff, eps, shift = False):
+def morse(a, r, sigma, cutoff, eps, shift = True):
     '''
     A Morse potential with a minimum at (sigma, -eps) with "width" given by "a".
     '''
