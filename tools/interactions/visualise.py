@@ -265,7 +265,7 @@ def draw_point_rod_2D(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_img)
     mc_scale_slider.on_changed(update_img)
     
-    return phi_slider, data_chooser
+    return phi_slider, data_chooser, mc_scale_slider
 
 def draw_point_rod_z_slice(vals, vals_min, prefix = ''):
     # 1D r-E plot
@@ -316,7 +316,7 @@ def draw_point_rod_z_slice(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_plot)
     mc_scale_slider.on_changed(update_plot)
     
-    return z_slider, data_chooser
+    return z_slider, data_chooser, mc_scale_slider
 
 def draw_point_rod_r_slice(vals, vals_min, prefix = ''):
     # 1D z-E plot
@@ -369,7 +369,7 @@ def draw_point_rod_r_slice(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_plot)
     mc_scale_slider.on_changed(update_plot)
     
-    return r_slider, data_chooser
+    return r_slider, data_chooser, mc_scale_slider
 
 #===================================================================
 
@@ -439,7 +439,7 @@ def draw_rod_rod_2D(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_img)
     mc_scale_slider.on_changed(update_img)
         
-    return psi1_slider, psi2_slider, data_chooser
+    return psi1_slider, psi2_slider, data_chooser, mc_scale_slider
 
 def draw_rod_rod_z_slice(vals, vals_min, prefix = ''):
     # 1D r-E plot
@@ -510,7 +510,7 @@ def draw_rod_rod_z_slice(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_plot)
     mc_scale_slider.on_changed(update_plot)
         
-    return psi2_slider, z_slider, data_chooser
+    return psi2_slider, z_slider, data_chooser, mc_scale_slider
 
 def draw_rod_rod_r_slice(vals, vals_min, prefix = ''):
     # 1D z-E plot
@@ -583,7 +583,7 @@ def draw_rod_rod_r_slice(vals, vals_min, prefix = ''):
     data_chooser.on_clicked(update_plot)
     mc_scale_slider.on_changed(update_plot)
         
-    return psi2_slider, r_slider, data_chooser
+    return psi2_slider, r_slider, data_chooser, mc_scale_slider
 
 #======================================================================================
 
