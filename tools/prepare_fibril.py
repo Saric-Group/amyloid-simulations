@@ -102,6 +102,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = rods.Model(args.config_file)
+    
+    output_dir = os.path.dirname(args.output)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     fibril_edges = prepare_fibril(model, args.N, args.phi, args.theta, args.r0, args.output)
     
@@ -113,7 +117,6 @@ if __name__ == '__main__':
     seed = 12345
     T = 1.0
     damp = 0.1
-    output_dir = os.path.dirname(args.output)
     log_path = os.path.join(output_dir, "prepare_fibril.log")
     output_freq = 10
     dump_path = os.path.join(output_dir, 'prepare_fibril.dump')

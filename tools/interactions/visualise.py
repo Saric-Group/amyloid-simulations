@@ -9,6 +9,12 @@ Created on 23 Apr 2018
 @author: Eugen Rožić
 '''
 
+import numpy as np
+
+from lammps_multistate_rods import Model
+import lammps_multistate_rods.tools.interactions as md
+import mc
+
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, RadioButtons, AxesWidget
 import six
@@ -179,12 +185,7 @@ class VertSlider(AxesWidget):
         if (self.val != self.valinit):
             self.set_val(self.valinit)
             
-
-import numpy as np
-
-from lammps_multistate_rods import Model
-import mc
-import md
+#========================================================================================
 
 def draw_models(axes = None, r = 0, z = 0, phi = 0, old = []):
     
@@ -589,7 +590,7 @@ def draw_rod_rod_r_slice(vals, vals_min, prefix = ''):
 def calculate_point_rod(bead_type, rod_state):
     vals = {}
     
-    vals['md'] = np.array([md.point_rod_int(bead_type, rod_state, r, z, psi1)
+    vals['md'] = np.array([md.point_rod(bead_type, rod_state, r, z, psi1)
                               for psi1 in thetas for r in rs for z in zs])
     vals['md'] = vals['md'].reshape(theta_points, r_points, z_points)
     vals_min = vals['md'].min()
@@ -620,7 +621,7 @@ def calculate_rod_rod(rod1_state, rod2_state, theta = 0, phi = 0, psi2 = None):
     
     vals = {}
     
-    vals['md'] = np.array([md.rod_rod_int(rod1_state, rod2_state, r, z, theta, phi, psi1, psi2)
+    vals['md'] = np.array([md.rod_rod(rod1_state, rod2_state, r, z, theta, phi, psi1, psi2)
                               for psi2 in psi2s for psi1 in thetas for r in rs for z in zs])
     vals['md'] = vals['md'].reshape(psi2_points, theta_points, r_points, z_points)
     vals_min = vals['md'].min()

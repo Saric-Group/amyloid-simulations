@@ -1,10 +1,10 @@
 # encoding: utf-8
 '''
+TODO
+
 Created on 21 Jun 2018
 
 @author: Eugen Rožić
-
-TODO
 '''
 import os
 import argparse
@@ -14,7 +14,7 @@ from matplotlib.widgets import Slider
 
 import numpy as np
 from math import sqrt
-import analysis
+from lammps_multistate_rods.tools import cluster_analysis
 
 def fetch_data(in_files):
     box_size = None
@@ -26,7 +26,7 @@ def fetch_data(in_files):
         if data_dir != os.path.dirname(in_file):
             raise Exception('All files should be from the same directory!')
     
-        _box_size, _timesteps, raw_data = analysis.read_raw_data(in_file)
+        _box_size, _timesteps, raw_data = cluster_analysis.read_raw_data(in_file)
     
         if box_size == None:
             box_size = _box_size
@@ -38,7 +38,7 @@ def fetch_data(in_files):
         elif len(_timesteps) != n_snapshots: #quick, non thorough check
             raise Exception('All files should have the same timesteps!')
     
-        file_cluster_data, _max_cluster_size = analysis.cluster_sizes_by_type(raw_data) 
+        file_cluster_data, _max_cluster_size = cluster_analysis.cluster_sizes_by_type(raw_data) 
         cluster_sizes_data.append(file_cluster_data)
         if _max_cluster_size > max_cluster_size:
             max_cluster_size = _max_cluster_size

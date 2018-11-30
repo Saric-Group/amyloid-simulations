@@ -1,10 +1,10 @@
 # encoding: utf-8
 '''
+TODO
+
 Created on 15 Aug 2018
 
 @author: Eugen Rožić
-
-TODO
 '''
 import os
 import argparse
@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 from matplotlib import pyplot as plt
 
-import analysis
+from lammps_multistate_rods.tools import cluster_analysis
 
 def concentration(number, volume):
     '''
@@ -41,11 +41,11 @@ for n in range(data_len):
         labels.append(label)
         data.append([])
     
-    box_size, timesteps, raw_data = analysis.read_raw_data(args.in_files[n])
+    box_size, timesteps, raw_data = cluster_analysis.read_raw_data(args.in_files[n])
     volume = reduce(lambda x,y: x*y, box_size)
     
     analyse_from = len(raw_data)-avg_over
-    results = analysis.free_monomers(raw_data[analyse_from:])
+    results = cluster_analysis.free_rods(raw_data[analyse_from:])
     
     temp_x = temp_y = 0.0
     for free_monomers, total_monomers in results:
