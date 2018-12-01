@@ -1,8 +1,9 @@
 # encoding: utf-8
 '''
-This can draw interactive plots of MC and MD potentials (and their difference),
-defined in "mc_interactions" and "md_interactions", with different possible
-interaction potentials for MD.
+An interactive console application for drawing interactive plots of interactions
+between rods from a lammps_multistate_rods model, defined in a config file, and
+the corresponding interactions in the MC model by Anđela Šarić along with 
+an interactive comparison between the two.
 
 Created on 23 Apr 2018
 
@@ -588,13 +589,17 @@ def draw_rod_rod_r_slice(vals, vals_min, prefix = ''):
 #======================================================================================
 
 def calculate_point_rod(bead_type, rod_state):
+    '''
+    Calculates the interaction between a bead of a given type at (z,r) and a rod
+    in a given state at (0,0), for all zs and rs and internal angles psi1.
+    '''
     vals = {}
     
     vals['md'] = np.array([md.point_rod(bead_type, rod_state, r, z, psi1)
                               for psi1 in thetas for r in rs for z in zs])
     vals['md'] = vals['md'].reshape(theta_points, r_points, z_points)
     vals_min = vals['md'].min()
-    print "md_sb_vals.min() =", vals_min
+    print "min MD val = {}".format(vals_min)
     
     vals['mc'] = np.array([mc.sb_interaction(r, z, psi1)
                               for psi1 in thetas for r in rs for z in zs])
@@ -607,7 +612,10 @@ def calculate_point_rod(bead_type, rod_state):
     
 def calculate_rod_rod(rod1_state, rod2_state, theta = 0, phi = 0, psi2 = None):
     '''
-    Calculates beta-beta interaction values...
+    Calculates the interaction between a rod in one state at (z,r) with orientation
+    (theta,phi) and internal angle rotation psi2, and a rod in another state at (0,0),
+    for all zs and rs and internal angles psi1.
+    
     theta : polar angle of rod at (r,z)
     phi : azimuthal angle of rod at (r,z)
     psi2 : angle of patch of rod at (r,z); if "None" calculated for psi2 in [-pi,pi>
@@ -625,7 +633,7 @@ def calculate_rod_rod(rod1_state, rod2_state, theta = 0, phi = 0, psi2 = None):
                               for psi2 in psi2s for psi1 in thetas for r in rs for z in zs])
     vals['md'] = vals['md'].reshape(psi2_points, theta_points, r_points, z_points)
     vals_min = vals['md'].min()
-    print "md_bb_vals.min() = ", vals_min
+    print "min MD val = {}".format(vals_min)
     
     vals['mc'] = np.array([mc.bb_interaction(r, z, theta, phi)
                               for r in rs for z in zs])
