@@ -211,7 +211,7 @@ def draw_models(axes = None, r = 0, z = 0, phi = 0, old = []):
         
     # the MC model patch axis
     new.append(
-        axes.add_patch(plt.Rectangle((r - mc.L_patch_half, z - 0.02), mc.L_patch, 0.04, color='black')))
+        axes.add_patch(plt.Rectangle((z - mc.L_patch_half, r - 0.02), mc.L_patch, 0.04, color='black')))
     
     # the MD model interaction centers (patches)
     for k in range(1, md.K):
@@ -222,9 +222,9 @@ def draw_models(axes = None, r = 0, z = 0, phi = 0, old = []):
     
     return new
 
-def draw_point_rod_2D(vals, vals_min, prefix = ''):
+def draw_point_rod_2D(vals, vals_min, fig_title = ''):
     
-    fig_2D, ax_2D = plt.subplots(num=prefix+" soluble-beta interaction (side 2D)", figsize=(11,7))
+    fig_2D, ax_2D = plt.subplots(num=fig_title, figsize=(11,7))
     fig_2D.subplots_adjust(left=0.13, bottom=0.15, right=0.99, top=0.99) #0.86 x 0.86
     
     img = ax_2D.imshow(vals['md'][0], extent=[zmin, zmax, rmin, rmax],
@@ -268,9 +268,9 @@ def draw_point_rod_2D(vals, vals_min, prefix = ''):
     
     return phi_slider, data_chooser, mc_scale_slider
 
-def draw_point_rod_z_slice(vals, vals_min, prefix = ''):
+def draw_point_rod_z_slice(vals, vals_min, fig_title = ''):
     # 1D r-E plot
-    fig_r, ax_r = plt.subplots(num=prefix+" soluble-beta interaction (z-slice)", figsize=(9,5))
+    fig_r, ax_r = plt.subplots(num=fig_title, figsize=(9,5))
     fig_r.subplots_adjust(left=0.18, bottom=0.15, right=0.99, top=0.99) #0.86 x 0.86
     
     lines = []
@@ -319,9 +319,9 @@ def draw_point_rod_z_slice(vals, vals_min, prefix = ''):
     
     return z_slider, data_chooser, mc_scale_slider
 
-def draw_point_rod_r_slice(vals, vals_min, prefix = ''):
+def draw_point_rod_r_slice(vals, vals_min, fig_title = ''):
     # 1D z-E plot
-    fig_z, ax_z = plt.subplots(num=prefix+" soluble-beta interaction (r-slice)", figsize=(11,5))
+    fig_z, ax_z = plt.subplots(num=fig_title, figsize=(11,5))
     fig_z.subplots_adjust(left=0.18, bottom=0.15, right=0.99, top=0.99) #0.86 x 0.86
     
     r_init = int(model.rod_radius*2/dx)
@@ -374,9 +374,9 @@ def draw_point_rod_r_slice(vals, vals_min, prefix = ''):
 
 #===================================================================
 
-def draw_rod_rod_2D(vals, vals_min, prefix = ''):
+def draw_rod_rod_2D(vals, vals_min, fig_title = ''):
     
-    fig_2D, ax_2D = plt.subplots(num=prefix+" beta-beta interaction", figsize=(10,7))
+    fig_2D, ax_2D = plt.subplots(num=fig_title, figsize=(10,7))
     fig_2D.subplots_adjust(left=0.14, bottom=0.20, right=0.99, top=0.99) #0.88 x 0.88
     
     if len(vals['md']) > 1:
@@ -442,9 +442,9 @@ def draw_rod_rod_2D(vals, vals_min, prefix = ''):
         
     return psi1_slider, psi2_slider, data_chooser, mc_scale_slider
 
-def draw_rod_rod_z_slice(vals, vals_min, prefix = ''):
+def draw_rod_rod_z_slice(vals, vals_min, fig_title = ''):
     # 1D r-E plot
-    fig_r, ax_r = plt.subplots(num=prefix+" beta-beta interaction (z-slice)", figsize=(9,6))
+    fig_r, ax_r = plt.subplots(num=fig_title, figsize=(9,6))
     fig_r.subplots_adjust(left=0.18, bottom=0.20, right=0.99, top=0.99) #0.86 x 0.86
     
     if len(vals['md']) > 1:
@@ -513,9 +513,9 @@ def draw_rod_rod_z_slice(vals, vals_min, prefix = ''):
         
     return psi2_slider, z_slider, data_chooser, mc_scale_slider
 
-def draw_rod_rod_r_slice(vals, vals_min, prefix = ''):
+def draw_rod_rod_r_slice(vals, vals_min, fig_title = ''):
     # 1D z-E plot
-    fig_z, ax_z = plt.subplots(num=prefix+" beta-beta interaction (r-slice)", figsize=(9,6))
+    fig_z, ax_z = plt.subplots(num=fig_title, figsize=(9,6))
     fig_z.subplots_adjust(left=0.18, bottom=0.20, right=0.99, top=0.99) #0.86 x 0.86
     
     if len(vals['md']) > 1:
@@ -655,8 +655,12 @@ rod models of the "lammps_multistate_rods" library''',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('config_file', type=str,
                     help='path to the "lammps_multistate_rods" model config file')
+parser.add_argument('--rmin', type=float, default=0.0,
+                        help='lower bound for the "r" variable')
 parser.add_argument('--rmax', type=float, default=5.0,
                         help='upper bound for the "r" variable')
+parser.add_argument('--zmin', type=float, default=0.0,
+                        help='lower bound for the "z" variable')
 parser.add_argument('--zmax', type=float, default=7.5,
                         help='upper bound for the "z" variable')
 parser.add_argument('--dx', type=float, default=0.1,
@@ -678,11 +682,11 @@ md.setup(model)
 dx = args.dx*model.rod_radius
 da = np.deg2rad(args.da)
 
-rmin = -0.0*model.rod_radius; rmax = args.rmax*model.rod_radius
+rmin = args.rmin*model.rod_radius; rmax = args.rmax*model.rod_radius
 r_points = int((rmax-rmin)/dx) + 1; zero_r = 0
 rs = np.linspace(rmin, rmax, r_points)
 
-zmin = -0.0*model.rod_radius; zmax = args.zmax*model.rod_radius
+zmin = args.zmin*model.rod_radius; zmax = args.zmax*model.rod_radius
 z_points = int((zmax-zmin)/dx) + 1; zero_z = 0
 zs = np.linspace(zmin, zmax, z_points)
 
@@ -700,7 +704,7 @@ img_cmap = plt.get_cmap("RdBu")
 plot_cmap = plt.cm.get_cmap('nipy_spectral')
 widget_color = 'lightgoldenrodyellow'
 
-# interactive console...
+# interactive console - choice of interaction
 while True:
     print
     int_type = raw_input("Enter '1' for point-rod or '2' for rod-rod interaction: ")
@@ -790,6 +794,7 @@ while True:
     else:
         print "Unexpected input ({:s}), please try again...".format(int_type)
 
+# interactive console - choice of plot
 while True:
     print
     print "1 : 2D plot"
@@ -800,19 +805,40 @@ while True:
     plot_type = plot_type.strip()
     if plot_type == '1':
         if int_type == '1':
-            widgets = draw_point_rod_2D(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_point_rod_2D(vals, vals_min,
+                                        "point({:d})-rod({:s}) interaction  ({:s})".format(
+                                            bead_type, model.rod_states[rod_state],
+                                            cfg_filename))
         else:
-            widgets = draw_rod_rod_2D(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_rod_rod_2D(vals, vals_min,
+                                      "rod({:s})-rod({:s}) interaction  ({:s})".format(
+                                            model.rod_states[rod1_state],
+                                            model.rod_states[rod2_state],
+                                            cfg_filename))
     elif plot_type == '2':
         if int_type == '1':
-            widgets = draw_point_rod_z_slice(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_point_rod_z_slice(vals, vals_min,
+                                        "point({:d})-rod({:s}) interaction  ({:s})".format(
+                                            bead_type, model.rod_states[rod_state],
+                                            cfg_filename))
         else:
-            widgets = draw_rod_rod_z_slice(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_rod_rod_z_slice(vals, vals_min,
+                                      "rod({:s})-rod({:s}) interaction  ({:s})".format(
+                                            model.rod_states[rod1_state],
+                                            model.rod_states[rod2_state],
+                                            cfg_filename))
     elif plot_type == '3':
         if int_type == '1':
-            widgets = draw_point_rod_r_slice(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_point_rod_r_slice(vals, vals_min,
+                                        "point({:d})-rod({:s}) interaction  ({:s})".format(
+                                            bead_type, model.rod_states[rod_state],
+                                            cfg_filename))
         else:
-            widgets = draw_rod_rod_r_slice(vals, vals_min, prefix=cfg_filename)
+            widgets = draw_rod_rod_r_slice(vals, vals_min,
+                                      "rod({:s})-rod({:s}) interaction  ({:s})".format(
+                                            model.rod_states[rod1_state],
+                                            model.rod_states[rod2_state],
+                                            cfg_filename))
     elif plot_type.lower() == 'q':
         quit()
     else:
