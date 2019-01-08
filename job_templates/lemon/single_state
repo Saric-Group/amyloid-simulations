@@ -27,6 +27,6 @@ fi
 
 SEED=$(( 10#${PBS_JOBID} % 900000000 ))
 
-python "$PROJECT_HOME"/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --MC_moves 0 --silent <args>
+python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --MC_moves 0 --silent <args>
 
 python "$PROJECT_HOME"/tools/clusters/analysis.py "<cfg_file>" "<out_folder>/<cell_size>-<num_cells>_${SEED}.dump" --every 1

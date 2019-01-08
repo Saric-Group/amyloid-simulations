@@ -73,7 +73,7 @@ if not os.path.exists(args.output_folder):
 #from mpi4py import MPI #TODO make MPI work...
 from lammps import PyLammps
 import lammps_multistate_rods as rods
-from tools.prepare_fibril import prepare_fibril
+from lammps_multistate_rods.tools.rod_preparation import fibril as prepare_fibril
 
 if args.seed is None:
     import time
