@@ -13,8 +13,8 @@ import argparse
 import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
 
-parser = argparse.ArgumentParser(description='Application for the analysis of clusters '\
-                                 'of lammps_multistate_rods from LAMMPS dump files',
+parser = argparse.ArgumentParser(description='Application for the processing of LAMMPS'\
+                                 'dump files generated with lammps_multistate_rods library',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('config_file',
                     help='path to the "lammps_multistate_rods" model config file')
