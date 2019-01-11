@@ -10,8 +10,8 @@ Created on 16 May 2018
 import os
 import argparse
 
-from lammps_multistate_rods import Model
-from lammps_multistate_rods.tools import cluster_analysis
+import lammps_multistate_rods as rods
+import lammps_multistate_rods.tools as rods_tools
 
 parser = argparse.ArgumentParser(description='Application for the analysis of clusters '\
                                  'of lammps_multistate_rods from LAMMPS dump files',
@@ -27,10 +27,20 @@ parser.add_argument('-n', '--every', type=int, default=1,
 
 args = parser.parse_args()
     
-model = Model(args.config_file)
+model = rods.Model(args.config_file)
     
 for in_file in args.in_files:
-    output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-    box_size, timesteps, raw_data = cluster_analysis.parse_dump_file(
-        in_file, args.every, model, args.type_offset)
-    cluster_analysis.output_raw_data(box_size, timesteps, raw_data, output_path)
+    raw_data = rods_tools.parse_dump_file(in_file)
+    
+    cluster_output_path = os.path.splitext(in_file)[0]+"_cluster_data"
+    box_size, timesteps, cluster_data = rods_tools.clusters.get_cluster_data(
+        raw_data, args.every, model, args.type_offset)
+    
+    rods_tools.clusters.write_cluster_data(box_size, timesteps, cluster_data,
+                                           cluster_output_path)
+    
+    last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
+    for timestep, box_bounds, data_structure, data in rods_tools.parse_dump_file(in_file):
+        pass
+    rods_tools.write_dump_snapshot(timestep, box_bounds, data_structure, data,
+                                       last_dump_output_path)

@@ -9,7 +9,7 @@ Created on 10 Aug 2018
 import os
 from lammps import PyLammps
 import lammps_multistate_rods as rods
-import lammps_multistate_rods.tools.rod_preparation as rod_preparation
+import lammps_multistate_rods.tools as rods_tools
             
 model = rods.Model('../data/test/5p.cfg')
     
@@ -24,9 +24,9 @@ phi = 45.0
 theta = 35.0
 N = 20
 
-rod_preparation.single(r0, z_axis, 0, data_in)
+rods_tools.prepare_single(r0, 0, 0, data_in)
 box_size = 2*model.rod_length
-#fibril_edges = rod_preparation.fibril(model, N, phi, theta, r0, data_in)
+#fibril_edges = rod_tools.prepare_fibril(model, N, phi, theta, r0, data_in)
 rods_state = 1
     
 seed = 12345

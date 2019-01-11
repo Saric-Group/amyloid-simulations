@@ -73,7 +73,7 @@ if not os.path.exists(args.output_folder):
 #from mpi4py import MPI #TODO make MPI work...
 from lammps import PyLammps
 import lammps_multistate_rods as rods
-from lammps_multistate_rods.tools.rod_preparation import fibril as prepare_fibril
+import lammps_multistate_rods.tools as rods_tools
 
 if args.seed is None:
     import time
@@ -103,7 +103,7 @@ py_lmp.region("box", "block",
 simulation.setup("box")
 
 # create fibril
-fibril_edges = prepare_fibril(model, args.N, args.phi, args.theta, args.r0, fibril_path)
+fibril_edges = rods_tools.prepare_fibril(model, args.N, args.phi, args.theta, args.r0, fibril_path)
 simulation.create_rods(state_ID=model.num_states-1, file=fibril_path)
 # create other rods
 xmin = fibril_edges[0][0] - model.rod_length / 2

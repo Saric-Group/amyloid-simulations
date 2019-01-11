@@ -12,7 +12,7 @@ import argparse
 import numpy as np
 from matplotlib import pyplot as plt
 
-from lammps_multistate_rods.tools import cluster_analysis
+from lammps_multistate_rods.tools.clusters import read_cluster_data, free_rods
 
 def concentration(number, volume):
     '''
@@ -41,11 +41,11 @@ for n in range(data_len):
         labels.append(label)
         data.append([])
     
-    box_size, timesteps, raw_data = cluster_analysis.read_raw_data(args.in_files[n])
+    box_size, timesteps, raw_data = read_cluster_data(args.in_files[n])
     volume = reduce(lambda x,y: x*y, box_size)
     
     analyse_from = len(raw_data)-avg_over
-    results = cluster_analysis.free_rods(raw_data[analyse_from:])
+    results = free_rods(raw_data[analyse_from:])
     
     temp_x = temp_y = 0.0
     for free_monomers, total_monomers in results:
