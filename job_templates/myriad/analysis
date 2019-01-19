@@ -25,4 +25,4 @@ else
 	exit
 fi
 
-python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" <out_folder>/*.dump <args> -c -l
+python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" <out_folder>/*.dump <args>
