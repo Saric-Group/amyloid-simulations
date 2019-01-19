@@ -25,7 +25,8 @@ else
 	exit
 fi
 
-SEED=$(( 10#${PBS_JOBID} % 900000000 ))
+JOB_ID=$( expr match "${PBS_JOBID}" '\([0-9]*\)' )
+SEED=$(( 10#${JOB_ID} % 900000000 ))
 
 python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --MC_moves 0 --silent <args>
 
