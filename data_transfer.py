@@ -26,7 +26,7 @@ remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, use
 if host.startswith('myriad'):
     remote_homedir = remote_local + 'lustre/home/ucapero'
     remote_rel_basedir = r'Scratch/amyloids'
-elif host.startwith('lemon'):
+elif host.startswith('lemon'):
     remote_homedir = remote_local + 'storage/users/erozic'
     remote_rel_basedir = r'simulations/amyloids/data'
 else:
@@ -47,7 +47,18 @@ def qesc(str):
     elif not "'" in str:
         return r"'{:s}'".format(str)
     else:
-        raise Exception("Can't escape a string that has both single and double quotation marks!")
+        raise Exception("Can't escape a string that contains both a single and double quotation mark!")
+    
+def scp_transfer(remote_src, local_dest, attempts = 3):
+    attempt = 1
+    while attempt <= attempts:
+        exit_status = os.system(r'scp {:s} {:s}'.format(
+            qesc(remote_to_scp(remote_src)), qesc(local_dest)))
+        if exit_status == 0:
+            break
+        else:
+            attempt += 1
+    return exit_status
 
 rootsearchdir = args.search
 rootnode = os.path.join(remote_basedir, rootsearchdir)
@@ -62,27 +73,40 @@ for node, dirs, files in os.walk(rootnode):
         if not ext == '.cfg':
             continue
         if os.path.basename(node) == basename:
-            # a dir containing a .cfg with the same name is a cue for it being
-            # processed and to be skipped (shouldn't contain nested relevant dirs)
-            del dirs
+            # a dir containing a .cfg with the same name is a cue for it having been
+            # processed and to be skipped
+            #del dirs #(shouldn't contain nested dirs, only files)
             break
-        if basename in dirs:
-            dirs.remove(basename) #no need to traverse this folder later
-            shutil.move(os.path.join(node, filename),
-                        os.path.join(node, basename, filename))
+        if basename in dirs: #this means that there exist some results...
+            cfg_path = os.path.join(node, filename)
+            dirs.remove(basename)
             srcdir = os.path.join(node, basename)
-            print "processing", os.path.relpath(srcdir, remote_basedir), "...",
+            print "Processing", os.path.relpath(srcdir, remote_basedir), "..."
             destdir = remote_to_local(srcdir)
             if not os.path.exists(destdir):
                 os.makedirs(destdir)
-            scp_srcdir = remote_to_scp(srcdir)
-            os.system(r"scp {:s} {:s}".format(qesc(os.path.join(scp_srcdir, '*.cfg')),
-                                              qesc(destdir)))
-            os.system(r"scp {:s} {:s}".format(qesc(os.path.join(scp_srcdir, '*_last_dump')),
-                                              qesc(destdir)))
-            os.system(r"scp {:s} {:s}".format(qesc(os.path.join(scp_srcdir, '*_cluster_data')),
-                                              qesc(destdir)))
-            print "done!"
+            
+            error = 0
+            for result_filename in os.listdir(srcdir):
+                if (result_filename.endswith('_last_dump') or
+                    result_filename.endswith('_cluster_data')):
+                    
+                    result_filepath = os.path.join(srcdir, result_filename)
+                    if os.path.exists(remote_to_local(result_filepath)):
+                        continue
+                    error += scp_transfer(result_filepath, destdir)
+                
+                #TODO possibly delete some stuff (*.mol, *.dat, *.out, *.log)
+            
+            if not os.path.exists(os.path.join(destdir, filename)):
+                error += scp_transfer(cfg_path, destdir)
+            
+            if error == 0: #if everything was successful
+                shutil.move(cfg_path, srcdir)
+                print "... done!"
+            else:
+                print "... not fully processed! Check manually."
+     
 secs = time.time() - start
 hrs = int(secs/3600); secs -= hrs*3600
 mins = int(secs/60); secs -= mins*60
