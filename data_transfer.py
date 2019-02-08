@@ -14,23 +14,32 @@ import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('user_host', type=str,
-                    help='user@host for SCP')
+parser.add_argument('server', type=str,
+                    help='myriad or lemon')
+parser.add_argument('-u', '--user', type=str,
+                    help='user name for the given server')
 parser.add_argument('-s', '--search', type=str, default=r'growth',
                     help='the root search dir')
+parser.add_argument('-f', '--full', action='store_true',
+                    help='transfers the .dump files too')
+parser.add_argument('--no_scp', action='store_true',
+                    help="uses only the OS's sftp connection for transfer")
 args = parser.parse_args()
 
-scp_prefix = args.user_host
-user, host = scp_prefix.split('@')
-remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
-if host.startswith('myriad'):
-    remote_homedir = remote_local + 'lustre/home/ucapero'
-    remote_rel_basedir = r'Scratch/amyloids'
-elif host.startswith('lemon'):
-    remote_homedir = remote_local + 'storage/users/erozic'
-    remote_rel_basedir = r'simulations/amyloids/data'
+if args.server.startswith('myriad'):
+    host = 'myriad.rc.ucl.ac.uk'
+    user = 'ucapero' if args.user == None else args.user
+    remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
+    remote_homedir = remote_local + 'lustre/home/' + user
+    remote_rel_basedir = 'Scratch/amyloids'
+elif args.server.startswith('lemon'):
+    host = 'lemon0.biop.phys.ucl.ac.uk'
+    user = 'erozic' if args.user == None else args.user
+    remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
+    remote_homedir = remote_local + 'storage/users/' + user
+    remote_rel_basedir = 'simulations/amyloids/data'
 else:
-    raise Exception('Unsupported host ({:s})!'.format(host))
+    raise Exception('Unsupported server ({:s})!'.format(args.server))
 
 remote_basedir = os.path.join(remote_homedir, remote_rel_basedir)
 local_basedir = r'/media/data_ntfs/PhD/simulation stuff/amyloids/data'
@@ -39,26 +48,30 @@ def remote_to_local(path):
     return os.path.join(local_basedir, os.path.relpath(path, remote_basedir))
 
 def remote_to_scp(path):
-    return r"{:s}:'{:s}'".format(scp_prefix, os.path.relpath(path, remote_homedir))
+    return r'{:s}@{:s}:"{:s}"'.format(user, host, os.path.relpath(path, remote_homedir))
 
-def qesc(str):
-    if not '"' in str:
-        return r'"{:s}"'.format(str)
-    elif not "'" in str:
-        return r"'{:s}'".format(str)
-    else:
-        raise Exception("Can't escape a string that contains both a single and double quotation mark!")
+def dq_esc(str):
+    return '"'+str+'"'
     
-def scp_transfer(remote_src, local_dest, attempts = 3):
+def scp_transfer(remote_src, local_dest, attempts = 1):
     attempt = 1
     while attempt <= attempts:
-        exit_status = os.system(r'scp {:s} {:s}'.format(
-            qesc(remote_to_scp(remote_src)), qesc(local_dest)))
+        command = r'scp {:s} {:s}'.format(
+            dq_esc(remote_to_scp(remote_src)), dq_esc(local_dest))
+        exit_status = os.system(command)
         if exit_status == 0:
             break
         else:
             attempt += 1
     return exit_status
+
+def sftp_transfer(remote_src, local_dest):
+    print "Transfering {:s}".format(os.path.relpath(remote_src, remote_basedir))
+    shutil.copy(remote_src, local_dest)
+    
+def file_transfer(remote_src, local_dest, scp_attempts=1):
+    if args.no_scp or scp_transfer(remote_src, local_dest, scp_attempts) != 0:
+        sftp_transfer(remote_src, local_dest)
 
 rootsearchdir = args.search
 rootnode = os.path.join(remote_basedir, rootsearchdir)
@@ -86,26 +99,26 @@ for node, dirs, files in os.walk(rootnode):
             if not os.path.exists(destdir):
                 os.makedirs(destdir)
             
-            error = 0
             for result_filename in os.listdir(srcdir):
                 if (result_filename.endswith('_last_dump') or
-                    result_filename.endswith('_cluster_data')):
+                    result_filename.endswith('_cluster_data') or
+                    (args.full and result_filename.endswith('.dump'))):
                     
                     result_filepath = os.path.join(srcdir, result_filename)
-                    if os.path.exists(remote_to_local(result_filepath)):
-                        continue
-                    error += scp_transfer(result_filepath, destdir)
+                    if not os.path.exists(remote_to_local(result_filepath)):
+                        file_transfer(result_filepath, destdir)
                 
                 #TODO possibly delete some stuff (*.mol, *.dat, *.out, *.log)
             
             if not os.path.exists(os.path.join(destdir, filename)):
-                error += scp_transfer(cfg_path, destdir)
+                file_transfer(cfg_path, destdir)
             
-            if error == 0: #if everything was successful
+            if not os.path.exists(os.path.join(srcdir, filename)):
                 shutil.move(cfg_path, srcdir)
-                print "... done!"
             else:
-                print "... not fully processed! Check manually."
+                os.remove(cfg_path)
+            
+            print "... done!"
      
 secs = time.time() - start
 hrs = int(secs/3600); secs -= hrs*3600
