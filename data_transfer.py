@@ -77,19 +77,16 @@ rootsearchdir = args.search
 rootnode = os.path.join(remote_basedir, rootsearchdir)
 
 start = time.time()
-for node, dirs, files in os.walk(rootnode):
-    if os.path.basename(node) == 'old':
-        del dirs
+for node, dirs, files in os.walk(rootnode, topdown=True):
+    node_name = os.path.basename(node)
+    if node_name == 'old' or node_name+'.cfg' in files:
+        # skip this dir and all subdirs (because either old or processed)
+        dirs[:] = [] #this way because it has to remain the same object
         continue
     for filename in files:
         basename, ext = os.path.splitext(filename)
         if not ext == '.cfg':
             continue
-        if os.path.basename(node) == basename:
-            # a dir containing a .cfg with the same name is a cue for it having been
-            # processed and to be skipped
-            #del dirs #(shouldn't contain nested dirs, only files)
-            break
         if basename in dirs: #this means that there exist some results...
             cfg_path = os.path.join(node, filename)
             dirs.remove(basename)
