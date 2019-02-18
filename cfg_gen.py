@@ -11,12 +11,12 @@ import os, re
 version = 3
 
 SSs = [0.0] #3.25
-SB_tips = [0.0] #2.0
-SB_crosss = [4.5]
-SB_centrals = [1.5]
-BB_centrals = [7.0]
+SB_tips = [0.0, 1.0]
+SB_crosss = [4.5] #absolute value, SB_tip/2 will be deduced
+SB_centrals = [1.5, 2.0]
+BB_centrals = [5.5] #relative to SB_centrals
 SB_sides = [1.5]
-BB_sides = [3.5]
+BB_sides = [2.0] #relative to SB_sides
 
 if version == 2:
     cross_range = 1.5
@@ -73,10 +73,13 @@ for SS in SSs:
         else:
             if_SB_tip_zero = ""
         for SB_cross in SB_crosss:
+            SB_cross -= SB_tip/2
             for SB_central in SB_centrals:
                 for BB_central in BB_centrals:
+                    BB_central += SB_central
                     for SB_side in SB_sides:
                         for BB_side in BB_sides:
+                            BB_side += SB_side
                             
                             cent_eff = calc_central_int(version, BB_central, SB_central, SB_cross, SB_tip)
                             side_eff = calc_side_int(version, BB_side, SB_side, SB_cross, SB_tip)
