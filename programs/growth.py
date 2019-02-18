@@ -47,6 +47,8 @@ parser.add_argument('-T', '--temp', default=1.0, type=float,
 parser.add_argument('-D', '--damp', default=0.1, type=float,
                     help='viscous damping (for Langevin)')
 
+parser.add_argument('-t', '--timestep', default=0.005, type=float,
+                    help='timestep length (in lj units)')
 parser.add_argument('-R', '--run_length', default=200, type=int,
                     help='number of MD steps between MC moves')
 parser.add_argument('--MC_moves', default=1.0, type=float,
@@ -172,6 +174,8 @@ py_lmp.thermo(args.run_length)
 mc_moves_per_run = 0
 if model.num_states > 1:
     mc_moves_per_run = int(args.MC_moves * simulation.rods_count())
+    
+py_lmp.timestep(args.timestep)
 
 if mc_moves_per_run == 0:
     py_lmp.command('run {:d}'.format(args.sim_length))
@@ -187,4 +191,3 @@ else:
                         float(beta_count)/base_count, float(success)/mc_moves_per_run)
             
     py_lmp.command('run {:d} post no'.format(args.run_length))
-
