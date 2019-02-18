@@ -27,6 +27,6 @@ fi
 
 SEED=$(( 10#$JOB_ID % 900000000 ))
 
-python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --silent <args>
+/usr/bin/time --verbose python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --silent <args>
 
 python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/<cell_size>-<num_cells>_${SEED}.dump" -c --every 10 -l
