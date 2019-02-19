@@ -11,7 +11,7 @@ from lammps import PyLammps
 import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
             
-model = rods.Model('../data/test/5p.cfg')
+model = rods.Model('../data/test/5p_cross-grad_v3.cfg')
     
 output_dir = os.path.dirname('../data/test/test_out/')
 if not os.path.exists(output_dir):
@@ -24,9 +24,9 @@ phi = 45.0
 theta = 35.0
 N = 20
 
-rods_tools.prepare_single(r0, 0, 0, data_in)
-box_size = 2*model.rod_length
-#fibril_edges = rod_tools.prepare_fibril(model, N, phi, theta, r0, data_in)
+#box_size = 2*model.rod_length
+#rods_tools.prepare_single(r0, 0, 0, data_in)
+fibril_edges = rods_tools.prepare_fibril(model, N, phi, theta, r0, data_in)
 rods_state = 1
     
 seed = 12345
@@ -43,12 +43,12 @@ py_lmp.units("lj")
 py_lmp.dimension(3)
 py_lmp.boundary("p p p")
     
-xmin = -box_size/2 #fibril_edges[0][0] - model.rod_length
-xmax = box_size/2 #fibril_edges[0][1] + model.rod_length
-ymin = -box_size/2 #fibril_edges[1][0] - model.rod_length
-ymax = box_size/2 #fibril_edges[1][1] + model.rod_length
-zmin = -box_size/2 #fibril_edges[2][0] - model.rod_length
-zmax = box_size/2 #fibril_edges[2][1] + model.rod_length
+xmin = fibril_edges[0][0] - model.rod_length
+xmax = fibril_edges[0][1] + model.rod_length
+ymin = fibril_edges[1][0] - model.rod_length
+ymax = fibril_edges[1][1] + model.rod_length
+zmin = fibril_edges[2][0] - model.rod_length
+zmax = fibril_edges[2][1] + model.rod_length
 py_lmp.region("box", "block", xmin, xmax, ymin, ymax, zmin, zmax)
 simulation.setup("box")
 
@@ -66,5 +66,6 @@ py_lmp.dump_modify("dump_cmd", "sort id")
 py_lmp.thermo_style("custom", "step atoms", "pe temp")
 py_lmp.thermo(1000)
 
+py_lmp.timestep(0.01)
 run_length = 1000
 py_lmp.command('run {:d}'.format(run_length))

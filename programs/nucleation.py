@@ -38,7 +38,7 @@ parser.add_argument('-D', '--damp', default=0.1, type=float,
 
 parser.add_argument('-t', '--timestep', default=0.005, type=float,
                     help='timestep length (in lj units)')
-parser.add_argument('-R', '--run_length', default=200, type=int,
+parser.add_argument('-R', '--runlen', default=200, type=int,
                     help='number of MD steps between MC moves')
 parser.add_argument('--MC_moves', default=1.0, type=float,
                     help='number of MC moves per rod between MD runs')
@@ -103,12 +103,12 @@ if (args.output_freq != None):
     py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, '"'+dump_path+'"', dump_elems)
     py_lmp.dump_modify("dump_cmd", "sort id")
 else:
-    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(args.sim_length+1, args.run_length))
+    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(args.sim_length+1, args.runlen))
     py_lmp.dump("dump_cmd", "all", "custom", 1, '"'+dump_path+'"', dump_elems)
     py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 
 py_lmp.thermo_style("custom", "step atoms", "pe temp")
-py_lmp.thermo(args.run_length)
+py_lmp.thermo(args.runlen)
 
 # RUN...
 mc_moves_per_run = 0
@@ -120,14 +120,14 @@ py_lmp.timestep(args.timestep)
 if mc_moves_per_run == 0:
     py_lmp.command('run {:d}'.format(args.sim_length))
 else:
-    for i in range(int(args.sim_length/args.run_length)-1):   
-        py_lmp.command('run {:d} post no'.format(args.run_length))
+    for i in range(int(args.sim_length/args.runlen)-1):   
+        py_lmp.command('run {:d} post no'.format(args.runlen))
         success = simulation.state_change_MC(mc_moves_per_run)
         if not args.silent:
             base_count = simulation.state_count(0)
             beta_count = simulation.state_count(1)
             print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
-                    (i+1)*args.run_length, args.sim_length, beta_count, base_count,
+                    (i+1)*args.runlen, args.sim_length, beta_count, base_count,
                         float(beta_count)/base_count, float(success)/mc_moves_per_run)
             
-    py_lmp.command('run {:d} post no'.format(args.run_length))
+    py_lmp.command('run {:d} post no'.format(args.runlen))

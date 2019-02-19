@@ -11,10 +11,10 @@ import os, re
 version = 3
 
 SSs = [0.0] #3.25
-SB_tips = [0.0, 1.0]
+SB_tips = [1.0]
 SB_crosss = [4.5] #absolute value, SB_tip/2 will be deduced
 SB_centrals = [1.5, 2.0]
-BB_centrals = [5.5] #relative to SB_centrals
+BB_centrals = [6.0] #relative to SB_centrals
 SB_sides = [1.5]
 BB_sides = [2.0] #relative to SB_sides
 
