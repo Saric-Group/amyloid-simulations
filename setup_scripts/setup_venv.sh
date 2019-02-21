@@ -28,7 +28,7 @@ fi
 
 pip install scipy numpy pyquaternion matplotlib mpi4py
 
-LAMMPSDIR="$(dirname "$(readlink -f "`which lammps-stable`")")"/..
+LAMMPSDIR="$(dirname "$(readlink -f "`which lammps-develop`")")"/..
 
 cd "$LAMMPSDIR"/python
 python install.py
