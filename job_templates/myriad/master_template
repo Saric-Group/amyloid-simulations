@@ -20,12 +20,11 @@ PROJECT_HOME="<project_home>"
 PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
 export PYTHONPATH
 
-if [ -d "$PROJECT_HOME/../venv" ]; then
-	source "$PROJECT_HOME"/../venv/bin/activate
-	echo "Virtualenv at $PROJECT_HOME/../venv activated."
+if [ -d "$PROJECT_HOME/venv" ]; then
+	source "$PROJECT_HOME"/venv/bin/activate
+	echo "Virtualenv at $PROJECT_HOME/venv activated."
 else
-	echo "ERROR: Virtualenv not found/activated !!"
-	exit
+	echo "WARNING: Virtualenv not found/activated! Using system python & LAMMPS..."
 fi
 
 SEED=$(( 10#$JOB_ID % 900000000 ))

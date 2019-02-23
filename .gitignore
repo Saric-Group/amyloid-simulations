@@ -13,6 +13,8 @@
 
 data/*
 libs/*
+venv/*
+lammps-local/*
 programs/test.py
 
 TODO
