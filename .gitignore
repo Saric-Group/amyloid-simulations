@@ -13,6 +13,6 @@
 
 data/*
 libs/*
-tools/interactions/test-cases/
+programs/test.py
 
 TODO

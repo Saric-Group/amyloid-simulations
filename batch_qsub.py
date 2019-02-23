@@ -8,10 +8,12 @@ Created on 16 Oct 2018
 '''
 
 import argparse
-import os, re
+import sys, os, re
 import subprocess
 import traceback
 import time
+
+script_loc = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 #----------------------------------------------------------------------------------------
 
@@ -30,6 +32,8 @@ parser.add_argument('sim_length', type=int,
 parser.add_argument('cfgs', nargs='+', type=str,
                     help='paths to .cfg files to run as simulations')
 
+parser.add_argument('--home', type=str, default=script_loc,
+                    help='the location of the home directory')
 parser.add_argument('-t', '--walltime', type=str, default='24:00:00',
                     help='walltime for the job (HH:MM:SS)')
 parser.add_argument('-m', '--memory', type=str, default='1G',
@@ -51,11 +55,12 @@ def match_replace(matchobj):
 def fill_template(line):
     return re.sub(r'<([a-zA-Z_][a-zA-Z_0-9\-]*)>', match_replace, line)
 
-walltime = job_args.walltime
-memory = job_args.memory
 cell_size = job_args.cell_size
 num_cells = job_args.num_cells
 sim_length = job_args.sim_length
+walltime = job_args.walltime
+memory = job_args.memory
+project_home = job_args.home
 args = job_args.args
 
 temp_script_path = 'temp_job_script'

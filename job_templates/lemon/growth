@@ -12,7 +12,7 @@
 
 cd $PBS_O_WORKDIR # where qsub is called from
 
-PROJECT_HOME="/storage/users/erozic/simulations/amyloids"
+PROJECT_HOME="<project_home>"
 
 PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
 export PYTHONPATH

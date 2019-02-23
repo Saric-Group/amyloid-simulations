@@ -12,7 +12,7 @@
 #$ -o "<out_folder>/$JOB_ID.out"
 #$ -j yes
 
-PROJECT_HOME="/home/ucapero/simulations/amyloids"
+PROJECT_HOME="<project_home>"
 
 PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
 export PYTHONPATH
