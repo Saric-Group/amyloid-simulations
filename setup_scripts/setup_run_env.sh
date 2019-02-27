@@ -9,7 +9,6 @@ cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 BASEDIR="$(pwd)"
 
 VENVDIR="$BASEDIR"/venv
-
 if [ ! -d $VENVDIR ]; then
 	echo "Installing and setting up virtualenv..."
 	virtualenv -p "`which python2.7`" "$VENVDIR"
@@ -38,11 +37,6 @@ else
 	git pull origin develop
 fi
 
-#get the cosine/squared pair style
-#git clone -b master https://github.com/Saric-Group/lammps_pair_cosine_squared.git "$LAMMPSDIR"/temp
-#mv "$LAMMPSDIR"/temp/src/* "$LAMMPSDIR"/src
-#rm -rf "$LAMMPSDIR"/temp
-
 cd "$LAMMPSDIR"/src
 make clean-all
 make purge
@@ -50,7 +44,7 @@ make package-update
 make no-all
 make yes-mc yes-molecule yes-rigid yes-opt yes-misc yes-user-misc yes-python
 # why does mpi not work?!?!
-make -j4 serial #LMP_INC="-DLAMMPS_PNG -DLAMMPS_JPEG -DLAMMPS_FFMPEG" JPG_LIB="-lpng -ljpeg"
+#make -j4 serial #LMP_INC="-DLAMMPS_PNG -DLAMMPS_JPEG -DLAMMPS_FFMPEG" JPG_LIB="-lpng -ljpeg"
 make -j4 serial mode=shlib LMP_INC="-DLAMMPS_EXCEPTIONS"
 make install-python
 
