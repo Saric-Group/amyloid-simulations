@@ -76,6 +76,12 @@ def file_transfer(remote_src, local_dest, scp_attempts=1):
 rootsearchdir = args.search
 rootnode = os.path.join(remote_basedir, rootsearchdir)
 
+if not os.path.exists(remote_basedir):
+    raise Exception("Missing SFTP connection with host ({:s})!".format(host))
+elif not os.path.exists(rootnode):
+    raise Exception("The search root dir ({:s}) doesn't exist! Change the '-s' option...".format(
+        os.path.relpath(rootnode, remote_homedir)))
+
 start = time.time()
 for node, dirs, files in os.walk(rootnode, topdown=True):
     node_name = os.path.basename(node)

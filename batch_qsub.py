@@ -78,7 +78,7 @@ for cfg_file in job_args.cfgs:
     for n in range(job_args.repeat):
         try:
             subprocess.call(['qsub', 'temp_job_script'])
-            time.sleep(2)
+            time.sleep(1)
         except:
             traceback.print_exc()
             os.remove(temp_script_path)
