@@ -11,6 +11,7 @@ BASEDIR="$(pwd)"
 VENVDIR="$BASEDIR"/venv
 if [ ! -d $VENVDIR ]; then
 	echo "Installing and setting up virtualenv..."
+	venv_setup=1
 	virtualenv -p "`which python2.7`" "$VENVDIR"
 fi
 
@@ -21,9 +22,10 @@ if [ "`which python2.7`" != "$VENVDIR/bin/python2.7" ]; then
 	exit
 fi
 
-pip install scipy numpy pyquaternion matplotlib mpi4py
-
-echo "...done!"
+if [[ $venv_setup == 1 ]]; then
+	pip install scipy numpy pyquaternion matplotlib mpi4py
+	echo "...done!"
+fi
 
 LAMMPSDIR="$BASEDIR"/lammps-local
 if [ ! -d $LAMMPSDIR ]; then
