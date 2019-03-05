@@ -76,9 +76,10 @@ dump_path = os.path.join(args.output_folder, dump_path)
 log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
+py_lmp.log('"'+log_path+'"')
 model = rods.Model(args.config_file)
 simulation = rods.Simulation(py_lmp, model, args.seed, args.output_folder,
-                             log_path=log_path, clusters=args.clusters)
+                             clusters=args.clusters)
 py_lmp.units("lj")
 py_lmp.dimension(3)
 py_lmp.boundary("p p p")

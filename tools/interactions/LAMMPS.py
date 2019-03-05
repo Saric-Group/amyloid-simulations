@@ -34,7 +34,7 @@ try:
     r_body = float(sys.argv[1])
 except:
     r_body = 1.0
-r_int = 0.25*r_body
+r_int = 1.0*r_body
 sigma = r_body + r_body
 
 # output parameters
@@ -76,7 +76,7 @@ for lj_cutoff in (2.6, 3.0, 3.75):
 #     py_lmp.pair_coeff("*", "*", eps, a, sigma, cutoff)
 #     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
 
-for reach in (1.0,):
+for reach in (0.0, 0.1, 1.0):
     py_lmp.pair_style("cosine/squared", max_r)
     py_lmp.pair_coeff("*", "*", eps, sigma, sigma + reach*r_body, "wca")
     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos-sq_'+str(reach))
@@ -136,4 +136,3 @@ F_axes.axvline(sigma+1.5*r_body, color='black', linestyle='--', linewidth=0.5)
 F_axes.grid(True)
 
 plt.show()
-
