@@ -190,10 +190,10 @@ if args.seed is None:
     args.seed = int((time.time() % 1)*1000000)
     print "WARNING: no seed given explicitly; using:", args.seed
     
-dump_path = str(args.cell_size)+'-'+str(args.num_cells)+'_'+str(args.seed)+'.dump'
+dump_path = str(args.mem_eps)+'-'+str(args.int_eps)+'_'+str(args.seed)+'.dump'
 dump_path = os.path.join(args.output_folder, dump_path)
 log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
-mem_dat_path = os.path.join(args.output_folder, 'membrane.dat')
+mem_dat_path = os.path.join(args.output_folder, str(args.seed)+'_membrane.dat')
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
