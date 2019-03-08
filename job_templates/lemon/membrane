@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#PBS -N growth
+#PBS -q batch
+
+#PBS -l walltime=<walltime>
+#PBS -l pmem=<memory>
+#PBS -l nodes=1:ppn=1
+
+#PBS -o "<out_folder>/${PBS_JOBID}.out"
+#PBS -j oe
+
+cd $PBS_O_WORKDIR # where qsub is called from
+
+PROJECT_HOME="<project_home>"
+
+PYTHONPATH="$PROJECT_HOME/libs:$PYTHONPATH"
+export PYTHONPATH
+
+if [ -d "$PROJECT_HOME/venv" ]; then
+	source "$PROJECT_HOME"/venv/bin/activate
+	echo "Virtualenv at $PROJECT_HOME/venv activated."
+else
+	echo "WARNING: Virtualenv not found/activated! Using system python & LAMMPS..."
+fi
+
+JOB_ID=$( expr match "${PBS_JOBID}" '\([0-9]*\)' )
+SEED=$(( 10#${JOB_ID} % 900000000 ))
+
+/usr/bin/time --verbose python "$PROJECT_HOME"/programs/membrane.py "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED --silent <args>
+
+python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/<cell_size>-<num_cells>_${SEED}.dump" -c -l
