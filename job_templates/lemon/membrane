@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N growth
+#PBS -N membrane
 #PBS -q batch
 
 #PBS -l walltime=<walltime>

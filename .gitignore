@@ -18,3 +18,4 @@ lammps-local/*
 programs/test.py
 
 TODO
+/cfg_gen.py

@@ -58,7 +58,7 @@ parser.add_argument('-R', '--runlen', default=200, type=int,
 parser.add_argument('--MC_moves', default=1.0, type=float,
                     help='number of MC moves per rod between MD runs')
 
-parser.add_argument('--clusters', default=1.0, type=float,
+parser.add_argument('--clusters', default=3.0, type=float,
                     help='the max distance (in rod radii) for two rods to be\
 in the same cluster (put to 0.0 to turn cluster tracking off)')
 
@@ -353,8 +353,8 @@ simulation.create_rods(region = "rod_init")
 
 # a group and a compute that flag adsorbed proteins (their active beads)
 py_lmp.group("mem+active", "union", simulation.active_beads_group, membrane.membrane_group)
-py_lmp.compute("mem_ads", "mem+active", "aggregate/atom", 0.9*sol_lipid_cutoff)
-# this counts adsorbed proteins... (some technical assumptions, can also be done in post-processing)
+py_lmp.compute("mem_cluster", "mem+active", "aggregate/atom", 0.9*sol_lipid_cutoff)
+# this counts adsorbed proteins natively (some non-watertight assumptions, like cluster ID)
 # from itertools import groupby
 # # this is A (type, occurrences) pair for AN active body bead in the base (0-index) state
 # an_active_sol_body_bead = [(body_bead_type, len(list(group)))
@@ -400,11 +400,11 @@ else:
     py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_top_msd[4]",
-           "file", os.path.join(args.output_folder, 'mem_top.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'mem_top.msd'))
 py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_bottom_msd[4]",
-           "file", os.path.join(args.output_folder, 'mem_bottom.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'mem_bottom.msd'))
 py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_full_msd[4]",
-           "file", os.path.join(args.output_folder, 'mem_full.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'mem_full.msd'))
 # py_lmp.fix("nads_out", "all", "ave/time", 1, 1, out_freq, "v_nads",
 #            "file", os.path.join(args.output_folder, 'adsorbed.dat'))
 py_lmp.thermo(args.output_freq)
