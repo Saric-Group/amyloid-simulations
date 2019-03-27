@@ -234,10 +234,12 @@ class Membrane(object):
             dat_file.write("\n\nAngles\n\n")
             dat_file.write('\n'.join(self.angles))
             
-    def create_membrane(self, append=True):
+    def create_membrane(self, seed, append=True):
         '''
         Creates the membrane using the "read_data" command. If not already done, the
         membrane data for this object will be generated.
+        
+        seed: a random seed (for the temp membrane.dat file)
         
         append: if False this will create the simulation box through the "read_data",
         otherwise it will just add the membrane particles in the already existent box.
@@ -249,7 +251,7 @@ class Membrane(object):
         
         if self.atom_id == 0:
             self.generate_data()
-        temp_dat_file = 'temp-membrane.dat'
+        temp_dat_file = seed+'-temp-membrane.dat'
         self.output_data(temp_dat_file)
         
         all_atom_mol_ids = self.py_lmp.lmp.gather_atoms_concat("molecule", 0, 1)
@@ -343,7 +345,7 @@ for bead_type, k in zip(membrane.bead_types, int_factors):
                       sol_lipid_contact, sol_lipid_cutoff)
 
 # create membrane
-membrane.create_membrane(append=True)
+membrane.create_membrane(args.seed, append=True)
 # create rods
 py_lmp.region("rod_init", "block",
               membrane.xmin, membrane.xmin + (x_cells-0.01)*args.cell_size,
@@ -400,11 +402,11 @@ else:
     py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_top_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'mem_top.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_top.msd'))
 py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_bottom_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'mem_bottom.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_bottom.msd'))
 py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_full_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'mem_full.msd'))
+           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_full.msd'))
 # py_lmp.fix("nads_out", "all", "ave/time", 1, 1, out_freq, "v_nads",
 #            "file", os.path.join(args.output_folder, 'adsorbed.dat'))
 py_lmp.thermo(args.output_freq)
