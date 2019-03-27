@@ -251,7 +251,7 @@ class Membrane(object):
         
         if self.atom_id == 0:
             self.generate_data()
-        temp_dat_file = seed+'-temp-membrane.dat'
+        temp_dat_file = str(seed)+'-temp-membrane.dat'
         self.output_data(temp_dat_file)
         
         all_atom_mol_ids = self.py_lmp.lmp.gather_atoms_concat("molecule", 0, 1)
