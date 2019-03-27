@@ -389,7 +389,7 @@ py_lmp.neigh_modify("every 1 delay 1")
 # OUTPUT
 py_lmp.variable("area", "equal", "lx*ly")
 py_lmp.thermo_style("custom", "step atoms", "pe temp", "press lx ly v_area")
-dump_elems = "id x y z type mol c_mem_ads"
+dump_elems = "id x y z type mol c_mem_cluster"
 if args.clusters > 0.0:
     dump_elems += " c_"+simulation.cluster_compute
 if (args.output_freq != None):
