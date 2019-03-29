@@ -12,55 +12,23 @@ Created on 16 Mar 2018
 @author: Eugen Rožić
 '''
 
+import os
 import argparse
 
 parser = argparse.ArgumentParser(description=
-                                 'Program for NVE+Langevin hybrid LAMMPS simulation of\
-spherocylinder-like rods above a 3-bead bilayer membrane.',
+                                 'Program for NVE+Langevin hybrid LAMMPS simulation of spherocylinder-like\
+rods, using the "lammps_multistate_rods" library, above a 3-bead bilayer membrane.',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('config_file',
-                    help='path to the "lammps_multistate_rods" model config file')
-parser.add_argument('output_folder',
-                    help='name for the folder that will be created for output files')
-parser.add_argument('cell_size', type=float,
-                    help='size of an SC cell (i.e. room for one rod)')
-parser.add_argument('num_cells', type=float,
-                    help='the number of cells in the z dimension')
-parser.add_argument('sim_length', type=int,
-                    help='the total number of MD steps to simulate')
+parser.add_argument('cfg_file',
+                    help='path to the "lammps_multistate_rods" model configuration file')
+parser.add_argument('run_file',
+                    help='path to the run configuration file')
 
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
-
-parser.add_argument('--Nx', type=int, default=30,
-                    help='length of membrane in lipids')
-parser.add_argument('--Ny', type=int, default=30,
-                    help='width of membrane in lipids')
-parser.add_argument('--mem_sigma', type=float, default=1.0,
-                    help='the lipid characteristic length (bead diameter)')
-parser.add_argument('--mem_wc', type=float, default=1.4,
-                    help='the width of the membrane potential')
-parser.add_argument('--mem_eps', type=float, default=1.0,
-                    help='the strength of the membrane potential')
-parser.add_argument('--int_eps', type=float, default=5.0,
-                    help='the strength of the membrane-lipid interaction')
-
-parser.add_argument('-T', '--temp', default=1.0, type=float,
-                    help='the temperature of the system (e.g. for Langevin)')
-parser.add_argument('-D', '--damp', default=0.1, type=float,
-                    help='viscous damping (for Langevin)')
-
-parser.add_argument('-t', '--timestep', default=0.01, type=float,
-                    help='timestep length (in lj units)')
-parser.add_argument('-R', '--runlen', default=200, type=int,
-                    help='number of MD steps between MC moves')
-parser.add_argument('--MC_moves', default=1.0, type=float,
-                    help='number of MC moves per rod between MD runs')
-
-parser.add_argument('--clusters', default=3.0, type=float,
-                    help='the max distance (in rod radii) for two rods to be\
-in the same cluster (put to 0.0 to turn cluster tracking off)')
+parser.add_argument('--out', type=str, default=None,
+                    help='name/path for the output folder (defaults to .cfg file path w/o ext)')
 
 parser.add_argument('-o', '--output_freq', type=int,
                     help='configuration output frequency (in MD steps);\
@@ -69,6 +37,24 @@ parser.add_argument('-s', '--silent', action='store_true',
                     help="doesn't print anything to stdout")
 
 args = parser.parse_args()
+
+if not args.cfg_file.endswith('.cfg'):
+    raise Exception('Model configuration file (first arg) has to end with ".cfg"!')
+
+if not args.run_file.endswith('.run'):
+    raise Exception('Run configuration file (second arg) has to end with ".run"!')
+
+if args.seed is None:
+    import time
+    seed = int((time.time() % 1)*1000000)
+    print "WARNING: no seed given explicitly; using:", seed
+else:
+    seed = args.seed
+
+if args.out is None:
+    output_folder = os.path.splitext(args.cfg_file)[0]
+else:
+    output_folder = args.out
 
 #========================================================================================
 
@@ -277,51 +263,53 @@ class Membrane(object):
 
 #========================================================================================
 
-import os
-if not os.path.exists(args.output_folder):
-    os.makedirs(args.output_folder)
-
 #from mpi4py import MPI #TODO make MPI work...
 from lammps import PyLammps
 import lammps_multistate_rods as rods
 
-if args.seed is None:
-    import time
-    args.seed = int((time.time() % 1)*1000000)
-    print "WARNING: no seed given explicitly; using:", args.seed
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
     
-dump_path = str(args.mem_eps)+'-'+str(args.int_eps)+'_'+str(args.seed)+'.dump'
-dump_path = os.path.join(args.output_folder, dump_path)
-log_path = os.path.join(args.output_folder, str(args.seed)+'_lammps.log')
+run_filename = os.path.splitext(os.path.basename(args.run_file))[0]
+sim_ID = '{:s}_{:d}'.format(run_filename, seed)
+    
+dump_filename = sim_ID+'.dump'
+dump_path = os.path.join(output_folder, dump_filename)
 
-out_freq = args.output_freq if args.output_freq != None else args.runlen
+log_filename = '{:d}.lammps'.format(seed)
+log_path = os.path.join(output_folder, log_filename)
+
+run_args = rods.model.Params()
+execfile(args.run_file, {'__builtins__': None}, vars(run_args))
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
-model = rods.Model(args.config_file)
-simulation = rods.Simulation(py_lmp, model, args.seed, args.output_folder,
-                             clusters=args.clusters)
-membrane = Membrane(args.Nx, args.Ny, 0.0, model.rod_length/2, 5.0,
-                    args.mem_sigma, args.mem_wc, args.mem_eps)
+model = rods.Model(args.cfg_file)
+simulation = rods.Simulation(py_lmp, model, seed, output_folder,
+                             clusters=run_args.cluster_cutoff)
+membrane = Membrane(run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0,
+                    run_args.mem_sigma, run_args.mem_wc, run_args.mem_eps)
 #membrane.generate()
-#mem_dat_path = os.path.join(args.output_folder, str(args.seed)+'_membrane.dat')
+#mem_dat_path = os.path.join(output_folder, '{:d}_membrane.dat'.format(seed))
 #membrane.output(mem_dat_path)
 
 # LAMMPS setup
 py_lmp.units("lj")
 py_lmp.dimension(3)
 py_lmp.boundary("p p f")
-py_lmp.lattice("sc", 1/(args.cell_size**3))
+py_lmp.lattice("sc", 1/(run_args.cell_size**3))
 
 # setup for rods (+ everything the simulations need for the membrane)
-x_cells = args.Nx*membrane.sigma/args.cell_size
-y_cells = args.Nx*membrane.sigma/args.cell_size
-z_cells = args.num_cells
+x_cells = run_args.mem_Nx*membrane.sigma/run_args.cell_size
+y_cells = run_args.mem_Nx*membrane.sigma/run_args.cell_size
+z_cells = run_args.num_cells
 py_lmp.region("rod_box", "block", -x_cells/2, x_cells/2,
                                   -y_cells/2, y_cells/2,
                                            0, z_cells)
 simulation.setup("rod_box", atom_style="molecular", type_offset=max(membrane.bead_types),
-                 extra_pair_styles=[], overlay=False,
+                 extra_pair_styles=[('lj/cut', model.global_cutoff),
+                                    ('cosine/squared', model.global_cutoff)],
+                 overlay=False,
                  bond_offset=membrane.bond_type, extra_bond_styles=['fene'],
                  everything_else = ["extra/bond/per/atom", 2,
                  "angle/types", membrane.angle_type, "extra/angle/per/atom", 1,
@@ -329,9 +317,9 @@ simulation.setup("rod_box", atom_style="molecular", type_offset=max(membrane.bea
 membrane.lammps_setup(py_lmp)
 
 # membrane-rod interaction...
-sol_lipid_eps = args.int_eps
+sol_lipid_eps = run_args.mem_int_eps
 sol_lipid_contact = 0.5*membrane.sigma + model.rod_radius 
-sol_lipid_cutoff = sol_lipid_contact + 0.5*membrane.sigma
+sol_lipid_cutoff = sol_lipid_contact + run_args.mem_int_range
 sol_body_type = model.state_structures[0][0][0] + simulation.type_offset
 sol_tip_type = model.state_structures[0][0][-1] + simulation.type_offset
 # lipid-protein volume-exclusion
@@ -345,18 +333,18 @@ for bead_type, k in zip(membrane.bead_types, int_factors):
                       sol_lipid_contact, sol_lipid_cutoff)
 
 # create membrane
-membrane.create_membrane(args.seed, append=True)
+membrane.create_membrane(seed, append=True)
 # create rods
 py_lmp.region("rod_init", "block",
-              membrane.xmin, membrane.xmin + (x_cells-0.01)*args.cell_size,
-              membrane.ymin, membrane.ymin + (y_cells-0.01)*args.cell_size,
-              0.0, z_cells*args.cell_size, "units box")
+              membrane.xmin, membrane.xmin + (x_cells-0.01)*run_args.cell_size,
+              membrane.ymin, membrane.ymin + (y_cells-0.01)*run_args.cell_size,
+              membrane.zmax, z_cells*run_args.cell_size, "units box")
 simulation.create_rods(region = "rod_init")
 
 # a group and a compute that flag adsorbed proteins (their active beads)
 py_lmp.group("mem+active", "union", simulation.active_beads_group, membrane.membrane_group)
 py_lmp.compute("mem_cluster", "mem+active", "aggregate/atom", 0.9*sol_lipid_cutoff)
-# this counts adsorbed proteins natively (some non-watertight assumptions, like cluster ID)
+# this below counts adsorbed proteins natively (some non-watertight assumptions, like cluster ID)
 # from itertools import groupby
 # # this is A (type, occurrences) pair for AN active body bead in the base (0-index) state
 # an_active_sol_body_bead = [(body_bead_type, len(list(group)))
@@ -374,7 +362,8 @@ py_lmp.compute("mem_full_msd", membrane.membrane_group, "msd")
 
 # DYNAMICS
 # -> all particles on the same temparature (langevin thermostat)
-py_lmp.fix("thermostat", "all", "langevin", args.temp, args.temp, args.damp, args.seed)#, "zero yes")
+py_lmp.fix("thermostat", "all", "langevin",
+           run_args.temp, run_args.temp, run_args.damp, seed)#, "zero yes")
 # -> nve for the rods (has to come before membrane nph - WHY?!?!)
 simulation.set_rod_dynamics("nve")
 # -> nph for the membrane particles
@@ -389,46 +378,48 @@ py_lmp.fix("zwalls", "all", "wall/lj126",
 py_lmp.neigh_modify("every 1 delay 1")
 
 # OUTPUT
+out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 py_lmp.variable("area", "equal", "lx*ly")
 py_lmp.thermo_style("custom", "step atoms", "pe temp", "press lx ly v_area")
 dump_elems = "id x y z type mol c_mem_cluster"
-if args.clusters > 0.0:
+if run_args.cluster_cutoff > 0.0:
     dump_elems += " c_"+simulation.cluster_compute
-if (args.output_freq != None):
+if out_freq == args.output_freq:
     py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "sort id")
 else:
-    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(args.sim_length+1, args.runlen))
+    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(
+        run_args.sim_length+1, run_args.run_length))
     py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
+py_lmp.thermo(out_freq)
 py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_top_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_top.msd'))
+           "file", os.path.join(output_folder, sim_ID+'_mem_top.msd'))
 py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_bottom_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_bottom.msd'))
+           "file", os.path.join(output_folder, sim_ID+'_mem_bottom.msd'))
 py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_full_msd[4]",
-           "file", os.path.join(args.output_folder, str(args.seed)+'_mem_full.msd'))
+           "file", os.path.join(output_folder, sim_ID+'_mem_full.msd'))
 # py_lmp.fix("nads_out", "all", "ave/time", 1, 1, out_freq, "v_nads",
-#            "file", os.path.join(args.output_folder, 'adsorbed.dat'))
-py_lmp.thermo(args.output_freq)
+#            "file", os.path.join(output_folder, 'adsorbed.dat'))
 
 # RUN...
 mc_moves_per_run = 0
 if model.num_states > 1:
-    mc_moves_per_run = int(args.MC_moves * simulation.rods_count())
+    mc_moves_per_run = int(run_args.mc_moves * simulation.rods_count())
     
-py_lmp.timestep(args.timestep)
+py_lmp.timestep(run_args.dt)
 
 if mc_moves_per_run == 0:
-    py_lmp.command('run {:d}'.format(args.sim_length))
+    py_lmp.command('run {:d}'.format(run_args.sim_length))
 else:
-    for i in range(int(args.sim_length/args.runlen)-1):   
-        py_lmp.command('run {:d} post no'.format(args.runlen))
+    for i in range(int(run_args.sim_length/run_args.run_length)-1):   
+        py_lmp.command('run {:d} post no'.format(run_args.run_length))
         success = simulation.state_change_MC(mc_moves_per_run)
         if not args.silent:
             base_count = simulation.state_count(0)
             beta_count = simulation.state_count(1)
             print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
-                    (i+1)*args.runlen, args.sim_length, beta_count, base_count,
-                        float(beta_count)/base_count, float(success)/mc_moves_per_run)
+                    (i+1)*run_args.run_length, run_args.sim_length, beta_count, base_count, 
+                    float(beta_count)/base_count, float(success)/mc_moves_per_run)
             
-    py_lmp.command('run {:d} post no'.format(args.runlen))
+    py_lmp.command('run {:d} post no'.format(run_args.run_length))

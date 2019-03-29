@@ -13,11 +13,11 @@ patch_bead_sep = (0.86*rod_radius,)*4 + (0.33*rod_radius,)
 patch_bulge_out = (0.05*rod_radius,)*4 + (0.33*rod_radius,)
 
 int_types = {'tip-tip' : ('cosine/squared', 1.00*rod_radius, 'wca'),
-             'SB_cross' : ('cosine/squared', <cross_range>*rod_radius),
-             'SB_central' : ('cosine/squared', <SB_central_range>*rod_radius),
-             'SB_side' : ('cosine/squared', <SB_side_range>*rod_radius),
-             'BB_central' : ('cosine/squared', <BB_central_range>*rod_radius),
-             'BB_side' : ('cosine/squared', <BB_side_range>*rod_radius),
+             'SB_cross' : ('cosine/squared', 1.5*rod_radius),
+             'SB_central' : ('cosine/squared', 1.0*rod_radius),
+             'SB_side' : ('cosine/squared', 0.75*rod_radius),
+             'BB_central' : ('cosine/squared', 1.0*rod_radius),
+             'BB_side' : ('cosine/squared', 0.75*rod_radius),
               vx : ('cosine/squared', 0.0, 'wca')}
 
 D_mu = <D_mu>

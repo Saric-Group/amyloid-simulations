@@ -24,4 +24,4 @@ else
 	echo "WARNING: Virtualenv not found/activated! Using system python & LAMMPS..."
 fi
 
-python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" <out_folder>/*.dump <args>
+python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" <out_folder>/*.dump <aargs>

@@ -17,5 +17,6 @@ venv/*
 lammps-local/*
 programs/test.py
 cfg_gen.py
+run_gen.py
 
 TODO

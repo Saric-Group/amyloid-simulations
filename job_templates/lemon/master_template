@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N NAME
+#PBS -N <name>
 #PBS -q batch
 
 #PBS -l walltime=<walltime>
@@ -30,6 +30,8 @@ fi
 JOB_ID=$( expr match "${PBS_JOBID}" '\([0-9]*\)' )
 SEED=$(( 10#${JOB_ID} % 900000000 ))
 
-/usr/bin/time --verbose python "$PROJECT_HOME"/programs/SCRIPT "<cfg_file>" "<out_folder>" <cell_size> <num_cells> <sim_length> --seed $SEED FIXED_ARGS <args>
+/usr/bin/time --verbose python "$PROJECT_HOME"/programs/<script> "<cfg_file>" "<run_file>" --seed $SEED --silent <args>
 
-python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/<cell_size>-<num_cells>_${SEED}.dump" -c --every N -l
+run_filename=`basename "<run_file>"`
+run_filename="${run_filename%%.*}"
+python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/${run_filename}_${SEED}.dump" <aargs>
