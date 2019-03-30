@@ -25,7 +25,9 @@ parser.add_argument('in_files', nargs='+',
 parser.add_argument('-c', '--cluster_data', action='store_true',
                     help='produce a "_cluster_data" file for each input file')
 parser.add_argument('-l', '--last_dump', action='store_true',
-                    help='make a "_last_dump" file, containing the last snapshot, for each input file')
+                    help='produce a "_last_dump" file, containing the last snapshot, for each input file')
+parser.add_argument('-m', '--membrane', action='store_true', 
+                    help='produce an "_adsorbed" file for each input file')
 
 parser.add_argument('-t', '--type_offset', type=int, default=0,
                     help='the type offset for the rod models of the simulation (for cluster data)')
@@ -52,4 +54,32 @@ for in_file in args.in_files:
             pass
         rods_tools.write_dump_snapshot(timestep, box_bounds, data_structure, data,
                                        last_dump_output_path)
-    
+        
+    if args.membrane:
+        raw_data = rods_tools.parse_dump_file(in_file)
+        adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
+        box_size, timesteps, mem_cluster_data = rods_tools.clusters.get_cluster_data(
+            raw_data, args.every, model, args.type_offset, compute_ID='mem_cluster')
+        biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
+        for snapshot in mem_cluster_data:
+            biggest_cluster_ID = 0
+            biggest_cluster_size = 0
+            for cluster_ID, cluster in snapshot.iteritems():
+                cluster_size = len(cluster)
+                if cluster_size > biggest_cluster_size:
+                    biggest_cluster_size = cluster_size
+                    biggest_cluster_ID = cluster_ID
+            biggest_cluster_IDs.append(cluster_ID)
+        adsorbed_rods = []
+        for i in range(len(biggest_cluster_IDs)):
+            adsorbed = []
+            for elem in mem_cluster_data[i][biggest_cluster_IDs[i]]:
+                if elem[1] != None: #if a rod, not something else (e.g. a lipid)
+                    adsorbed.append(elem[0])
+            adsorbed_rods.append(adsorbed)
+                
+        with open(adsorbed_output_path, 'w') as adsorbed_out:
+            adsorbed_out.write('{:f} {:f} {:f}\n'.format(*box_size))
+            for timestep, adsorbed in zip(timesteps, adsorbed_rods):
+                adsorbed_out.write('{:^10d} | {:s}\n'.format(timestep, str(adsorbed)))
+        
