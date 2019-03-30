@@ -43,10 +43,11 @@ for in_file in args.in_files:
     if args.cluster_data:
         raw_data = rods_tools.parse_dump_file(in_file)
         cluster_output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-        box_size, timesteps, cluster_data = rods_tools.clusters.get_cluster_data(
+        timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
             raw_data, args.every, model, args.type_offset)
-        rods_tools.clusters.write_cluster_data(box_size, timesteps, cluster_data,
+        rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
                                                cluster_output_path)
+    
     if args.last_dump:
         raw_data = rods_tools.parse_dump_file(in_file)
         last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
@@ -54,12 +55,15 @@ for in_file in args.in_files:
             pass
         rods_tools.write_dump_snapshot(timestep, box_bounds, data_structure, data,
                                        last_dump_output_path)
-        
+    
     if args.membrane:
         raw_data = rods_tools.parse_dump_file(in_file)
         adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
-        box_size, timesteps, mem_cluster_data = rods_tools.clusters.get_cluster_data(
-            raw_data, args.every, model, args.type_offset, compute_ID='mem_cluster')
+        try:
+            timesteps, box_sizes, mem_cluster_data = rods_tools.clusters.get_cluster_data(
+                raw_data, args.every, model, args.type_offset, compute_ID='mem_cluster')
+        except KeyError:
+            raise Exception('No membrane data to analyse! (invalid -m option)')
         biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
         for snapshot in mem_cluster_data:
             biggest_cluster_ID = 0
@@ -77,9 +81,6 @@ for in_file in args.in_files:
                 if elem[1] != None: #if a rod, not something else (e.g. a lipid)
                     adsorbed.append(elem[0])
             adsorbed_rods.append(adsorbed)
-                
-        with open(adsorbed_output_path, 'w') as adsorbed_out:
-            adsorbed_out.write('{:f} {:f} {:f}\n'.format(*box_size))
-            for timestep, adsorbed in zip(timesteps, adsorbed_rods):
-                adsorbed_out.write('{:^10d} | {:s}\n'.format(timestep, str(adsorbed)))
-        
+            
+        rods_tools.clusters.write_cluster_data(timesteps, box_sizes, adsorbed_rods,
+                                               adsorbed_output_path)        

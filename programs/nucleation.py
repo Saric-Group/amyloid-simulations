@@ -26,7 +26,7 @@ parser.add_argument('run_file',
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
 parser.add_argument('--out', type=str, default=None,
-                    help='name/path for the output folder (defaults to .cfg file path w/o ext)')
+                    help='name/path for the output folder (defaults to cfg_file path w/o ext)')
 
 parser.add_argument('-o', '--output_freq', type=int,
                     help='configuration output frequency (in MD steps);\
