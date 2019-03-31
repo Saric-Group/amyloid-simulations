@@ -53,7 +53,7 @@ for in_file in args.in_files:
         last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
         for timestep, box_bounds, data_structure, data in raw_data:
             pass
-        rods_tools.write_dump_snapshot(timestep, box_bounds, data_structure, data,
+        rods_tools.write_dump_snapshot((timestep, box_bounds, data_structure, data),
                                        last_dump_output_path)
     
     if args.membrane:
