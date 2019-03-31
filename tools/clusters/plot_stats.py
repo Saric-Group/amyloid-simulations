@@ -14,69 +14,95 @@ from matplotlib.widgets import Slider
 
 import numpy as np
 from math import sqrt
-from lammps_multistate_rods.tools.clusters import read_cluster_data, sizes_by_cluster_type
+from lammps_multistate_rods.tools.clusters import read_cluster_data, composition_by_states
 
 def fetch_data(in_files):
-    box_size = None
-    timesteps = None
-    n_snapshots = None
-    cluster_sizes_data = []
-    max_cluster_size = 0
+    '''
+    Two types of clusters:
+     - first are with 0/1 betas (counts all),
+     - second are 2+ betas (counts only betas)
+    '''
+    data = []
+    max_cluster_sizes = [0,0]
     for in_file in in_files:
         if data_dir != os.path.dirname(in_file):
             raise Exception('All files should be from the same directory!')
     
-        _box_size, _timesteps, raw_data = read_cluster_data(in_file)
+        timesteps, box_sizes, cluster_data = read_cluster_data(in_file)
+        n_snapshots = len(timesteps)
+        cluster_compositions = composition_by_states(cluster_data)
+        
+        cluster_type_data = [None]*n_snapshots
+        for i in range(n_snapshots):
+            _cluster_type_data = [[], []]
+            for cluster_composition in cluster_compositions[i].values():
+                if None in cluster_composition:
+                    continue #not a "clean" rod cluster
+                num_sols = cluster_composition.get(0, 0)
+                num_betas = cluster_composition.get(1, 0)
+                if num_betas < 2 and num_sols > 0:
+                    _cluster_type_data[0].append(num_sols+num_betas)
+                    if _cluster_type_data[0][-1] > max_cluster_sizes[0]:
+                        max_cluster_sizes[0] = _cluster_type_data[0][-1] 
+                else:
+                    _cluster_type_data[1].append(num_betas)
+                    if _cluster_type_data[1][-1] > max_cluster_sizes[1]:
+                        max_cluster_sizes[1] = _cluster_type_data[1][-1]
+            for cluster_type in (0,1):
+                _cluster_type_data[cluster_type] = np.unique(_cluster_type_data[cluster_type],
+                                                             return_counts=True)
+            cluster_type_data[i] = _cluster_type_data
+        
+        data.append((timesteps, box_sizes, cluster_type_data))
     
-        if box_size == None:
-            box_size = _box_size
-        elif box_size != _box_size:
-            raise Exception('All files should have the same box size!')
-        if timesteps == None:
-            timesteps = _timesteps
-            n_snapshots = len(timesteps)
-        elif len(_timesteps) != n_snapshots: #quick, non thorough check
-            raise Exception('All files should have the same timesteps!')
-    
-        file_cluster_data, _max_cluster_size = sizes_by_cluster_type(raw_data) 
-        cluster_sizes_data.append(file_cluster_data)
-        if _max_cluster_size > max_cluster_size:
-            max_cluster_size = _max_cluster_size
-    
-    return box_size, timesteps, cluster_sizes_data, max_cluster_size
+    return data, max_cluster_sizes
 
-def do_overall_stats():
+def do_overall_stats(data, cluster_type, max_snapshots):
     
-    avgs = [0]*n_snapshots
-    avg_devs = [0]*n_snapshots
-    maxs = [0]*n_snapshots
-    max_devs = [0]*n_snapshots
-    mcs = [0]*n_snapshots
-    mc_devs = [0]*n_snapshots
-    fms = [0]*n_snapshots
-    fm_devs = [0]*n_snapshots
+    n_simulations = len(data)
     
-    for i in range(n_snapshots):
-        avg_sizes = np.zeros(n_simulations)
-        sizes_devs = np.zeros(n_simulations)
-        max_sizes = np.zeros(n_simulations, int)
-        mc_sizes = np.zeros(n_simulations, int)
-        free_mons = np.zeros(n_simulations, int)
+    avgs = [0]*max_snapshots
+    avg_devs = [0]*max_snapshots
+    maxs = [0]*max_snapshots
+    max_devs = [0]*max_snapshots
+    mcs = [0]*max_snapshots
+    mc_devs = [0]*max_snapshots
+    fms = [0]*max_snapshots
+    fm_devs = [0]*max_snapshots
+    
+    for i in range(max_snapshots):
+        avg_sizes = []#np.zeros(n_simulations)
+        sizes_devs = []#np.zeros(n_simulations)
+        max_sizes = []#np.zeros(n_simulations, int)
+        mc_sizes = []#np.zeros(n_simulations, int)
+        free_mons = []#np.zeros(n_simulations, int)
+        max_index = -1
         for n in range(n_simulations):
             try:
-                n_sizes = np.array(cluster_sizes_data[n][i][cluster_type][0])
-            except KeyError:
+                n_sizes = np.array(data[n][2][i][cluster_type][0])
+            except IndexError:
                 continue
-            n_size_occurrences = np.array(cluster_sizes_data[n][i][cluster_type][1])
-            max_sizes[n] = n_sizes[-1]
+            avg_sizes.append(0.0)
+            sizes_devs.append(0.0)
+            max_sizes.append(0)
+            mc_sizes.append(0)
+            free_mons.append(0)
+            max_index += 1
+            n_size_occurrences = np.array(data[n][2][i][cluster_type][1])
+            max_sizes[max_index] = n_sizes[-1]
             if n_sizes[0] == 1: #if smallest size is 1 (if there are single monomers)
-                free_mons[n] = n_size_occurrences[0]
+                free_mons[max_index] = n_size_occurrences[0]
                 n_sizes = n_sizes[1:]
                 n_size_occurrences = n_size_occurrences[1:]
-            if max_sizes[n] > 1: # else it should be 0, which it is by initialisation
-                avg_sizes[n] = np.average(n_sizes, weights=n_size_occurrences)
-                sizes_devs[n] = sqrt(np.average((n_sizes-avg_sizes[n])**2, weights=n_size_occurrences))
-                mc_sizes[n] = n_sizes[np.argmax(n_size_occurrences)]
+            if max_sizes[max_index] > 1:
+                avg_sizes[max_index] = np.average(n_sizes, weights=n_size_occurrences)
+                sizes_devs[max_index] = sqrt(np.average((n_sizes-avg_sizes[max_index])**2, weights=n_size_occurrences))
+                mc_sizes[max_index] = n_sizes[np.argmax(n_size_occurrences)]
+        avg_sizes = np.array(avg_sizes)
+        sizes_devs = np.array(sizes_devs)
+        max_sizes = np.array(max_sizes)
+        mc_sizes = np.array(mc_sizes)
+        free_mons = np.array(free_mons)
         temp = np.sum(1. / sizes_devs**2)
         avgs[i] = np.sum(avg_sizes / sizes_devs**2) / temp
         avg_devs[i] = 1. / sqrt(temp)
@@ -89,26 +115,25 @@ def do_overall_stats():
     
     return (avgs, avg_devs, maxs, max_devs, mcs, mc_devs, fms, fm_devs)
 
-def generate_pdfs(last_n):
+def generate_pdfs(data, max_cluster_sizes, cluster_type, last_n):
     
+    n_simulations = len(data)
     aggregate_occurrences = [None]*last_n
     
-    offset = n_snapshots - last_n
+    offset = max_snapshots - last_n
     for i in range(last_n):
-        aggregate_occurrences[i] = [None]*max_cluster_size
-        for j in range(max_cluster_size):
-            aggregate_occurrences[i][j] = np.zeros(n_simulations)
+        aggregate_occurrences[i] = [None]*max_cluster_sizes[cluster_type]
+        for j in range(max_cluster_sizes[cluster_type]):
+            aggregate_occurrences[i][j] = []#np.zeros(n_simulations)
         for n in range(n_simulations):
             try:
-                data = cluster_sizes_data[n][offset+i][cluster_type]
-            except KeyError:
+                for size, occurrences in zip(*data[n][2][offset+i][cluster_type]):
+                    aggregate_occurrences[i][size-1].append(occurrences)
+            except IndexError:
                 continue
-            for size, occurrences in zip(*data):
-                aggregate_occurrences[i][size-1][n] = occurrences        
-                
     return aggregate_occurrences
 
-def plot_overall_stats(plot_data):
+def plot_overall_stats(plot_data, timesteps):
     
     #TODO make this a subplot of a figure...
     fig = plt.figure('Cluster type {} overall statistics ({})'.format(cluster_type, data_dir))
@@ -130,7 +155,9 @@ def plot_overall_stats(plot_data):
     
     return fig
 
-def plot_interactive_pdf(pdf_data):
+def plot_interactive_pdf(pdf_data, timesteps, max_cluster_size):
+    
+    max_snapshots = len(timesteps)
     
     distributions = [None]*len(pdf_data)
     for i in range(len(pdf_data)):
@@ -151,8 +178,8 @@ def plot_interactive_pdf(pdf_data):
     ax.set_ylabel('occurrences', rotation='vertical')
 
     timestep_slider_axes = fig.add_axes([0.35, 0.02, 0.32, 0.03])
-    timestep_slider = Slider(timestep_slider_axes, 'timestep', 0, n_snapshots-1,
-                            valinit=n_snapshots-1, valfmt="%d", valstep=1)
+    timestep_slider = Slider(timestep_slider_axes, 'timestep', 0, max_snapshots-1,
+                            valinit=max_snapshots-1, valfmt="%d", valstep=1)
     timestep_slider.valtext.set_text(timestep_slider.valfmt % timesteps[-1])
 
     def update_dist_plot(new_timestep_index):
@@ -169,7 +196,7 @@ def plot_interactive_pdf(pdf_data):
     
     return fig, timestep_slider
 
-def plot_aggregate_pdf(pdf_data):
+def plot_aggregate_pdf(pdf_data, max_cluster_size):
     
     pdf_data = [np.array([item for sublist in snapshot for item in sublist])
                 for snapshot in zip(*pdf_data)]
@@ -207,28 +234,22 @@ static cluster PDF averaged over the last N timesteps')
     args = parser.parse_args()
 
     data_dir = os.path.dirname(args.in_files[0])
-    box_size, timesteps, cluster_sizes_data, max_cluster_size = fetch_data(args.in_files)
-    n_snapshots = len(timesteps)
-    n_simulations = len(cluster_sizes_data)
-    
-    #this is a "hack", but based on a fair and strong assumption really, so I can skip exhaustive search...
-    cluster_types = set()
-    for sim_data in cluster_sizes_data:
-        cluster_types.update(sim_data[0].keys())
-        cluster_types.update(sim_data[n_snapshots/2].keys())
-        cluster_types.update(sim_data[-1].keys())        
+    data, max_cluster_sizes = fetch_data(args.in_files)
+    n_snapshots = [len(timesteps) for timesteps, _, _ in data]
+    max_snapshots = max(n_snapshots)
+    max_timesteps = data[n_snapshots.index(max_snapshots)][0]
     
     overall_figure = None
     pdf_figure = None
     widgets = []
-    for cluster_type in cluster_types:
+    for cluster_type in (0,1):
         
         if args.overall:
             if not overall_figure:
                 overall_figure = None #TODO create the figure with len(cluster_types) subplots
             
-            overall_stats = do_overall_stats()
-            overall_plot = plot_overall_stats(overall_stats)
+            overall_stats = do_overall_stats(data, cluster_type, max_snapshots)
+            overall_plot = plot_overall_stats(overall_stats, max_timesteps)
             
             #TODO put the "overall_plot" in the "overall_figure" in the right spot...
         
@@ -237,20 +258,21 @@ static cluster PDF averaged over the last N timesteps')
                 pdf_figure = None #TODO create the figure with len(cluster_types) subplots
             
             if args.pdf == 'i':
-                pdf_data = generate_pdfs(n_snapshots)
-                pdf_plot, slider = plot_interactive_pdf(pdf_data)
+                pdf_data = generate_pdfs(data, max_cluster_sizes, cluster_type, max_snapshots)
+                pdf_plot, slider = plot_interactive_pdf(pdf_data, max_timesteps,
+                                                        max_cluster_sizes[cluster_type])
                 widgets.append(slider)
             else:
                 try:
                     last_n = int(args.pdf)
-                    if last_n > n_snapshots:
+                    if last_n > max_snapshots:
                         raise Exception()
                 except:
                     print 'ERROR: nonsupported value ({}) for the "--pdf" option! (only integers smaller \
 than the number of snapshots, or "i" for interactive mode, accepted)'.format(args.pdf)
                     quit()
-                pdf_data = generate_pdfs(last_n)
-                pdf_plot = plot_aggregate_pdf(pdf_data)
+                pdf_data = generate_pdfs(data, max_cluster_sizes, cluster_type, last_n)
+                pdf_plot = plot_aggregate_pdf(pdf_data, max_cluster_sizes[cluster_type])
             
             #TODO put the "pdf_plot" in the "pdf_figure" in the right spot...
     

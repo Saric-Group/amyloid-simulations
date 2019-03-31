@@ -41,22 +41,24 @@ for n in range(data_len):
         labels.append(label)
         data.append([])
     
-    box_size, timesteps, raw_data = read_cluster_data(args.in_files[n])
-    volume = reduce(lambda x,y: x*y, box_size)
+    timesteps, box_sizes, cluster_data = read_cluster_data(args.in_files[n])
+    volumes = [reduce(lambda x,y: x*y, box_size) for box_size in box_sizes]
+    n_snapshots = len(timesteps)
     
-    analyse_from = len(raw_data)-avg_over
-    results = free_rods(raw_data[analyse_from:])
+    analyse_from = n_snapshots-avg_over
+    results = free_rods(cluster_data[analyse_from:])
     
-    temp_x = temp_y = 0.0
-    for free_monomers, total_monomers in results:
-        if temp_x == 0.0:
-            temp_x = total_monomers 
-        elif total_monomers != temp_x:
+    total_monomers = results[0][1]
+    c_x = c_y = 0.0
+    for i in range(analyse_from, n_snapshots):
+        if results[i][1] != total_monomers:
             raise Exception('Total number of monomers is not constant!') #??
-        temp_y += free_monomers
-    temp_y /= avg_over
+        c_y += concentration(results[i][0], volumes[i])
+        c_x += concentration(results[i][1], volumes[i])
+    c_x /= avg_over
+    c_y /= avg_over
 
-    data[-1].append((concentration(temp_x, volume),concentration(temp_y, volume)))
+    data[-1].append((c_x, c_y))
 
 n = len(labels)
 
