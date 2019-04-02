@@ -73,7 +73,7 @@ for in_file in args.in_files:
                 if cluster_size > biggest_cluster_size:
                     biggest_cluster_size = cluster_size
                     biggest_cluster_ID = cluster_ID
-            biggest_cluster_IDs.append(cluster_ID)
+            biggest_cluster_IDs.append(biggest_cluster_ID)
         adsorbed_rods = []
         for i in range(len(biggest_cluster_IDs)):
             adsorbed = []
