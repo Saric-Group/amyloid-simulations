@@ -393,11 +393,15 @@ else:
     py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
     py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 py_lmp.thermo(out_freq)
-py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_top_msd[4]",
+# output membrane MSD data (only in x & y directions)
+py_lmp.variable("top_msd", "equal", "c_mem_top_msd[1] + c_mem_top_msd[2]")
+py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "v_top_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_top.msd'))
-py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_bottom_msd[4]",
+py_lmp.variable("bottom_msd", "equal", "c_mem_bottom_msd[1] + c_mem_bottom_msd[2]")
+py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "v_bottom_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_bottom.msd'))
-py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "c_mem_full_msd[4]",
+py_lmp.variable("full_msd", "equal", "c_mem_full_msd[1] + c_mem_full_msd[2]")
+py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "v_full_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_full.msd'))
 # py_lmp.fix("nads_out", "all", "ave/time", 1, 1, out_freq, "v_nads",
 #            "file", os.path.join(output_folder, 'adsorbed.dat'))
