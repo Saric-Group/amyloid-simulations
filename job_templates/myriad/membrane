@@ -29,5 +29,5 @@ SEED=$(( 10#$JOB_ID % 900000000 ))
 /usr/bin/time --verbose python "$PROJECT_HOME"/programs/membrane.py "<cfg_file>" "<run_file>" --seed $SEED --silent <args>
 
 run_filename=`basename "<run_file>"`
-run_filename="${run_filename%%.*}"
+run_filename="${run_filename%.*}"
 python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/${run_filename}_${SEED}.dump" -c --type_offset 3 -m <aargs>
