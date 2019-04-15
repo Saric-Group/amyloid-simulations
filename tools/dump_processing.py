@@ -36,7 +36,7 @@ parser.add_argument('-n', '--every', type=int, default=1,
 
 args = parser.parse_args()
     
-model = rods.Model(args.config_file)
+model = rods.Rod_model(args.config_file)
     
 for in_file in args.in_files:
     
@@ -44,7 +44,7 @@ for in_file in args.in_files:
         raw_data = rods_tools.parse_dump_file(in_file)
         cluster_output_path = os.path.splitext(in_file)[0]+"_cluster_data"
         timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
-            raw_data, args.every, model, args.type_offset)
+            raw_data, args.every, model, args.type_offset, 'rod_cluster')
         rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
                                                cluster_output_path)
     
@@ -61,7 +61,7 @@ for in_file in args.in_files:
         adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
         try:
             timesteps, box_sizes, mem_cluster_data = rods_tools.clusters.get_cluster_data(
-                raw_data, args.every, model, args.type_offset, compute_ID='mem_cluster')
+                raw_data, args.every, model, args.type_offset, 'mem_cluster')
         except KeyError:
             raise Exception('No membrane data to analyse! (invalid -m option)')
         biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed

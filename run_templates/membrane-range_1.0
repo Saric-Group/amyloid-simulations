@@ -17,9 +17,9 @@ sim_length = 10000000
 mem_Nx = 30
 mem_Ny = 30
 mem_sigma = 1.0
-mem_wc = 1.4*mem_sigma
+mem_wc = <mem_wc>*mem_sigma
 mem_eps = <mem_eps>
 
 # for membrane.py (protein-membrane interaction)
 mem_int_eps = <int_eps>
-mem_int_range = 0.3*mem_sigma
+mem_int_range = 0.5*mem_sigma

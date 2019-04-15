@@ -74,12 +74,12 @@ dump_path = os.path.join(output_folder, dump_filename)
 log_filename = '{:d}.lammps'.format(seed)
 log_path = os.path.join(output_folder, log_filename)
 
-run_args = rods.model.Params()
+run_args = rods.rod_model.Params()
 execfile(args.run_file, {'__builtins__': None}, vars(run_args))
 
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
-model = rods.Model(args.cfg_file)
+model = rods.Rod_model(args.cfg_file)
 simulation = rods.Simulation(py_lmp, model, seed, output_folder,
                              clusters=run_args.cluster_cutoff)
 

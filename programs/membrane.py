@@ -74,19 +74,19 @@ class Membrane(object):
     
     top_layer_group = 'mem_top_layer'
     bottom_layer_group = 'mem_bottom_layer'
-    membrane_group = 'membrane'
+    main_group = 'membrane'
     
-    def __init__(self, Nx, Ny, zmax, above, below, sigma, wc, eps,
+    def __init__(self, sigma, wc, eps, Nx, Ny, zmax, above, below,
                  bead_mass=1.0, type_offset=0, bond_offset=0, angle_offset=0):
         '''
+        sigma: the characteristic length of the membrane particles (diameter of beads)
+        wc: the tail-tail interaction (cosine/squared) range
+        eps: the depth (strength) of the interaction between lipid particles.
         Nx: length of the membrane in lipids
         Ny: width of the membrane in lipids
         zmax: the upper bound on the membrane area (including "above" space)
         above: the empty space buffer below zmax and the top of the upper layer
         below: the empty space buffer below the end of the bottom layer
-        sigma: the characteristic length of the membrane particles (diameter of beads)
-        wc: the tail-tail interaction (cosine/squared) range
-        eps: the depth (strength) of the interaction between lipid particles.
         '''
         self.Nx = Nx
         self.Ny = Ny
@@ -97,9 +97,6 @@ class Membrane(object):
         self.wc = wc
         self.eps = eps
         self.bead_mass = bead_mass
-        self.type_offset = type_offset
-        self.bond_offset = bond_offset
-        self.angle_offset = angle_offset
         
         self.side_length = 1.1*sigma
         self.xmin = -Nx*self.side_length/2
@@ -108,6 +105,10 @@ class Membrane(object):
         self.ymax = Ny*self.side_length/2
         self.zmin = zmax - above*sigma - 6*self.side_length - below*sigma
         self.zmid = zmax - above*sigma - 3*self.side_length
+        
+        self.type_offset = type_offset
+        self.bond_offset = bond_offset
+        self.angle_offset = angle_offset
     
         self.bead_types = [i + type_offset for i in (1,2,3)]
         self.head_type = self.bead_types[0]
@@ -122,38 +123,6 @@ class Membrane(object):
         self.bond_id = 0
         self.angles = []
         self.angle_id = 0
-    
-    def lammps_setup(self, py_lmp, angle_coeff=5.0, fene_coeff=30.0, full=False):
-        '''
-        Sets up the LAMMPS parameters relevant for membrane simulation, i.e.
-            - harmonic angle bond in the lipid (strength 1/2 * 10 = 5)
-            - fene bond between beads of the lipid (30.0, r = 1.5*R)
-            - "cosine/squared" pair style coefficients between membrane particles
-        
-        full: if True also sets up atom, bond and pair styles (minimum necessary for
-        simulating the membrane)
-        '''
-        self.py_lmp = py_lmp
-        if full:
-            py_lmp.atom_style("molecular")
-            py_lmp.pair_style('cosine/squared', 3*self.sigma)
-            py_lmp.bond_style('fene')
-        py_lmp.angle_style("harmonic")
-        py_lmp.angle_coeff(self.angle_type, angle_coeff, 180)
-        py_lmp.bond_coeff(self.bond_type, "fene", fene_coeff, 1.5*self.sigma, self.eps, self.sigma)
-        #py_lmp.special_bonds("lj", 0.0, 1.0, 1.0)
-        
-        lj_factor = pow(2,1./6)
-        # head-head & head-tail interaction
-        for bead_type in self.bead_types:
-            py_lmp.pair_coeff(self.head_type, bead_type, "cosine/squared", self.eps,
-                              0.95*self.sigma*lj_factor, 0.95*self.sigma*lj_factor, "wca")
-        # tail-tail interaction
-        for i in range(len(self.tail_types)):
-            for j in range(i, len(self.tail_types)):
-                py_lmp.pair_coeff(self.tail_types[i], self.tail_types[j], "cosine/squared",
-                                  self.eps, 1.0*self.sigma*lj_factor,
-                                  (1.0*lj_factor + self.wc)*self.sigma, "wca")
     
     def _add_lipid(self, x, y, reverse=False):
         self.mol_id += 1
@@ -220,7 +189,7 @@ class Membrane(object):
             dat_file.write("\n\nAngles\n\n")
             dat_file.write('\n'.join(self.angles))
             
-    def create_membrane(self, seed, append=True):
+    def create_membrane(self, py_lmp, seed, append=True):
         '''
         Creates the membrane using the "read_data" command. If not already done, the
         membrane data for this object will be generated.
@@ -230,17 +199,12 @@ class Membrane(object):
         append: if False this will create the simulation box through the "read_data",
         otherwise it will just add the membrane particles in the already existent box.
         '''
-        try:
-            isinstance(py_lmp, object)
-        except NameError:
-            raise Exception('"Membrane.create_membrane" can only be called after "Membrane.lammps_setup"!')
-        
         if self.atom_id == 0:
             self.generate_data()
         temp_dat_file = str(seed)+'-temp-membrane.dat'
         self.output_data(temp_dat_file)
         
-        all_atom_mol_ids = self.py_lmp.lmp.gather_atoms_concat("molecule", 0, 1)
+        all_atom_mol_ids = py_lmp.lmp.gather_atoms_concat("molecule", 0, 1)
         if len(all_atom_mol_ids) > 0:
             mol_offset = max(all_atom_mol_ids)
         else:
@@ -249,19 +213,19 @@ class Membrane(object):
         read_data_args = []
         if append:
             read_data_args.append("add append")
-            read_data_args.append("offset {:d} {:d} {:d} 0 0".format(
-                self.type_offset, self.bond_offset, self.angle_offset))
-        self.py_lmp.read_data('"'+temp_dat_file+'"', ' '.join(read_data_args))
+#             read_data_args.append("offset {:d} {:d} {:d} 0 0".format(
+#                 self.type_offset, self.bond_offset, self.angle_offset))
+        py_lmp.read_data('"'+temp_dat_file+'"', ' '.join(read_data_args))
         
-        self.py_lmp.group(Membrane.top_layer_group, "molecule",
+        py_lmp.group(Membrane.top_layer_group, "molecule",
                      "{:d}:{:d}:2".format(mol_offset+1, mol_offset+membrane.mol_id))
-        self.py_lmp.group(Membrane.bottom_layer_group, "molecule",
+        py_lmp.group(Membrane.bottom_layer_group, "molecule",
                      "{:d}:{:d}:2".format(mol_offset+2, mol_offset+membrane.mol_id))
-        self.py_lmp.group(Membrane.membrane_group, "type", *membrane.bead_types)
+        py_lmp.group(Membrane.main_group, "type", *membrane.bead_types)
         
         os.remove(temp_dat_file)
 
-#========================================================================================
+# =======================================================================================
 
 #from mpi4py import MPI #TODO make MPI work...
 from lammps import PyLammps
@@ -279,151 +243,228 @@ dump_path = os.path.join(output_folder, dump_filename)
 log_filename = '{:d}.lammps'.format(seed)
 log_path = os.path.join(output_folder, log_filename)
 
-run_args = rods.model.Params()
+run_args = rods.rod_model.Params()
 execfile(args.run_file, {'__builtins__': None}, vars(run_args))
 
+out_freq = args.output_freq if args.output_freq != None else run_args.run_length
+
+model = rods.Rod_model(args.cfg_file)
+model.generate_mol_files(output_folder)
+type_offset = max(model.all_bead_types)
+bond_offset = 1
+membrane = Membrane(run_args.mem_sigma, run_args.mem_wc, run_args.mem_eps, 
+                    run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0,
+                    type_offset=type_offset, bond_offset=bond_offset)
+max_type = max(membrane.bead_types)
+zmax = run_args.num_cells*run_args.cell_size
+
+# ===== LAMMPS setup ====================================================================
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
-model = rods.Model(args.cfg_file)
-simulation = rods.Simulation(py_lmp, model, seed, output_folder,
-                             clusters=run_args.cluster_cutoff)
-membrane = Membrane(run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0,
-                    run_args.mem_sigma, run_args.mem_wc, run_args.mem_eps)
-#membrane.generate()
-#mem_dat_path = os.path.join(output_folder, '{:d}_membrane.dat'.format(seed))
-#membrane.output(mem_dat_path)
-
-# LAMMPS setup
-py_lmp.units("lj")
+py_lmp.units('lj')
 py_lmp.dimension(3)
-py_lmp.boundary("p p f")
-py_lmp.lattice("sc", 1/(run_args.cell_size**3))
+py_lmp.boundary('p p f')
+py_lmp.atom_style('molecular')
+py_lmp.angle_style('harmonic')
+py_lmp.bond_style('hybrid fene zero')
+py_lmp.pair_style('cosine/squared', model.global_cutoff)
 
-# setup for rods (+ everything the simulations need for the membrane)
-x_cells = run_args.mem_Nx*membrane.sigma/run_args.cell_size
-y_cells = run_args.mem_Nx*membrane.sigma/run_args.cell_size
-z_cells = run_args.num_cells
-py_lmp.region("rod_box", "block", -x_cells/2, x_cells/2,
-                                  -y_cells/2, y_cells/2,
-                                           0, z_cells)
-simulation.setup("rod_box", atom_style="molecular", type_offset=max(membrane.bead_types),
-                 extra_pair_styles=[('lj/cut', model.global_cutoff),
-                                    ('cosine/squared', model.global_cutoff)],
-                 overlay=False,
-                 bond_offset=membrane.bond_type, extra_bond_styles=['fene'],
-                 everything_else = ["extra/bond/per/atom", 2,
-                 "angle/types", membrane.angle_type, "extra/angle/per/atom", 1,
-                 "extra/special/per/atom", 3])
-membrane.lammps_setup(py_lmp)
+py_lmp.region('box', 'block',
+              membrane.xmin, membrane.xmax,
+              membrane.ymin, membrane.ymax,
+              0.0, zmax)
+py_lmp.create_box(max_type, 'box',
+                  'bond/types', 2, 'extra/bond/per/atom', 2,
+                  'angle/types', 1, 'extra/angle/per/atom', 1,
+                  'extra/special/per/atom', 6)
 
-# membrane-rod interaction...
+zwalls_fix = 'zwalls'
+py_lmp.fix(zwalls_fix, 'all', 'wall/lj126',
+           'zlo EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6),
+           'zhi EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6))
+
+for state_name in model.rod_states:
+    py_lmp.molecule(state_name, '"'+os.path.join(output_folder, state_name+'.mol')+'"')
+
+all_type_range = '{:d}*{:d}'.format(1, max_type)
+py_lmp.mass(all_type_range, model.rod_mass*10**-10)
+for bead_type in model.body_bead_types:
+    py_lmp.mass(bead_type, model.rod_mass/model.num_beads[0])
+for bead_type in membrane.bead_types:
+    py_lmp.mass(bead_type, membrane.bead_mass)
+
+py_lmp.angle_coeff(membrane.angle_type, 5.0, 180)
+py_lmp.bond_coeff(1, 'zero')
+py_lmp.bond_coeff(membrane.bond_type, 'fene',
+                  30.0, 1.5*membrane.sigma, membrane.eps, membrane.sigma)
+py_lmp.special_bonds('lj', 0.0, 1.0, 1.0) #not really necessary because of "neigh_modify exclude molecule/intra"
+
+# set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
+py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, model.rod_radius, model.rod_radius, "wca")
+lj_factor = pow(2,1./6)
+max_range = 0.0
+# protein-protein interaction
+for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
+    sigma = 0
+    for bead_type in bead_types:
+        if bead_type in model.body_bead_types:
+            sigma += model.rod_radius
+        else:
+            for k in range(model.num_patches):
+                if bead_type in model.patch_bead_types[k]:
+                    sigma += model.patch_bead_radii[k]
+                    break
+    type_1 = bead_types[0]
+    type_2 = bead_types[1]
+    int_type = model.int_types[int_type_key]
+    max_range = int_type[1] if int_type[1] > max_range else max_range
+    py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], "wca")
+    
+# head-head & head-tail inter-lipid interaction
+for bead_type in membrane.bead_types:
+    py_lmp.pair_coeff(membrane.head_type, bead_type, membrane.eps,
+                      0.95*membrane.sigma*lj_factor,
+                      0.95*membrane.sigma*lj_factor, 'wca')
+# tail-tail inter-lipid interaction
+for i in range(len(membrane.tail_types)):
+    for j in range(i, len(membrane.tail_types)):
+        py_lmp.pair_coeff(membrane.tail_types[i], membrane.tail_types[j], membrane.eps,
+                          1.0*membrane.sigma*lj_factor,
+                          (1.0*lj_factor + membrane.wc)*membrane.sigma, 'wca')
+
+# lipid-protein interaction
 sol_lipid_eps = run_args.mem_int_eps
-sol_lipid_contact = 0.5*membrane.sigma + model.rod_radius 
+sol_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.rod_radius 
 sol_lipid_cutoff = sol_lipid_contact + run_args.mem_int_range
-sol_body_type = model.state_structures[0][0][0] + simulation.type_offset
-sol_tip_type = model.state_structures[0][0][-1] + simulation.type_offset
+sol_body_types = filter(lambda t: t not in model.active_bead_types,
+                       model.state_bead_types[0])
+sol_tip_types = filter(lambda t: t in model.active_bead_types,
+                      model.state_bead_types[0])
 # lipid-protein volume-exclusion
-for mem_bead_type in membrane.bead_types:
-    py_lmp.pair_coeff(mem_bead_type, sol_body_type, "lj/cut", sol_lipid_eps,
-                      sol_lipid_contact, sol_lipid_contact)
+for sol_body_type in sol_body_types:
+    for mem_bead_type in membrane.bead_types:
+        py_lmp.pair_coeff(sol_body_type, mem_bead_type, sol_lipid_eps,
+                          sol_lipid_contact, sol_lipid_contact, 'wca')
 # lipid-protein tip interaction
 int_factors = (1.0, 0.5, 0.25)
-for bead_type, k in zip(membrane.bead_types, int_factors):
-    py_lmp.pair_coeff(bead_type, sol_tip_type, "lj/cut", k*sol_lipid_eps,
-                      sol_lipid_contact, sol_lipid_cutoff)
+for sol_tip_type in sol_tip_types:
+    for mem_bead_type, k in zip(membrane.bead_types, int_factors):
+        py_lmp.pair_coeff(sol_tip_type, mem_bead_type, k*sol_lipid_eps,
+                          sol_lipid_contact, sol_lipid_cutoff, 'wca')
+    
+# ===== RODS ============================================================================
+# GROUPS & COMPUTES
+rods_group = 'rods'
+cluster_group = 'active_rod_beads'
+py_lmp.group(rods_group, 'empty')
+py_lmp.variable('active', 'atom', '"' + 
+                ' || '.join(['(type == {:d})'.format(t)
+                             for t in model.active_bead_types])
+                + '"')
+py_lmp.group(cluster_group, 'dynamic', rods_group,
+             'var', 'active', 'every', out_freq)
+cluster_compute = rods.Simulation.cluster_compute
+py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', 2*model.rod_radius + max_range)
 
-# create membrane
-membrane.create_membrane(seed, append=True)
-# create rods
-py_lmp.region("rod_init", "block",
-              membrane.xmin, membrane.xmin + (x_cells-0.01)*run_args.cell_size,
-              membrane.ymin, membrane.ymin + (y_cells-0.01)*run_args.cell_size,
-              membrane.zmax, z_cells*run_args.cell_size, "units box")
-simulation.create_rods(region = "rod_init")
+# FIXES & DYNAMICS
+thermo_fix = 'thermostat'
+py_lmp.fix(thermo_fix, 'all', 'langevin', run_args.temp, run_args.temp, run_args.damp, seed)#, "zero yes")
+rod_dyn_fix = 'rod_dynamics'
+py_lmp.fix(rod_dyn_fix, rods_group, 'rigid/nve/small', 'molecule', 'mol', model.rod_states[0])
+py_lmp.neigh_modify("exclude", "molecule/intra", rods_group)
+#py_lmp.fix_modify(rod_dyn_fix, 'dynamic/dof yes') 
+py_lmp.compute_modify("thermo_temp", "dynamic/dof yes")
 
-# a group and a compute that flag adsorbed proteins (their active beads)
-py_lmp.group("mem+active", "union", simulation.active_beads_group, membrane.membrane_group)
-py_lmp.compute("mem_cluster", "mem+active", "aggregate/atom", 0.9*sol_lipid_cutoff)
-# this below counts adsorbed proteins natively (some non-watertight assumptions, like cluster ID)
-# from itertools import groupby
-# # this is A (type, occurrences) pair for AN active body bead in the base (0-index) state
-# an_active_sol_body_bead = [(body_bead_type, len(list(group)))
-#                            for body_bead_type, group in groupby(model.state_structures[0][0])
-#                            if body_bead_type in model.active_bead_types][0]
-# py_lmp.variable("adsorbed", "atom", '"((c_mem_ads == 1) && (type == {:d}))"'.format(
-#                     an_active_sol_body_bead[0] + simulation.type_offset))
-# py_lmp.group("adsorbed", "dynamic", simulation.rods_group, "var", "adsorbed", "every", out_freq)
-# py_lmp.variable("nads", "equal", "count(adsorbed)/{:d}".format(an_active_sol_body_bead[1]))
+py_lmp.region('gcmc_init', 'block',
+              membrane.xmin + model.rod_length/2, membrane.xmax - model.rod_length/2,
+              membrane.ymin + model.rod_length/2, membrane.ymax - model.rod_length/2,
+              0.0 + model.rod_length/2, zmax - model.rod_length/2)
+rod_gcmc_fix = 'rod_gcmc'
+py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
+           0, seed, run_args.temp, run_args.mu, 0.0,
+           'region', 'gcmc_init', 'mol', model.rod_states[0],
+           'rigid', rod_dyn_fix, 'tfac_insert', 100)
 
-# MSD computes
-py_lmp.compute("mem_top_msd", membrane.top_layer_group, "msd")
-py_lmp.compute("mem_bottom_msd", membrane.bottom_layer_group, "msd")
-py_lmp.compute("mem_full_msd", membrane.membrane_group, "msd")
+# TEST DUMP...
+py_lmp.thermo_style('custom', 'step atoms', 'pe temp')
+py_lmp.thermo(out_freq)
+py_lmp.dump('test_dump', 'all', 'custom', out_freq, dump_path+'_test',
+            'id x y z type mol c_'+cluster_compute)
+py_lmp.dump_modify('test_dump', 'sort id')
 
-# DYNAMICS
-# -> all particles on the same temparature (langevin thermostat)
-py_lmp.fix("thermostat", "all", "langevin",
-           run_args.temp, run_args.temp, run_args.damp, seed)#, "zero yes")
-# -> nve for the rods (has to come before membrane nph - WHY?!?!)
-simulation.set_rod_dynamics("nve")
-# -> nph for the membrane particles
-# --> with intra-lipid pair-interaction exclusion (bonds take care of everything)
-py_lmp.fix("mem_dyn", "membrane", "nph", "x 0.0 0.0 10", "y 0.0 0.0 10", "couple xy", "dilate membrane")
-py_lmp.neigh_modify("exclude", "molecule/intra", "membrane")
-# -> reflecting soft walls in z dimension (so no particles are lost)
-py_lmp.fix("zwalls", "all", "wall/lj126",
-           "zlo EDGE", membrane.eps, membrane.sigma, membrane.sigma*pow(2,1./6),
-           "zhi EDGE", membrane.eps, membrane.sigma, membrane.sigma*pow(2,1./6))
+# GENERATING INITIAL CONFIGURATION
+py_lmp.neigh_modify('every', 1, 'delay', 1)
+py_lmp.timestep(run_args.dt)
+py_lmp.command('run 2000')
+py_lmp.unfix(rod_gcmc_fix)
+py_lmp.reset_timestep(0)
 
-py_lmp.neigh_modify("every 1 delay 1")
+# ===== MEMBRANE ========================================================================
+
+# create membrane (box update, create membrane & groups, ...)
+membrane.create_membrane(py_lmp, seed, append=True)
+
+py_lmp.fix(zwalls_fix, 'all', 'wall/lj126',
+           'zlo EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6),
+           'zhi EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6))
+    
+# GROUPS & COMPUTES
+adsorbed_group = 'mem_active'
+py_lmp.variable('mem_active', 'atom', '"' + 
+                ' || '.join(['(type == {:d})'.format(t)
+                             for t in list(model.active_bead_types) + membrane.bead_types])
+                + '"')
+py_lmp.group(adsorbed_group, 'dynamic', 'all',
+             'var', 'mem_active', 'every', out_freq)
+adsorbed_compute = 'mem_cluster'
+py_lmp.compute(adsorbed_compute, adsorbed_group, 'aggregate/atom', sol_lipid_cutoff)
+top_msd_compute = 'mem_top_msd'
+py_lmp.compute(top_msd_compute, membrane.top_layer_group, 'msd')
+bottom_msd_compute = 'mem_bottom_msd'
+py_lmp.compute(bottom_msd_compute, membrane.bottom_layer_group, 'msd')
+full_msd_compute = 'mem_full_msd'
+py_lmp.compute(full_msd_compute, membrane.main_group, 'msd')
+
+# FIXES & DYNAMICS
+mem_dyn_fix = 'mem_dynamics'
+py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
+           'x 0.0 0.0 10', 'y 0.0 0.0 10', 'couple xy',
+           'dilate', membrane.main_group)
+py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
+
+# MEMBRANE EQUILIBRATION
+py_lmp.command('run 1000')
+py_lmp.reset_timestep(0)
+
+# ===== FINAL ===========================================================================
+py_lmp.variable('temp_x', 'equal', '"xhi - {:f}"'.format(model.rod_length/2))
+py_lmp.variable('temp_y', 'equal', '"yhi - {:f}"'.format(model.rod_length/2))
+py_lmp.region('gcmc_box', 'block',
+              '-${temp_x}', '${temp_x}',
+              '-${temp_y}', '${temp_y}',
+              0.0 + 2*model.rod_length, zmax - model.rod_length/2)
+py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 1000, 10, 0,
+           0, seed, run_args.temp, run_args.mu, 0.0,
+           'region', 'gcmc_box', 'mol', model.rod_states[0],
+           'rigid', rod_dyn_fix, 'tfac_insert', 100)
 
 # OUTPUT
-out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 py_lmp.variable("area", "equal", "lx*ly")
 py_lmp.thermo_style("custom", "step atoms", "pe temp", "press lx ly v_area")
-dump_elems = "id x y z type mol c_mem_cluster"
-if run_args.cluster_cutoff > 0.0:
-    dump_elems += " c_"+simulation.cluster_compute
-if out_freq == args.output_freq:
-    py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
-    py_lmp.dump_modify("dump_cmd", "sort id")
-else:
-    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(
-        run_args.sim_length+1, run_args.run_length))
-    py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
-    py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
 py_lmp.thermo(out_freq)
-# output membrane MSD data (only in x & y directions)
-py_lmp.variable("top_msd", "equal", '"c_mem_top_msd[1] + c_mem_top_msd[2]"')
+dump_elems = 'id x y z type mol c_{:s} c_{:s}'.format(cluster_compute, adsorbed_compute)
+py_lmp.dump("dump_cmd", "all", "custom", out_freq, dump_path, dump_elems)
+py_lmp.dump_modify("dump_cmd", "sort id")
+# MSD data (only in x & y directions)
+py_lmp.variable("top_msd", "equal", '"c_{0}[1] + c_{0}[2]"'.format(top_msd_compute))
 py_lmp.fix("mem_top_msd", "all", "ave/time", 1, 1, out_freq, "v_top_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_top.msd'))
-py_lmp.variable("bottom_msd", "equal", '"c_mem_bottom_msd[1] + c_mem_bottom_msd[2]"')
+py_lmp.variable("bottom_msd", "equal", '"c_{0}[1] + c_{0}[2]"'.format(bottom_msd_compute))
 py_lmp.fix("mem_bottom_msd", "all", "ave/time", 1, 1, out_freq, "v_bottom_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_bottom.msd'))
-py_lmp.variable("full_msd", "equal", '"c_mem_full_msd[1] + c_mem_full_msd[2]"')
+py_lmp.variable("full_msd", "equal", '"c_{0}[1] + c_{0}[2]"'.format(full_msd_compute))
 py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "v_full_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_full.msd'))
-# py_lmp.fix("nads_out", "all", "ave/time", 1, 1, out_freq, "v_nads",
-#            "file", os.path.join(output_folder, 'adsorbed.dat'))
 
 # RUN...
-mc_moves_per_run = 0
-if model.num_states > 1:
-    mc_moves_per_run = int(run_args.mc_moves * simulation.rods_count())
-    
-py_lmp.timestep(run_args.dt)
-
-if mc_moves_per_run == 0:
-    py_lmp.command('run {:d}'.format(run_args.sim_length))
-else:
-    for i in range(int(run_args.sim_length/run_args.run_length)-1):   
-        py_lmp.command('run {:d} post no'.format(run_args.run_length))
-        success = simulation.state_change_MC(mc_moves_per_run)
-        if not args.silent:
-            base_count = simulation.state_count(0)
-            beta_count = simulation.state_count(1)
-            print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
-                    (i+1)*run_args.run_length, run_args.sim_length, beta_count, base_count, 
-                    float(beta_count)/base_count, float(success)/mc_moves_per_run)
-            
-    py_lmp.command('run {:d} post no'.format(run_args.run_length))
+py_lmp.command('run {:d}'.format(run_args.sim_length))
