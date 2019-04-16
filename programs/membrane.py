@@ -256,7 +256,6 @@ membrane = Membrane(run_args.mem_sigma, run_args.mem_wc, run_args.mem_eps,
                     run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0,
                     type_offset=type_offset, bond_offset=bond_offset)
 max_type = max(membrane.bead_types)
-zmax = run_args.num_cells*run_args.cell_size
 
 # ===== LAMMPS setup ====================================================================
 py_lmp = PyLammps(cmdargs=['-screen','none'])
@@ -272,7 +271,7 @@ py_lmp.pair_style('cosine/squared', model.global_cutoff)
 py_lmp.region('box', 'block',
               membrane.xmin, membrane.xmax,
               membrane.ymin, membrane.ymax,
-              0.0, zmax)
+              0.0, run_args.Lz)
 py_lmp.create_box(max_type, 'box',
                   'bond/types', 2, 'extra/bond/per/atom', 2,
                   'angle/types', 1, 'extra/angle/per/atom', 1,
@@ -378,7 +377,7 @@ py_lmp.compute_modify("thermo_temp", "dynamic/dof yes")
 py_lmp.region('gcmc_init', 'block',
               membrane.xmin + model.rod_length/2, membrane.xmax - model.rod_length/2,
               membrane.ymin + model.rod_length/2, membrane.ymax - model.rod_length/2,
-              0.0 + model.rod_length/2, zmax - model.rod_length/2)
+              0.0 + model.rod_length/2, run_args.Lz - model.rod_length/2)
 rod_gcmc_fix = 'rod_gcmc'
 py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
@@ -442,7 +441,7 @@ py_lmp.variable('temp_y', 'equal', '"yhi - {:f}"'.format(model.rod_length/2))
 py_lmp.region('gcmc_box', 'block',
               '-${temp_x}', '${temp_x}',
               '-${temp_y}', '${temp_y}',
-              0.0 + 2*model.rod_length, zmax - model.rod_length/2)
+              0.0 + 2*model.rod_length, run_args.Lz - model.rod_length/2)
 py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 1000, 10, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_box', 'mol', model.rod_states[0],
