@@ -385,11 +385,11 @@ py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
            'rigid', rod_dyn_fix, 'tfac_insert', 100)
 
 # TEST DUMP...
-py_lmp.thermo_style('custom', 'step atoms', 'pe temp')
-py_lmp.thermo(out_freq)
-py_lmp.dump('test_dump', 'all', 'custom', out_freq, dump_path+'_test',
-            'id x y z type mol c_'+cluster_compute)
-py_lmp.dump_modify('test_dump', 'sort id')
+# py_lmp.thermo_style('custom', 'step atoms', 'pe temp')
+# py_lmp.thermo(out_freq)
+# py_lmp.dump('test_dump', 'all', 'custom', out_freq, dump_path+'_init',
+#             'id x y z type mol c_'+cluster_compute)
+# py_lmp.dump_modify('test_dump', 'sort id')
 
 # GENERATING INITIAL CONFIGURATION
 py_lmp.neigh_modify('every', 1, 'delay', 1)
