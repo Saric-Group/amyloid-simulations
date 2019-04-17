@@ -301,7 +301,6 @@ py_lmp.special_bonds('lj', 0.0, 1.0, 1.0) #not really necessary because of "neig
 # set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
 py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, model.rod_radius, model.rod_radius, "wca")
 lj_factor = pow(2,1./6)
-max_range = 0.0
 # protein-protein interaction
 for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
     sigma = 0
@@ -316,7 +315,6 @@ for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
     type_1 = bead_types[0]
     type_2 = bead_types[1]
     int_type = model.int_types[int_type_key]
-    max_range = int_type[1] if int_type[1] > max_range else max_range
     py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], "wca")
     
 # head-head & head-tail inter-lipid interaction
@@ -362,8 +360,8 @@ py_lmp.variable('active', 'atom', '"' +
                 + '"')
 py_lmp.group(cluster_group, 'dynamic', rods_group,
              'var', 'active', 'every', out_freq)
-cluster_compute = rods.Simulation.cluster_compute
-py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', 2*model.rod_radius + max_range)
+cluster_compute = "rod_cluster"
+py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
 
 # FIXES & DYNAMICS
 thermo_fix = 'thermostat'

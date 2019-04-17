@@ -43,8 +43,11 @@ for in_file in args.in_files:
     if args.cluster_data:
         raw_data = rods_tools.parse_dump_file(in_file)
         cluster_output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-        timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
-            raw_data, args.every, model, args.type_offset, 'rod_cluster')
+        try:
+            timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
+                raw_data, args.every, model, args.type_offset, 'rod_cluster')
+        except KeyError:
+            raise Exception('No cluster data to analyse! (invalid -c option)')
         rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
                                                cluster_output_path)
     

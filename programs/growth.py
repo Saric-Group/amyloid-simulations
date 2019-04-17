@@ -77,11 +77,12 @@ log_path = os.path.join(output_folder, log_filename)
 run_args = rods.rod_model.Params()
 execfile(args.run_file, {'__builtins__': None}, vars(run_args))
 
+out_freq = args.output_freq if args.output_freq != None else run_args.run_length
+
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
 model = rods.Rod_model(args.cfg_file)
-simulation = rods.Simulation(py_lmp, model, seed, output_folder,
-                             clusters=run_args.cluster_cutoff)
+simulation = rods.Simulation(py_lmp, model, seed, output_folder)
 
 py_lmp.units("lj")
 py_lmp.dimension(3)
@@ -148,20 +149,25 @@ simulation.set_rod_dynamics("nve")
 
 py_lmp.neigh_modify("every 1 delay 1")
 
+# GROUPS & COMPUTES
+if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
+    cluster_group = 'active_rod_beads'
+    py_lmp.variable('active', 'atom', '"' + 
+                    ' || '.join(['(type == {:d})'.format(t)
+                                 for t in model.active_bead_types])
+                    + '"')
+    py_lmp.group(cluster_group, 'dynamic', simulation.rods_group,
+                 'var', 'active', 'every', out_freq)
+    cluster_compute = "rod_cluster"
+    py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
+
 # OUTPUT
-out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 py_lmp.thermo_style("custom", "step atoms", "pe temp")
 dump_elems = "id x y z type mol"
-if run_args.cluster_cutoff > 0.0:
-    dump_elems += " c_"+simulation.cluster_compute
-if out_freq == args.output_freq:
-    py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
-    py_lmp.dump_modify("dump_cmd", "sort id")
-else:
-    py_lmp.variable("out_timesteps", "equal", "stride(1,{:d},{:d})".format(
-        run_args.sim_length+1, run_args.run_length))
-    py_lmp.dump("dump_cmd", "all", "custom", 1, dump_path, dump_elems)
-    py_lmp.dump_modify("dump_cmd", "every v_out_timesteps", "sort id")
+if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
+    dump_elems += " c_"+cluster_compute
+py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
+py_lmp.dump_modify("dump_cmd", "sort id")
 py_lmp.thermo(out_freq)
 
 # RUN...
@@ -174,8 +180,9 @@ py_lmp.timestep(run_args.dt)
 if mc_moves_per_run == 0:
     py_lmp.command('run {:d}'.format(run_args.sim_length))
 else:
-    for i in range(int(run_args.sim_length/run_args.run_length)-1):   
-        py_lmp.command('run {:d} post no'.format(run_args.run_length))
+    py_lmp.command('run {:d} post no'.format(run_args.run_length-1)) #so output happens after state changes
+    remaining = run_args.sim_length - run_args.run_length + 1
+    for i in range(run_args.sim_length / run_args.run_length):
         success = simulation.state_change_MC(mc_moves_per_run)
         if not args.silent:
             base_count = simulation.state_count(0)
@@ -183,5 +190,9 @@ else:
             print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
                     (i+1)*run_args.run_length, run_args.sim_length, beta_count, base_count, 
                     float(beta_count)/base_count, float(success)/mc_moves_per_run)
-            
-    py_lmp.command('run {:d} post no'.format(run_args.run_length))
+        
+        if remaining / run_args.run_length > 0:
+            py_lmp.command('run {:d} post no'.format(run_args.run_length))
+            remaining -= run_args.run_length
+        else:
+            py_lmp.command('run {:d} post no'.format(remaining))
