@@ -424,13 +424,14 @@ py_lmp.compute(full_msd_compute, membrane.main_group, 'msd')
 
 # FIXES & DYNAMICS
 mem_dyn_fix = 'mem_dynamics'
+press_eq_t = 1000*run_args.dt
 py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
-           'x 0.0 0.0 10', 'y 0.0 0.0 10', 'couple xy',
+           'x 0.0 0.0', press_eq_t, 'y 0.0 0.0', press_eq_t, 'couple xy',
            'dilate', 'all')
 py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
 
 # MEMBRANE EQUILIBRATION
-py_lmp.command('run 1000')
+py_lmp.command('run 2000') #2xpress_eq_t, for good measure
 py_lmp.reset_timestep(0)
 
 # ===== FINAL ===========================================================================
