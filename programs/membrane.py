@@ -426,7 +426,7 @@ py_lmp.compute(full_msd_compute, membrane.main_group, 'msd')
 mem_dyn_fix = 'mem_dynamics'
 py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
            'x 0.0 0.0 10', 'y 0.0 0.0 10', 'couple xy',
-           'dilate', membrane.main_group)
+           'dilate', 'all')
 py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
 
 # MEMBRANE EQUILIBRATION
