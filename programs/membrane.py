@@ -296,11 +296,11 @@ py_lmp.angle_coeff(membrane.angle_type, 5.0*membrane.eps, 180)
 py_lmp.bond_coeff(1, 'zero')
 py_lmp.bond_coeff(membrane.bond_type, 'fene', 30.0*membrane.eps/membrane.sigma**2,
                   1.5*membrane.sigma, membrane.eps, membrane.sigma)
-py_lmp.special_bonds('lj', 0.0, 1.0, 1.0) #not really necessary because of "neigh_modify exclude molecule/intra"
+py_lmp.special_bonds('fene') #not really necessary because of "neigh_modify exclude molecule/intra"
 
 # set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
-py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, model.rod_radius, model.rod_radius, "wca")
-lj_factor = pow(2,1./6)
+py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, model.rod_radius, model.rod_radius, 'wca')
+lj_factor = pow(2, 1./6)
 # protein-protein interaction
 for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
     sigma = 0
@@ -315,7 +315,7 @@ for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
     type_1 = bead_types[0]
     type_2 = bead_types[1]
     int_type = model.int_types[int_type_key]
-    py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], "wca")
+    py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], 'wca')
     
 # head-head & head-tail inter-lipid interaction
 for bead_type in membrane.bead_types:
@@ -331,36 +331,36 @@ for i in range(len(membrane.tail_types)):
 
 # lipid-protein interaction
 sol_lipid_eps = run_args.mem_int_eps
-sol_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.rod_radius 
-sol_lipid_cutoff = sol_lipid_contact + run_args.mem_int_range
-sol_body_types = filter(lambda t: t not in model.active_bead_types,
-                       model.state_bead_types[0])
-sol_tip_types = filter(lambda t: t in model.active_bead_types,
-                      model.state_bead_types[0])
-# lipid-protein volume-exclusion
-for sol_body_type in sol_body_types:
-    for mem_bead_type in membrane.bead_types:
-        py_lmp.pair_coeff(sol_body_type, mem_bead_type, sol_lipid_eps,
-                          sol_lipid_contact, sol_lipid_contact, 'wca')
-# lipid-protein tip interaction
 int_factors = (1.0, 0.5, 0.25)
-for sol_tip_type in sol_tip_types:
+# lipid-protein volume-exclusion (all states)
+vx_types = filter(lambda t: t not in model.active_bead_types,
+                  model.all_bead_types)
+for vx_type in vx_types:
+    bead_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.bead_radii[vx_type]
+    for mem_bead_type in membrane.bead_types:
+        py_lmp.pair_coeff(vx_type, mem_bead_type, sol_lipid_eps,
+                          bead_lipid_contact, bead_lipid_contact, 'wca')
+# lipid-protein tip interaction (all states)
+tip_types = [state_struct[0][-1] for state_struct in model.state_structures]
+tip_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.rod_radius
+tip_lipid_cutoff = tip_lipid_contact + run_args.mem_int_range
+for tip_type in tip_types:
     for mem_bead_type, k in zip(membrane.bead_types, int_factors):
-        py_lmp.pair_coeff(sol_tip_type, mem_bead_type, k*sol_lipid_eps,
-                          sol_lipid_contact, sol_lipid_cutoff, 'wca')
+        py_lmp.pair_coeff(tip_type, mem_bead_type, k*sol_lipid_eps,
+                          tip_lipid_contact, tip_lipid_cutoff, 'wca')
     
 # ===== RODS ============================================================================
 # GROUPS & COMPUTES
 rods_group = 'rods'
-cluster_group = 'active_rod_beads'
+cluster_group = 'rod_tips'
 py_lmp.group(rods_group, 'empty')
-py_lmp.variable('active', 'atom', '"' + 
+py_lmp.variable('rod_tips', 'atom', '"' + 
                 ' || '.join(['(type == {:d})'.format(t)
-                             for t in model.active_bead_types])
+                             for t in tip_types])
                 + '"')
 py_lmp.group(cluster_group, 'dynamic', rods_group,
-             'var', 'active', 'every', out_freq)
-cluster_compute = "rod_cluster"
+             'var', 'rod_tips', 'every', out_freq)
+cluster_compute = 'rod_cluster'
 py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
 
 # FIXES & DYNAMICS
@@ -406,15 +406,15 @@ py_lmp.fix(zwalls_fix, 'all', 'wall/lj126',
            'zhi EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6))
     
 # GROUPS & COMPUTES
-adsorbed_group = 'mem_active'
-py_lmp.variable('mem_active', 'atom', '"' + 
+adsorbed_group = 'mem_and_tips'
+py_lmp.variable('mem_and_tips', 'atom', '"' + 
                 ' || '.join(['(type == {:d})'.format(t)
-                             for t in list(model.active_bead_types) + membrane.bead_types])
+                             for t in tip_types + membrane.bead_types])
                 + '"')
 py_lmp.group(adsorbed_group, 'dynamic', 'all',
-             'var', 'mem_active', 'every', out_freq)
+             'var', 'mem_and_tips', 'every', out_freq)
 adsorbed_compute = 'mem_cluster'
-py_lmp.compute(adsorbed_compute, adsorbed_group, 'aggregate/atom', sol_lipid_cutoff)
+py_lmp.compute(adsorbed_compute, adsorbed_group, 'aggregate/atom', tip_lipid_cutoff)
 top_msd_compute = 'mem_top_msd'
 py_lmp.compute(top_msd_compute, membrane.top_layer_group, 'msd')
 bottom_msd_compute = 'mem_bottom_msd'
@@ -429,6 +429,8 @@ py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
            'x 0.0 0.0', press_eq_t, 'y 0.0 0.0', press_eq_t, 'couple xy',
            'dilate', 'all')
 py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
+# -> saves neighbour calculating without consequences (because beads 1 & 3 will
+#    never be in range anyway & this doesn't affect bonds and angles)
 
 # MEMBRANE EQUILIBRATION
 py_lmp.command('run 2000') #2xpress_eq_t, for good measure
