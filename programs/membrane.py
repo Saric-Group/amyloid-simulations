@@ -292,10 +292,10 @@ for bead_type in model.body_bead_types:
 for bead_type in membrane.bead_types:
     py_lmp.mass(bead_type, membrane.bead_mass)
 
-py_lmp.angle_coeff(membrane.angle_type, 5.0, 180)
+py_lmp.angle_coeff(membrane.angle_type, 5.0*membrane.eps, 180)
 py_lmp.bond_coeff(1, 'zero')
-py_lmp.bond_coeff(membrane.bond_type, 'fene',
-                  30.0, 1.5*membrane.sigma, membrane.eps, membrane.sigma)
+py_lmp.bond_coeff(membrane.bond_type, 'fene', 30.0*membrane.eps/membrane.sigma**2,
+                  1.5*membrane.sigma, membrane.eps, membrane.sigma)
 py_lmp.special_bonds('lj', 0.0, 1.0, 1.0) #not really necessary because of "neigh_modify exclude molecule/intra"
 
 # set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
