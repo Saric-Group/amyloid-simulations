@@ -296,24 +296,13 @@ py_lmp.angle_coeff(membrane.angle_type, 5.0*membrane.eps, 180)
 py_lmp.bond_coeff(1, 'zero')
 py_lmp.bond_coeff(membrane.bond_type, 'fene', 30.0*membrane.eps/membrane.sigma**2,
                   1.5*membrane.sigma, membrane.eps, membrane.sigma)
-py_lmp.special_bonds('fene') #not really necessary because of "neigh_modify exclude molecule/intra"
 
 # set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
-py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, model.rod_radius, model.rod_radius, 'wca')
+py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, membrane.sigma, membrane.sigma, 'wca')
 lj_factor = pow(2, 1./6)
 # protein-protein interaction
-for bead_types, (eps_val, int_type_key) in model.eps.iteritems():
-    sigma = 0
-    for bead_type in bead_types:
-        if bead_type in model.body_bead_types:
-            sigma += model.rod_radius
-        else:
-            for k in range(model.num_patches):
-                if bead_type in model.patch_bead_types[k]:
-                    sigma += model.patch_bead_radii[k]
-                    break
-    type_1 = bead_types[0]
-    type_2 = bead_types[1]
+for (type_1, type_2), (eps_val, int_type_key) in model.eps.iteritems():
+    sigma = model.bead_radii[type_1] + model.bead_radii[type_2]
     int_type = model.int_types[int_type_key]
     py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], 'wca')
     
@@ -380,11 +369,12 @@ rod_gcmc_fix = 'rod_gcmc'
 py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_init', 'mol', model.rod_states[0],
-           'rigid', rod_dyn_fix, 'tfac_insert', 100)
+           'rigid', rod_dyn_fix, 'tfac_insert', 1.65)
 
 # TEST DUMP...
 # py_lmp.thermo_style('custom', 'step atoms', 'pe temp')
-# py_lmp.thermo(out_freq)
+# py_lmp.variable('thermo_var', 'equal', '"stagger({:d}, 1)"'.format(out_freq))
+# py_lmp.thermo('v_thermo_var')
 # py_lmp.dump('test_dump', 'all', 'custom', out_freq, dump_path+'_init',
 #             'id x y z type mol c_'+cluster_compute)
 # py_lmp.dump_modify('test_dump', 'sort id')
@@ -431,9 +421,10 @@ py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
 py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
 # -> saves neighbour calculating without consequences (because beads 1 & 3 will
 #    never be in range anyway & this doesn't affect bonds and angles)
+py_lmp.special_bonds('fene') # not really necessary because of "neigh_modify exclude"
 
 # MEMBRANE EQUILIBRATION
-py_lmp.command('run 2000') #2xpress_eq_t, for good measure
+py_lmp.command('run 2000') #2 x press_eq_t, for good measure
 py_lmp.reset_timestep(0)
 
 # ===== FINAL ===========================================================================
@@ -446,7 +437,7 @@ py_lmp.region('gcmc_box', 'block',
 py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 1000, 10, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_box', 'mol', model.rod_states[0],
-           'rigid', rod_dyn_fix, 'tfac_insert', 100)
+           'rigid', rod_dyn_fix, 'tfac_insert', 1.65)
 
 # OUTPUT
 py_lmp.variable("area", "equal", "lx*ly")

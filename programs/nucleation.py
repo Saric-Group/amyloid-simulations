@@ -130,14 +130,19 @@ py_lmp.timestep(run_args.dt)
 if mc_moves_per_run == 0:
     py_lmp.command('run {:d}'.format(run_args.sim_length))
 else:
-    for i in range(int(run_args.sim_length/run_args.run_length)-1):   
-        py_lmp.command('run {:d} post no'.format(run_args.run_length))
-        success = simulation.state_change_MC(mc_moves_per_run)
+    py_lmp.command('run {:d} post no'.format(run_args.run_length-1)) #so output happens after state changes
+    remaining = run_args.sim_length - run_args.run_length + 1
+    for i in range(run_args.sim_length / run_args.run_length):
+        success = simulation.state_change_MC(mc_moves_per_run)#, replenish=("box", 2*model.rod_radius, 10)) TODO
         if not args.silent:
             base_count = simulation.state_count(0)
             beta_count = simulation.state_count(1)
             print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
                     (i+1)*run_args.run_length, run_args.sim_length, beta_count, base_count, 
                     float(beta_count)/base_count, float(success)/mc_moves_per_run)
-            
-    py_lmp.command('run {:d} post no'.format(run_args.run_length))
+        
+        if remaining / run_args.run_length > 0:
+            py_lmp.command('run {:d} post no'.format(run_args.run_length))
+            remaining -= run_args.run_length
+        else:
+            py_lmp.command('run {:d} post no'.format(remaining))
