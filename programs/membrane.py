@@ -358,8 +358,6 @@ py_lmp.fix(thermo_fix, 'all', 'langevin', run_args.temp, run_args.temp, run_args
 rod_dyn_fix = 'rod_dynamics'
 py_lmp.fix(rod_dyn_fix, rods_group, 'rigid/nve/small', 'molecule', 'mol', model.rod_states[0])
 py_lmp.neigh_modify("exclude", "molecule/intra", rods_group)
-#py_lmp.fix_modify(rod_dyn_fix, 'dynamic/dof yes') 
-py_lmp.compute_modify("thermo_temp", "dynamic/dof yes")
 
 py_lmp.region('gcmc_init', 'block',
               membrane.xmin + model.rod_length/2, membrane.xmax - model.rod_length/2,
@@ -370,6 +368,9 @@ py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_init', 'mol', model.rod_states[0],
            'rigid', rod_dyn_fix, 'tfac_insert', 1.65)
+
+#py_lmp.fix_modify(rod_dyn_fix, 'dynamic/dof yes') #only for nvt&npt (small)
+py_lmp.compute_modify("thermo_temp", "dynamic/dof yes")
 
 # TEST DUMP...
 # py_lmp.thermo_style('custom', 'step atoms', 'pe temp')
@@ -418,6 +419,7 @@ press_eq_t = 1000*run_args.dt
 py_lmp.fix(mem_dyn_fix, membrane.main_group, 'nph',
            'x 0.0 0.0', press_eq_t, 'y 0.0 0.0', press_eq_t, 'couple xy',
            'dilate', 'all')
+py_lmp.compute_modify(mem_dyn_fix+'_temp', 'dynamic/dof yes')
 py_lmp.neigh_modify('exclude', 'molecule/intra', membrane.main_group)
 # -> saves neighbour calculating without consequences (because beads 1 & 3 will
 #    never be in range anyway & this doesn't affect bonds and angles)
