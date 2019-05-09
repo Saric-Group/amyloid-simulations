@@ -112,34 +112,34 @@ zmax = fibril_edges[2][1] + model.rod_length / 2
 py_lmp.region("fibril", "block", xmin, xmax, ymin, ymax, zmin, zmax, "units box")
 #TODO py_lmp.region("box_minus_fibril", "subtract", 2, "box", "fibril")
 py_lmp.region("left", "block",
-              -box_size/2, xmin,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
+              'EDGE', xmin,
+              'EDGE', 'EDGE',
+              'EDGE', 'EDGE',
               "units box")
 py_lmp.region("right", "block",
-               xmax, box_size / 2,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
+               xmax, 'EDGE',
+              'EDGE', 'EDGE',
+              'EDGE', 'EDGE',
               "units box")
 py_lmp.region("front", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, ymin,
-              -box_size / 2, box_size / 2,
+              'EDGE', 'EDGE',
+              'EDGE', ymin,
+              'EDGE', 'EDGE',
               "units box")
 py_lmp.region("back", "block",
-              -box_size / 2, box_size / 2,
-               ymax, box_size / 2,
-              -box_size / 2, box_size / 2,
+              'EDGE', 'EDGE',
+               ymax, 'EDGE',
+              'EDGE', 'EDGE',
               "units box")
 py_lmp.region("down", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-              -box_size / 2, zmin,
+              'EDGE', 'EDGE',
+              'EDGE', 'EDGE',
+              'EDGE', zmin,
               "units box")
 py_lmp.region("up", "block",
-              -box_size / 2, box_size / 2,
-              -box_size / 2, box_size / 2,
-               zmax, box_size / 2,
+              'EDGE', 'EDGE',
+              'EDGE', 'EDGE',
+               zmax, 'EDGE',
               "units box")
 py_lmp.region("box_minus_fibril", "union", 6, "up", "down", "front", "back", "left", "right")
 simulation.create_rods(region = "box_minus_fibril")
