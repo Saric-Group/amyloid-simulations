@@ -22,6 +22,8 @@ parser.add_argument('cfg_file',
                     help='path to the "lammps_multistate_rods" model configuration file')
 parser.add_argument('run_file',
                     help='path to the run configuration file')
+parser.add_argument('simlen', type=int,
+                    help='the length of the simulation')
 
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
@@ -116,7 +118,7 @@ py_lmp.thermo_style("custom", "step atoms", "pe temp")
 dump_elems = "id x y z type mol"
 if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
     dump_elems += " c_"+cluster_compute
-py_lmp.dump("dump_cmd", "all", "custom", args.output_freq, dump_path, dump_elems)
+py_lmp.dump("dump_cmd", "all", "custom", out_freq, dump_path, dump_elems)
 py_lmp.dump_modify("dump_cmd", "sort id")
 py_lmp.thermo(out_freq)
 
@@ -128,17 +130,17 @@ if model.num_states > 1:
 py_lmp.timestep(run_args.dt)
 
 if mc_moves_per_run == 0:
-    py_lmp.command('run {:d}'.format(run_args.sim_length))
+    py_lmp.command('run {:d}'.format(args.simlen))
 else:
     py_lmp.command('run {:d} post no'.format(run_args.run_length-1)) #so output happens after state changes
-    remaining = run_args.sim_length - run_args.run_length + 1
-    for i in range(run_args.sim_length / run_args.run_length):
+    remaining = args.simlen - run_args.run_length + 1
+    for i in range(args.simlen / run_args.run_length):
         success = simulation.state_change_MC(mc_moves_per_run)#, replenish=("box", 2*model.rod_radius, 10)) TODO
         if not args.silent:
             base_count = simulation.state_count(0)
             beta_count = simulation.state_count(1)
             print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
-                    (i+1)*run_args.run_length, run_args.sim_length, beta_count, base_count, 
+                    (i+1)*run_args.run_length, args.simlen, beta_count, base_count, 
                     float(beta_count)/base_count, float(success)/mc_moves_per_run)
         
         if remaining / run_args.run_length > 0:

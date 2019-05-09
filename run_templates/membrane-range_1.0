@@ -7,7 +7,6 @@ mc_moves = 0.0
 
 dt = 0.01
 run_length = 100
-sim_length = 15000000
 
 # membrane params
 mem_sigma = 1.0

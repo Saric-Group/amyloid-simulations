@@ -23,10 +23,12 @@ simulation jobs with "qsub"',
 
 parser.add_argument('job_template',
                     help='the job template to populate and run')
-parser.add_argument('run_file',
-                    help='path to the run configuration file')
 parser.add_argument('cfg_file',
                     help='path to the model configuration file')
+parser.add_argument('run_file',
+                    help='path to the run configuration file')
+parser.add_argument('simlen', type=int,
+                    help='the length of the simulation')
 
 parser.add_argument('--home', type=str, default=script_loc,
                     help='the location of the home directory')
@@ -52,8 +54,9 @@ def match_replace(matchobj):
 def fill_template(line):
     return re.sub(r'<([a-zA-Z_][a-zA-Z_0-9\-]*)>', match_replace, line)
 
-run_file = job_args.run_file
 cfg_file = job_args.cfg_file
+run_file = job_args.run_file
+simlen = job_args.simlen
 project_home = job_args.home
 walltime = job_args.walltime
 memory = job_args.memory
@@ -66,14 +69,14 @@ out_folder = os.path.splitext(cfg_file)[0]
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
     
-with open(temp_script_path, 'w') as job_script:
-    with open(job_args.job_template, 'r') as job_template:
-        for line in job_template:
-            job_script.write(fill_template(line))
+with open(temp_script_path, 'w') as job_script,\
+     open(job_args.job_template, 'r') as job_template:
+    for line in job_template:
+        job_script.write(fill_template(line))
     
 for n in range(job_args.repeat):
     try:
-        subprocess.call(['qsub', 'temp_job_script'])
+        subprocess.call(['qsub', temp_script_path])
         time.sleep(1)
     except:
         traceback.print_exc()

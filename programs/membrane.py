@@ -24,6 +24,8 @@ parser.add_argument('cfg_file',
                     help='path to the "lammps_multistate_rods" model configuration file')
 parser.add_argument('run_file',
                     help='path to the run configuration file')
+parser.add_argument('simlen', type=int,
+                    help='the length of the simulation')
 
 parser.add_argument('--seed', type=int,
                     help='the seed for random number generators')
@@ -460,4 +462,4 @@ py_lmp.fix("mem_full_msd", "all", "ave/time", 1, 1, out_freq, "v_full_msd",
            "file", os.path.join(output_folder, sim_ID+'_mem_full.msd'))
 
 # RUN...
-py_lmp.command('run {:d}'.format(run_args.sim_length))
+py_lmp.command('run {:d}'.format(args.simlen))

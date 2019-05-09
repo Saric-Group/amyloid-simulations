@@ -107,7 +107,7 @@ for node, dirs, files in os.walk(rootnode, topdown=True):
                     result_filename.endswith('_cluster_data') or
                     result_filename.endswith('_adsorbed') or
                     result_filename.endswith('.msd') or
-                    result_filename.endswith('.run') or
+                    result_filename.endswith('.lammps') or
                     (args.full and result_filename.endswith('.dump'))):
                     
                     result_filepath = os.path.join(srcdir, result_filename)
