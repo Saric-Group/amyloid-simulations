@@ -12,7 +12,7 @@ Created on 23 Apr 2018
 
 import numpy as np
 
-from lammps_multistate_rods import Model
+from lammps_multistate_rods import Rod_model
 import lammps_multistate_rods.tools.interactions as md
 import mc
 
@@ -284,7 +284,7 @@ def draw_point_rod_z_slice(vals, vals_min, fig_title = ''):
     
     ax_r.set_xlabel(r'$r$', **axis_font)
     ax_r.set_ylabel(r'$E$', **axis_font)
-    ax_r.legend(loc = 'lower left', prop = axis_font)
+    ax_r.legend(loc = 'lower right', prop = axis_font)
     ax_r.axis([rmin, rmax, 1.05*vals_min, -1.05*vals_min])
     
     z_slider_axes = fig_r.add_axes([0.41, 0.02, 0.35, 0.03], facecolor=widget_color)
@@ -462,7 +462,7 @@ def draw_rod_rod_z_slice(vals, vals_min, fig_title = ''):
     
     ax_r.set_xlabel(r'$r$', **axis_font)
     ax_r.set_ylabel(r'$E$', **axis_font)
-    ax_r.legend(loc = 'lower left', prop = axis_font)
+    ax_r.legend(loc = 'lower right', prop = axis_font)
     ax_r.axis([rmin, rmax, 1.05*vals_min, -1.05*vals_min])
     
     psi2_slider = None
@@ -674,7 +674,7 @@ if __name__ != '__main__':
     quit()
 
 cfg_filename = args.config_file
-model = Model(cfg_filename)
+model = Rod_model(cfg_filename)
 mc.setup(model)
 md.setup(model)
 
