@@ -15,10 +15,10 @@ Created on 16 Mar 2018
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description=
-                                 'Program for NVE+Langevin hybrid LAMMPS simulation of spherocylinder-like\
-rods, using the "lammps_multistate_rods" library, above a 3-bead bilayer membrane.',
-                                formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(description='Program for NVE+Langevin hybrid LAMMPS'\
+                                 ' simulation of spherocylinder-like rods, using the'\
+                                 ' "lammps_multistate_rods" library, above a 3-bead bilayer membrane.',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('cfg_file',
                     help='path to the "lammps_multistate_rods" model configuration file')
@@ -33,8 +33,8 @@ parser.add_argument('--out', type=str, default=None,
                     help='name/path for the output folder (defaults to cfg_file path w/o ext)')
 
 parser.add_argument('-o', '--output_freq', type=int,
-                    help='configuration output frequency (in MD steps);\
-default behavior is after every batch of MC moves')
+                    help='configuration output frequency (in MD steps);'\
+                    ' default behavior is after every batch of MC moves')
 parser.add_argument('-s', '--silent', action='store_true',
                     help="doesn't print anything to stdout")
 

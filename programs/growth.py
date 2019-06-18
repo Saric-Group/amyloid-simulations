@@ -15,9 +15,9 @@ Created on 16 Mar 2018
 import os
 import argparse
 
-parser = argparse.ArgumentParser(description=
-                                 'Program for NVE+Langevin hybrid LAMMPS simulation of spherocylinder-like\
-rods, using the "lammps_multistate_rods" library, with a preassembled fibril.',
+parser = argparse.ArgumentParser(description='Program for NVE+Langevin hybrid LAMMPS'\
+                                 ' simulation of spherocylinder-like rods, using the'\
+                                 ' "lammps_multistate_rods" library, with a preassembled fibril.',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('cfg_file',
@@ -33,8 +33,8 @@ parser.add_argument('--out', type=str, default=None,
                     help='name/path for the output folder (defaults to cfg_file path w/o ext)')
 
 parser.add_argument('-o', '--output_freq', type=int,
-                    help='configuration output frequency (in MD steps);\
-default behavior is after every batch of MC moves')
+                    help='configuration output frequency (in MD steps);'\
+                    ' default behavior is after every batch of MC moves')
 parser.add_argument('-s', '--silent', action='store_true',
                     help="doesn't print anything to stdout")
 
@@ -99,7 +99,7 @@ simulation.setup("box")
 fibril_temp_file = os.path.join(output_folder, '{:d}_fibril.dat'.format(seed))
 fibril_edges = rods_tools.prepare_fibril(model, run_args.seed_size, run_args.seed_phi,
                                          run_args.seed_theta, run_args.seed_r0, fibril_temp_file)
-simulation.create_rods(state_ID=model.num_states-1, file=fibril_temp_file)
+simulation.create_rods(state_ID=model.num_states-1, file=[fibril_temp_file])
 os.remove(fibril_temp_file)
 # create other rods
 box_size = run_args.num_cells * run_args.cell_size
@@ -142,7 +142,7 @@ py_lmp.region("up", "block",
                zmax, 'EDGE',
               "units box")
 py_lmp.region("box_minus_fibril", "union", 6, "up", "down", "front", "back", "left", "right")
-simulation.create_rods(region = "box_minus_fibril")
+simulation.create_rods(region = ["box_minus_fibril"])
 
 # DYNAMICS
 py_lmp.fix("thermostat", "all", "langevin",

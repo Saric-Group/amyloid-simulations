@@ -42,7 +42,7 @@ else:
     raise Exception('Unsupported server ({:s})!'.format(args.server))
 
 remote_basedir = os.path.join(remote_homedir, remote_rel_basedir)
-local_basedir = r'/media/data_ntfs/PhD/simulation stuff/amyloids/data'
+local_basedir = r'/media/data_ntfs/PhD/projects/amyloid MD simulations/data'
 
 def remote_to_local(path):
     return os.path.join(local_basedir, os.path.relpath(path, remote_basedir))
