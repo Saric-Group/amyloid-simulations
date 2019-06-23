@@ -150,6 +150,12 @@ py_lmp.fix("thermostat", "all", "langevin",
 simulation.set_rod_dynamics("nve")
 
 py_lmp.neigh_modify("every 1 delay 1")
+py_lmp.timestep(run_args.dt)
+
+# RANDOMISE INITIAL CONFIGURATION
+simulation.deactivate_state(0, vx_eps=5.0)
+py_lmp.command('run 10000')
+simulation.activate_state(0)
 
 # GROUPS & COMPUTES
 if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
@@ -176,8 +182,6 @@ py_lmp.thermo(out_freq)
 mc_moves_per_run = 0
 if model.num_states > 1:
     mc_moves_per_run = int(run_args.mc_moves * simulation.rods_count())
-    
-py_lmp.timestep(run_args.dt)
 
 if mc_moves_per_run == 0:
     py_lmp.command('run {:d}'.format(args.simlen))
