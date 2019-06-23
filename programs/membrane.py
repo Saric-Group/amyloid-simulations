@@ -251,63 +251,41 @@ execfile(args.run_file, {'__builtins__': None}, vars(run_args))
 out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 
 model = rods.Rod_model(args.cfg_file)
-model.generate_mol_files(output_folder)
-type_offset = max(model.all_bead_types)
-bond_offset = 1
 membrane = Membrane(run_args.mem_sigma, run_args.mem_wc, run_args.mem_eps, 
-                    run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0,
-                    type_offset=type_offset, bond_offset=bond_offset)
-max_type = max(membrane.bead_types)
+                    run_args.mem_Nx, run_args.mem_Ny, 0.0, model.rod_length/2, 5.0)
 
 # ===== LAMMPS setup ====================================================================
 py_lmp = PyLammps(cmdargs=['-screen','none'])
 py_lmp.log('"'+log_path+'"')
+
+simulation = rods.Simulation(py_lmp, model, seed, output_folder)
+
 py_lmp.units('lj')
 py_lmp.dimension(3)
 py_lmp.boundary('p p f')
-py_lmp.atom_style('molecular')
-py_lmp.angle_style('harmonic')
-py_lmp.bond_style('hybrid fene zero')
-py_lmp.pair_style('cosine/squared', model.global_cutoff)
-
 py_lmp.region('box', 'block',
               membrane.xmin, membrane.xmax,
               membrane.ymin, membrane.ymax,
               0.0, run_args.Lz)
-py_lmp.create_box(max_type, 'box',
-                  'bond/types', 2, 'extra/bond/per/atom', 2,
-                  'angle/types', 1, 'extra/angle/per/atom', 1,
-                  'extra/special/per/atom', 6)
+
+simulation.setup('box', type_offset=max(membrane.bead_types),
+                 extra_pair_styles=[('cosine/squared', model.global_cutoff)],
+                 bond_offset=membrane.bond_type, extra_bond_styles=['fene'],
+                 everything_else=['angle/types', 1, 'extra/angle/per/atom', 1])
+py_lmp.angle_style('harmonic')
 
 zwalls_fix = 'zwalls'
 py_lmp.fix(zwalls_fix, 'all', 'wall/lj126',
            'zlo EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6),
            'zhi EDGE', 1.0, model.rod_radius, model.rod_radius*pow(2,1./6))
 
-for state_name in model.rod_states:
-    py_lmp.molecule(state_name, '"'+os.path.join(output_folder, state_name+'.mol')+'"')
-
-all_type_range = '{:d}*{:d}'.format(1, max_type)
-py_lmp.mass(all_type_range, model.rod_mass*10**-10)
-for bead_type in model.body_bead_types:
-    py_lmp.mass(bead_type, model.rod_mass/model.num_beads[0])
 for bead_type in membrane.bead_types:
     py_lmp.mass(bead_type, membrane.bead_mass)
-
 py_lmp.angle_coeff(membrane.angle_type, 5.0*membrane.eps, 180)
-py_lmp.bond_coeff(1, 'zero')
 py_lmp.bond_coeff(membrane.bond_type, 'fene', 30.0*membrane.eps/membrane.sigma**2,
                   1.5*membrane.sigma, membrane.eps, membrane.sigma)
 
-# set interactions (initially to 0.0, of whatever interaction, between all pairs of types)
-py_lmp.pair_coeff(all_type_range, all_type_range, 0.0, membrane.sigma, membrane.sigma, 'wca')
 lj_factor = pow(2, 1./6)
-# protein-protein interaction
-for (type_1, type_2), (eps_val, int_type_key) in model.eps.iteritems():
-    sigma = model.bead_radii[type_1] + model.bead_radii[type_2]
-    int_type = model.int_types[int_type_key]
-    py_lmp.pair_coeff(type_1, type_2, eps_val, sigma, sigma+int_type[1], 'wca')
-    
 # head-head & head-tail inter-lipid interaction
 for bead_type in membrane.bead_types:
     py_lmp.pair_coeff(membrane.head_type, bead_type, membrane.eps,
@@ -323,33 +301,38 @@ for i in range(len(membrane.tail_types)):
 # lipid-protein interaction
 sol_lipid_eps = run_args.mem_int_eps
 int_factors = (1.0, 0.5, 0.25)
+# lipid-protein initial 0 interaction between all
+rod_type_range = "{:d}*{:d}".format(simulation.get_min_rod_type(),
+                                    simulation.get_max_rod_type())
+mem_type_range = "{:d}*{:d}".format(min(membrane.bead_types),
+                                    max(membrane.bead_types))
+py_lmp.pair_coeff(mem_type_range, rod_type_range, 0.0, model.global_cutoff-0.01, model.global_cutoff)
 # lipid-protein volume-exclusion (all states)
 vx_types = filter(lambda t: t not in model.active_bead_types,
                   model.all_bead_types)
 for vx_type in vx_types:
     bead_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.bead_radii[vx_type]
     for mem_bead_type in membrane.bead_types:
-        py_lmp.pair_coeff(vx_type, mem_bead_type, sol_lipid_eps,
-                          bead_lipid_contact, bead_lipid_contact, 'wca')
+        py_lmp.pair_coeff(mem_bead_type, vx_type + simulation.type_offset,
+                          sol_lipid_eps, bead_lipid_contact, bead_lipid_contact, 'wca')
 # lipid-protein tip interaction (all states)
-tip_types = [state_struct[0][-1] for state_struct in model.state_structures]
+tip_types = [state_struct[0][-1] + simulation.type_offset
+             for state_struct in model.state_structures]
 tip_lipid_contact = 0.5*membrane.sigma*pow(2,1./6) + model.rod_radius
 tip_lipid_cutoff = tip_lipid_contact + run_args.mem_int_range
 for tip_type in tip_types:
     for mem_bead_type, k in zip(membrane.bead_types, int_factors):
-        py_lmp.pair_coeff(tip_type, mem_bead_type, k*sol_lipid_eps,
-                          tip_lipid_contact, tip_lipid_cutoff, 'wca')
+        py_lmp.pair_coeff(mem_bead_type, tip_type,
+                          k*sol_lipid_eps, tip_lipid_contact, tip_lipid_cutoff, 'wca')
     
 # ===== RODS ============================================================================
 # GROUPS & COMPUTES
-rods_group = 'rods'
 cluster_group = 'rod_tips'
-py_lmp.group(rods_group, 'empty')
 py_lmp.variable('rod_tips', 'atom', '"' + 
                 ' || '.join(['(type == {:d})'.format(t)
                              for t in tip_types])
                 + '"')
-py_lmp.group(cluster_group, 'dynamic', rods_group,
+py_lmp.group(cluster_group, 'dynamic', simulation.rods_group,
              'var', 'rod_tips', 'every', out_freq)
 cluster_compute = 'rod_cluster'
 py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
@@ -357,21 +340,19 @@ py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluste
 # FIXES & DYNAMICS
 thermo_fix = 'thermostat'
 py_lmp.fix(thermo_fix, 'all', 'langevin', run_args.temp, run_args.temp, run_args.damp, seed)#, "zero yes")
-rod_dyn_fix = 'rod_dynamics'
-py_lmp.fix(rod_dyn_fix, rods_group, 'rigid/nve/small', 'molecule', 'mol', model.rod_states[0])
-py_lmp.neigh_modify("exclude", "molecule/intra", rods_group)
+simulation.set_rod_dynamics('nve', everything_else=['mol', model.rod_states[0]])
 
 py_lmp.region('gcmc_init', 'block',
               membrane.xmin + model.rod_length/2, membrane.xmax - model.rod_length/2,
               membrane.ymin + model.rod_length/2, membrane.ymax - model.rod_length/2,
               0.0 + model.rod_length/2, run_args.Lz - model.rod_length/2)
 rod_gcmc_fix = 'rod_gcmc'
-py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 100, 200, 0,
+py_lmp.fix(rod_gcmc_fix, simulation.rods_group, 'gcmc', 100, 200, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_init', 'mol', model.rod_states[0],
-           'rigid', rod_dyn_fix, 'tfac_insert', 1.65)
+           'rigid', simulation.rod_dyn_fix, 'tfac_insert', 1.65)
 
-#py_lmp.fix_modify(rod_dyn_fix, 'dynamic/dof yes') #only for nvt&npt (small)
+#py_lmp.fix_modify(simulation.rod_dyn_fix, 'dynamic/dof yes') #only for nvt&npt (small)
 py_lmp.compute_modify("thermo_temp", "dynamic/dof yes")
 
 # TEST DUMP...
@@ -387,6 +368,7 @@ py_lmp.neigh_modify('every', 1, 'delay', 1)
 py_lmp.timestep(run_args.dt)
 py_lmp.command('run 2000')
 py_lmp.unfix(rod_gcmc_fix)
+py_lmp.unfix(zwalls_fix)
 py_lmp.reset_timestep(0)
 
 # ===== MEMBRANE ========================================================================
@@ -438,10 +420,10 @@ py_lmp.region('gcmc_box', 'block',
               '-${temp_x}', '${temp_x}',
               '-${temp_y}', '${temp_y}',
               0.0 + 2*model.rod_length, run_args.Lz - model.rod_length/2)
-py_lmp.fix(rod_gcmc_fix, rods_group, 'gcmc', 1000, 10, 0,
+py_lmp.fix(rod_gcmc_fix, simulation.rods_group, 'gcmc', 1000, 10, 0,
            0, seed, run_args.temp, run_args.mu, 0.0,
            'region', 'gcmc_box', 'mol', model.rod_states[0],
-           'rigid', rod_dyn_fix, 'tfac_insert', 1.65)
+           'rigid', simulation.rod_dyn_fix, 'tfac_insert', 1.65)
 
 # OUTPUT
 py_lmp.variable("area", "equal", "lx*ly")
