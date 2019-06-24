@@ -72,7 +72,9 @@ log_filename = '{:d}.lammps'.format(seed)
 log_path = os.path.join(output_folder, log_filename)
 
 run_args = rods.rod_model.Params()
-execfile(args.run_file, {'__builtins__': None}, vars(run_args))
+execfile(args.run_file,
+         {'__builtins__' : None, 'True' : True, 'False' : False, 'None' : None},
+         vars(run_args))
 
 out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 
@@ -103,24 +105,31 @@ py_lmp.timestep(run_args.dt)
 simulation.deactivate_state(0, vx_eps=5.0)
 py_lmp.command('run 10000')
 simulation.activate_state(0)
+py_lmp.reset_timestep(0)
 
 # GROUPS & COMPUTES
-if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
-    cluster_group = 'active_rod_beads'
-    bead_types = filter(lambda t: t in model.body_bead_types, model.active_bead_types)
-    py_lmp.variable('active', 'atom', '"' + 
-                    ' || '.join(['(type == {:d})'.format(t) for t in bead_types])
-                    + '"')
-    py_lmp.group(cluster_group, 'dynamic', simulation.rods_group,
-                 'var', 'active', 'every', out_freq)
-    cluster_compute = "rod_cluster"
-    py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
+if hasattr(run_args, 'label_micelles'): 
+    micelle_group = 'sol_tips'
+    sol_tip_bead_type = model.state_structures[0][0][-1]
+    py_lmp.variable(micelle_group, 'atom', '"type == {:d}"'.format(sol_tip_bead_type))
+    py_lmp.group(micelle_group, 'dynamic', simulation.rods_group, 'var', micelle_group,
+                 'every', out_freq)
+    micelle_compute = "micelle_ID"
+    if hasattr(run_args, 'micelle_cutoff'):
+        micelle_cutoff = run_args.micelle_cutoff
+    else:
+        SS_tip_int_key = model.eps[(sol_tip_bead_type, sol_tip_bead_type)][1]
+        SS_tip_int_range = model.int_types[SS_tip_int_key][1]
+        micelle_cutoff = 2*model.rod_radius + SS_tip_int_range/2
+    py_lmp.compute(micelle_compute, micelle_group, 'aggregate/atom', micelle_cutoff)
 
 # OUTPUT
 py_lmp.thermo_style("custom", "step atoms", "pe temp")
 dump_elems = "id x y z type mol"
-if hasattr(run_args, 'cluster_cutoff') and run_args.cluster_cutoff > 0.0:
-    dump_elems += " c_"+cluster_compute
+try:
+    dump_elems += " c_"+micelle_compute
+except:
+    pass
 py_lmp.dump("dump_cmd", "all", "custom", out_freq, dump_path, dump_elems)
 py_lmp.dump_modify("dump_cmd", "sort id")
 py_lmp.thermo(out_freq)

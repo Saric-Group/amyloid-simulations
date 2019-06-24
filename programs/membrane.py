@@ -246,7 +246,9 @@ log_filename = '{:d}.lammps'.format(seed)
 log_path = os.path.join(output_folder, log_filename)
 
 run_args = rods.rod_model.Params()
-execfile(args.run_file, {'__builtins__': None}, vars(run_args))
+execfile(args.run_file,
+         {'__builtins__' : None, 'True' : True, 'False' : False, 'None' : None},
+         vars(run_args))
 
 out_freq = args.output_freq if args.output_freq != None else run_args.run_length
 
@@ -327,15 +329,22 @@ for tip_type in tip_types:
     
 # ===== RODS ============================================================================
 # GROUPS & COMPUTES
-cluster_group = 'rod_tips'
-py_lmp.variable('rod_tips', 'atom', '"' + 
-                ' || '.join(['(type == {:d})'.format(t)
-                             for t in tip_types])
-                + '"')
-py_lmp.group(cluster_group, 'dynamic', simulation.rods_group,
-             'var', 'rod_tips', 'every', out_freq)
-cluster_compute = 'rod_cluster'
-py_lmp.compute(cluster_compute, cluster_group, 'aggregate/atom', run_args.cluster_cutoff)
+if hasattr(run_args, 'label_micelles'): 
+    micelle_group = 'sol_tips'
+    sol_tip_bead_type = model.state_structures[0][0][-1]
+    py_lmp.variable(micelle_group, 'atom', '"type == {:d}"'.format(sol_tip_bead_type))
+    py_lmp.group(micelle_group, 'dynamic', simulation.rods_group, 'var', micelle_group,
+                 'every', out_freq)
+    micelle_compute = "micelle_ID"
+    if hasattr(run_args, 'micelle_cutoff'):
+        micelle_cutoff = run_args.micelle_cutoff
+    else:
+        SS_tip_int_key = model.eps[(sol_tip_bead_type, sol_tip_bead_type)][1]
+        SS_tip_int_range = model.int_types[SS_tip_int_key][1]
+        micelle_cutoff = 2*model.rod_radius + SS_tip_int_range/2
+    py_lmp.compute(micelle_compute, micelle_group, 'aggregate/atom', micelle_cutoff)
+
+#TODO label_fibrils ??
 
 # FIXES & DYNAMICS
 thermo_fix = 'thermostat'
@@ -386,8 +395,8 @@ py_lmp.variable('mem_and_tips', 'atom', '"' +
                 ' || '.join(['(type == {:d})'.format(t)
                              for t in tip_types + membrane.bead_types])
                 + '"')
-py_lmp.group(adsorbed_group, 'dynamic', 'all',
-             'var', 'mem_and_tips', 'every', out_freq)
+py_lmp.group(adsorbed_group, 'dynamic', 'all', 'var', 'mem_and_tips',
+             'every', out_freq)
 adsorbed_compute = 'mem_cluster'
 py_lmp.compute(adsorbed_compute, adsorbed_group, 'aggregate/atom', tip_lipid_cutoff)
 top_msd_compute = 'mem_top_msd'
@@ -429,7 +438,15 @@ py_lmp.fix(rod_gcmc_fix, simulation.rods_group, 'gcmc', 1000, 10, 0,
 py_lmp.variable("area", "equal", "lx*ly")
 py_lmp.thermo_style("custom", "step atoms", "pe temp", "press lx ly v_area")
 py_lmp.thermo(out_freq)
-dump_elems = 'id x y z type mol c_{:s} c_{:s}'.format(cluster_compute, adsorbed_compute)
+dump_elems = "id x y z type mol"
+try:
+    dump_elems += " c_"+micelle_compute
+except:
+    pass
+try:
+    dump_elems += " c_"+adsorbed_compute
+except:
+    pass
 py_lmp.dump("dump_cmd", "all", "custom", out_freq, dump_path, dump_elems)
 py_lmp.dump_modify("dump_cmd", "sort id")
 # MSD data (only in x & y directions)

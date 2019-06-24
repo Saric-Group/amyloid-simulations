@@ -23,7 +23,7 @@ parser.add_argument('in_files', nargs='+',
                     help='path(s) of the dump file(s) to analyse')
 
 parser.add_argument('-c', '--cluster_data', action='store_true',
-                    help='produce a "_cluster_data" file for each input file')
+                    help='produce a "_micelle_data" and/or a "_fibril_data" file for each input file')
 parser.add_argument('-l', '--last_dump', action='store_true',
                     help='produce a "_last_dump" file, containing the last snapshot, for each input file')
 parser.add_argument('-m', '--membrane', action='store_true', 
@@ -40,50 +40,63 @@ model = rods.Rod_model(args.config_file)
     
 for in_file in args.in_files:
     
+    raw_data = rods_tools.parse_dump_file(in_file)
+    _, _, data_structure, _ = next(raw_data)
+    del raw_data
+    
     if args.cluster_data:
-        raw_data = rods_tools.parse_dump_file(in_file)
-        cluster_output_path = os.path.splitext(in_file)[0]+"_cluster_data"
-        try:
+        
+        if 'c_micelle_ID' in data_structure:
             timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
-                raw_data, args.every, model, args.type_offset, 'rod_cluster')
-        except KeyError:
-            raise Exception('No cluster data to analyse! (invalid -c option)')
-        rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
-                                               cluster_output_path)
+                rods_tools.parse_dump_file(in_file), 'micelle_ID',
+                args.every, model, args.type_offset)
+            
+            micelle_output_path = os.path.splitext(in_file)[0]+"_micelle_data"
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
+                                                   micelle_output_path)
+        
+        if 'c_fibril_ID' in data_structure:
+            timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
+                rods_tools.parse_dump_file(in_file), 'fibril_ID',
+                args.every, model, args.type_offset)
+            
+            fibril_output_path = os.path.splitext(in_file)[0]+"_fibril_data"
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
+                                                   fibril_output_path)
     
     if args.last_dump:
-        raw_data = rods_tools.parse_dump_file(in_file)
-        last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
-        for timestep, box_bounds, data_structure, data in raw_data:
+        for timestep, box_bounds, data_structure, data in rods_tools.parse_dump_file(in_file):
             pass
+        last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
         rods_tools.write_dump_snapshot((timestep, box_bounds, data_structure, data),
                                        last_dump_output_path)
     
     if args.membrane:
-        raw_data = rods_tools.parse_dump_file(in_file)
-        adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
-        try:
+        if 'c_mem_cluster' in data_structure:           
             timesteps, box_sizes, mem_cluster_data = rods_tools.clusters.get_cluster_data(
-                raw_data, args.every, model, args.type_offset, 'mem_cluster')
-        except KeyError:
-            raise Exception('No membrane data to analyse! (invalid -m option)')
-        biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
-        for snapshot in mem_cluster_data:
-            biggest_cluster_ID = 0
-            biggest_cluster_size = 0
-            for cluster_ID, cluster in snapshot.iteritems():
-                cluster_size = len(cluster)
-                if cluster_size > biggest_cluster_size:
-                    biggest_cluster_size = cluster_size
-                    biggest_cluster_ID = cluster_ID
-            biggest_cluster_IDs.append(biggest_cluster_ID)
-        adsorbed_rods = []
-        for i in range(len(biggest_cluster_IDs)):
-            adsorbed = []
-            for elem in mem_cluster_data[i][biggest_cluster_IDs[i]]:
-                if elem[1] != None: #if a rod, not something else (e.g. a lipid)
-                    adsorbed.append(elem[0])
-            adsorbed_rods.append(adsorbed)
-            
-        rods_tools.clusters.write_cluster_data(timesteps, box_sizes, adsorbed_rods,
-                                               adsorbed_output_path)        
+                rods_tools.parse_dump_file(in_file), 'mem_cluster',
+                args.every, model, args.type_offset)
+            biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
+            for snapshot in mem_cluster_data:
+                biggest_cluster_ID = 0
+                biggest_cluster_size = 0
+                for cluster_ID, cluster in snapshot.iteritems():
+                    cluster_size = len(cluster)
+                    if cluster_size > biggest_cluster_size:
+                        biggest_cluster_size = cluster_size
+                        biggest_cluster_ID = cluster_ID
+                biggest_cluster_IDs.append(biggest_cluster_ID)
+            adsorbed_rods = []
+            for i in range(len(biggest_cluster_IDs)):
+                adsorbed = []
+                for elem in mem_cluster_data[i][biggest_cluster_IDs[i]]:
+                    if elem[1] != None: #if a rod, not something else (e.g. a lipid)
+                        adsorbed.append(elem[0])
+                adsorbed_rods.append(adsorbed)
+        
+            adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, adsorbed_rods,
+                                                   adsorbed_output_path)
+        else:
+            print 'ERROR: No membrane data to analyse! (invalid -m option)'
+
