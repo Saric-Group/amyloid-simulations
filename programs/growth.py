@@ -161,21 +161,6 @@ simulation.activate_state(0)
 py_lmp.reset_timestep(0)
 
 # GROUPS & COMPUTES
-if hasattr(run_args, 'label_micelles'): 
-    micelle_group = 'sol_tips'
-    sol_tip_bead_type = model.state_structures[0][0][-1]
-    py_lmp.variable(micelle_group, 'atom', '"type == {:d}"'.format(sol_tip_bead_type))
-    py_lmp.group(micelle_group, 'dynamic', simulation.rods_group, 'var', micelle_group,
-                 'every', out_freq)
-    micelle_compute = "micelle_ID"
-    if hasattr(run_args, 'micelle_cutoff'):
-        micelle_cutoff = run_args.micelle_cutoff
-    else:
-        SS_tip_int_key = model.eps[(sol_tip_bead_type, sol_tip_bead_type)][1]
-        SS_tip_int_range = model.int_types[SS_tip_int_key][1]
-        micelle_cutoff = 2*model.rod_radius + SS_tip_int_range/2
-    py_lmp.compute(micelle_compute, micelle_group, 'aggregate/atom', micelle_cutoff)
-
 if hasattr(run_args, 'label_fibrils'):
     fibril_group = 'beta_patches'
     beta_active_patch_types = sorted(filter(lambda t: (t in model.active_bead_types) and\
@@ -201,7 +186,7 @@ if hasattr(run_args, 'label_fibrils'):
                 except:
                     continue
                 int_range = model.int_types[int_key][1]
-                cutoff = model.bead_radii[t1] + model.bead_radii[t2] + int_range/2
+                cutoff = model.bead_radii[t1] + model.bead_radii[t2] + int_range*2/3
                 if cutoff > fibril_cutoff:
                     fibril_cutoff = cutoff
     py_lmp.compute(fibril_compute, fibril_group, 'aggregate/atom', fibril_cutoff)
@@ -209,10 +194,6 @@ if hasattr(run_args, 'label_fibrils'):
 # OUTPUT
 py_lmp.thermo_style("custom", "step atoms", "pe temp")
 dump_elems = "id x y z type mol"
-try:
-    dump_elems += " c_"+micelle_compute
-except:
-    pass
 try:
     dump_elems += " c_"+fibril_compute
 except:
@@ -222,26 +203,24 @@ py_lmp.dump_modify("dump_cmd", "sort id")
 py_lmp.thermo(out_freq)
 
 # RUN...
-mc_moves_per_run = 0
-if model.num_states > 1:
-    mc_moves_per_run = int(run_args.mc_moves * simulation.rods_count())
+if model.num_states == 1 or run_args.mc_moves == 0:
+    raise Exception("Multiple states need to exist and MC moves need to be made for fibrils to grow!")
+mc_moves_per_run = int(run_args.mc_moves * simulation.rods_count())
 
-if mc_moves_per_run == 0:
-    py_lmp.command('run {:d}'.format(args.simlen))
-else:
-    py_lmp.command('run {:d} post no'.format(run_args.run_length-1)) #so output happens after state changes
-    remaining = args.simlen - run_args.run_length + 1
-    for i in range(args.simlen / run_args.run_length):
-        success = simulation.state_change_MC(mc_moves_per_run)#, replenish=("box", 2*model.rod_radius, 10)) TODO
-        if not args.silent:
-            base_count = simulation.state_count(0)
-            beta_count = simulation.state_count(1)
-            print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
-                    (i+1)*run_args.run_length, args.simlen, beta_count, base_count, 
-                    float(beta_count)/base_count, float(success)/mc_moves_per_run)
-        
-        if remaining / run_args.run_length > 0:
-            py_lmp.command('run {:d} post no'.format(run_args.run_length))
-            remaining -= run_args.run_length
-        else:
-            py_lmp.command('run {:d} post no'.format(remaining))
+py_lmp.command('run {:d} post no'.format(run_args.run_length-1)) #so output happens after state changes
+remaining = args.simlen - run_args.run_length + 1
+while True:
+    success = simulation.state_change_MC(mc_moves_per_run)#, replenish=("box", 2*model.rod_radius, 10)) TODO
+    if not args.silent:
+        base_count = simulation.state_count(0)
+        beta_count = simulation.state_count(1)
+        print 'step {:d} / {:d} :  beta-to-soluble ratio = {:d}/{:d} = {:.5f} (accept rate = {:.5f})'.format(
+              (i+1)*run_args.run_length, args.simlen, beta_count, base_count, float(beta_count)/base_count,
+              float(success)/mc_moves_per_run)
+    
+    if remaining / run_args.run_length > 0:
+        py_lmp.command('run {:d} post no'.format(run_args.run_length))
+        remaining -= run_args.run_length
+    else:
+        py_lmp.command('run {:d} post no'.format(remaining))
+        break

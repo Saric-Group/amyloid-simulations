@@ -5,6 +5,11 @@ mu = -5.0
 
 mc_moves = 0.0
 
+#label_micelles = True
+#micelle_cutoff = 3.0
+#label_fibrils = True
+#fibril_cutoff = 0.77
+
 dt = 0.01
 run_length = 100
 
@@ -19,5 +24,3 @@ Lz = 30*1.1
 # protein-membrane interaction
 mem_int_eps = <int_eps>
 mem_int_range = 0.5*mem_sigma
-
-cluster_cutoff = 1.5*mem_sigma # = 3*rod_radius

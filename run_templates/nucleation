@@ -13,9 +13,3 @@ label_fibrils = True
 
 dt = 0.01
 run_length = 100
-
-# for growth.py (fibril seed params)
-seed_size = 8
-seed_phi = 0
-seed_theta = 0
-seed_r0 = (0.0, 0.0, 0.0)
