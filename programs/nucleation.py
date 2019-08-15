@@ -171,7 +171,7 @@ while True:
               float(success)/mc_moves_per_run)
     
     if beta_count >= 2:
-        to_next_output = out_freq - (args.simlen - remaining)%out_freq + 1 #+1 just in case
+        to_next_output = out_freq - (args.simlen - remaining)%out_freq
         py_lmp.command('run {:d} post no'.format(to_next_output))
         break
     elif remaining / run_args.run_length > 0:
