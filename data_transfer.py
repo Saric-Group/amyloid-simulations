@@ -50,8 +50,8 @@ def remote_to_local(path):
 def remote_to_scp(path):
     return r'{:s}@{:s}:"{:s}"'.format(user, host, os.path.relpath(path, remote_homedir))
 
-def dq_esc(str):
-    return '"'+str+'"'
+def dq_esc(a_str):
+    return '"' + a_str + '"'
     
 def scp_transfer(remote_src, local_dest, attempts = 1):
     attempt = 1

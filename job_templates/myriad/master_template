@@ -29,7 +29,7 @@ fi
 
 SEED=$(( 10#$JOB_ID % 900000000 ))
 
-/usr/bin/time --verbose python "$PROJECT_HOME"/programs/SCRIPT "<cfg_file>" "<run_file>" <simlen> --seed $SEED --silent <args>
+/usr/bin/time --verbose python "$PROJECT_HOME"/programs/SCRIPT "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
 
 run_filename=`basename "<run_file>"`
 run_filename="${run_filename%.*}"

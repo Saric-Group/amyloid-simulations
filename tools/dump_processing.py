@@ -36,7 +36,7 @@ parser.add_argument('-n', '--every', type=int, default=1,
 
 args = parser.parse_args()
     
-model = rods.Rod_model(args.config_file)
+model = rods.Rod_model(rods.Rod_params().from_file(args.config_file))
     
 for in_file in args.in_files:
     

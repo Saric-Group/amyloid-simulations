@@ -44,10 +44,9 @@ make clean-all
 make purge
 make package-update
 make no-all
-make yes-mc yes-molecule yes-rigid yes-opt yes-misc yes-user-misc yes-python
-# why does mpi not work?!?!
-#make -j4 serial #LMP_INC="-DLAMMPS_PNG -DLAMMPS_JPEG -DLAMMPS_FFMPEG" JPG_LIB="-lpng -ljpeg"
-make -j4 serial mode=shlib LMP_INC="-DLAMMPS_EXCEPTIONS"
+make yes-molecule yes-rigid yes-mc yes-python yes-extra-pair
+#make -j4 mpi #LMP_INC="-DLAMMPS_PNG -DLAMMPS_JPEG -DLAMMPS_FFMPEG" JPG_LIB="-lpng -ljpeg"
+make -j4 mpi mode=shared LMP_INC="-DLAMMPS_EXCEPTIONS"
 make install-python
 
 echo "...done!"

@@ -5,9 +5,10 @@ num_cells = <num_cells>
 temp = 1.0
 damp = 0.1
 
-mc_moves = 0.0
-
 label_micelles = True
 #micelle_cutoff = 3.0
+
+mc_every = 100
+mc_tries = 0.0
 
 dt = 0.005

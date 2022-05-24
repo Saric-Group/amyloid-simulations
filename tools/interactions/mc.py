@@ -20,7 +20,7 @@ L_patch_half_sq = None
 
 def setup(model):
     '''
-    model : a lammps_multistate_rods.Model instance
+    model : a lammps_multistate_rods.Rod_model instance
     '''
     global sigma, sigma_sq, L, L_half, L_patch, L_patch_half, L_patch_half_sq
     sigma = 2*model.rod_radius

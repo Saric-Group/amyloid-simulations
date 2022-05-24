@@ -5,16 +5,17 @@ num_cells = <num_cells>
 
 temp = 1.0
 damp = 0.1
-
-mc_moves = 1.0
+conc = 1.0 # per cell
 
 label_fibrils = True
 #fibril_cutoff = 0.77
 
-dt = 0.01
-run_length = 100
+mc_every = 100
+mc_tries = 1.0
 
-# for growth.py (fibril seed params)
+dt = 0.01
+
+# fibril seed params
 seed_size = 8
 seed_phi = 0
 seed_theta = 0

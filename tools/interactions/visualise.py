@@ -12,7 +12,7 @@ Created on 23 Apr 2018
 
 import numpy as np
 
-from lammps_multistate_rods import Rod_model
+from lammps_multistate_rods import Rod_model, Rod_params
 import lammps_multistate_rods.tools.interactions as md
 import mc
 
@@ -674,7 +674,7 @@ if __name__ != '__main__':
     quit()
 
 cfg_filename = args.config_file
-model = Rod_model(cfg_filename)
+model = Rod_model(Rod_params().from_file(cfg_filename))
 mc.setup(model)
 md.setup(model)
 
