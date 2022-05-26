@@ -373,7 +373,8 @@ py_lmp.region('gcmc_init', 'block',
               membrane.xmin + model.rod_length/2, membrane.xmax - model.rod_length/2,
               membrane.ymin + model.rod_length/2, membrane.ymax - model.rod_length/2,
               0.0 + model.rod_length/2, run_args.Lz - model.rod_length/2)
-simulation.set_state_concentration(0, run_args.conc, 100, 200,
+concentration = run_args.conc / model.rod_length**3
+simulation.set_state_concentration(0, concentration, 10, 10,
                                    opt = ['region', 'gcmc_init',
                                           'tfac_insert', 1.65])
 
@@ -388,7 +389,7 @@ simulation.set_state_concentration(0, run_args.conc, 100, 200,
 # GENERATING INITIAL CONFIGURATION
 py_lmp.neigh_modify('every', 1, 'delay', 1)
 py_lmp.timestep(run_args.dt)
-py_lmp.run(2000)
+py_lmp.run(1000)
 simulation.unset_state_concentration(0)
 py_lmp.unfix(zwalls_fix)
 py_lmp.reset_timestep(0)
@@ -442,8 +443,11 @@ py_lmp.region('gcmc_box', 'block',
               '-${temp_x}', '${temp_x}',
               '-${temp_y}', '${temp_y}',
               0.0 + 2 * model.rod_length, run_args.Lz - model.rod_length / 2)
-
-simulation.set_state_concentration(0, run_args.conc, 1000, 10,
+N_rod_approx = int((membrane.xmax - membrane.xmin) *
+                   (membrane.ymax - membrane.ymin) * 
+                   run_args.Lz * concentration + 1)
+mc_tries = int(0.01 * N_rod_approx + 1)
+simulation.set_state_concentration(0, concentration, run_args.mc_every, mc_tries,
                                    opt = ['region', 'gcmc_box',
                                           'tfac_insert', 1.65])
 # OUTPUT
