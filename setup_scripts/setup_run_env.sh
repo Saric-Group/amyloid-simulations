@@ -23,7 +23,7 @@ if [ "`which python2.7`" != "$VENVDIR/bin/python2.7" ]; then
 fi
 
 if [[ $venv_setup == 1 ]]; then
-	pip install scipy numpy pyquaternion matplotlib mpi4py
+	pip install virtualenv scipy pyquaternion mpi4py #matplotlib
 	echo "...done!"
 fi
 
