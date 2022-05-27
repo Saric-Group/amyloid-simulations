@@ -6,6 +6,7 @@
 #$ -l h_rt=<walltime>
 #$ -l mem=<memory>
 #$ -l tmpfs=0
+#$ -pe mpi <num_proc>
 
 #$ -cwd
 
@@ -26,7 +27,7 @@ fi
 
 SEED=$(( 10#$JOB_ID % 900000000 ))
 
-/usr/bin/time --verbose python "$PROJECT_HOME"/programs/growth.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
+/usr/bin/time --verbose gerun python "$PROJECT_HOME"/programs/growth.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
 
 run_filename=`basename "<run_file>"`
 run_filename="${run_filename%.*}"

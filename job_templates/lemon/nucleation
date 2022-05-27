@@ -5,7 +5,7 @@
 
 #PBS -l walltime=<walltime>
 #PBS -l pmem=<memory>
-#PBS -l nodes=1:ppn=1
+#PBS -l nodes=1:ppn=<num_proc>
 
 #PBS -o "<out_folder>/${PBS_JOBID}.out"
 #PBS -j oe
@@ -27,7 +27,7 @@ fi
 JOB_ID=$( expr match "${PBS_JOBID}" '\([0-9]*\)' )
 SEED=$(( 10#${JOB_ID} % 900000000 ))
 
-/usr/bin/time --verbose python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
+/usr/bin/time --verbose mpiexec -f $PBS_NODEFILE python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
 
 run_filename=`basename "<run_file>"`
 run_filename="${run_filename%.*}"

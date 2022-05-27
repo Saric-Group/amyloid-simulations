@@ -36,6 +36,8 @@ parser.add_argument('-t', '--walltime', type=str, default='24:00:00',
                     help='walltime for the job (HH:MM:SS)')
 parser.add_argument('-m', '--memory', type=str, default='1G',
                     help='memory for the job')
+parser.add_argument('-np', '--num_proc', type=str, default='8',
+                    help='number of processors/cores')
 parser.add_argument('--args', type=str, default='',
                     help='any additional args for the program (to be passed verbatim)')
 parser.add_argument('--aargs', type=str, default='',
@@ -60,6 +62,7 @@ simlen = job_args.simlen
 project_home = job_args.home
 walltime = job_args.walltime
 memory = job_args.memory
+num_proc = job_args.num_proc
 args = job_args.args
 aargs = job_args.aargs
 
