@@ -18,7 +18,7 @@ L = L_half = None
 L_patch = L_patch_half = None
 L_patch_half_sq = None
 
-def setup(model):
+def model_setup(model):
     '''
     model : a lammps_multistate_rods.Rod_model instance
     '''

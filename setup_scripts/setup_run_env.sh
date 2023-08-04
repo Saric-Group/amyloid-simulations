@@ -12,11 +12,11 @@ VENVDIR="$BASEDIR"/venv
 if [ ! -d $VENVDIR ]; then
 	echo "Installing and setting up virtualenv..."
 	venv_setup=1
-	virtualenv -p "`which python2.7`" "$VENVDIR"
+	virtualenv -p "`which python3`" "$VENVDIR"
 fi
 
 source "$VENVDIR"/bin/activate
-if [ "`which python2.7`" != "$VENVDIR/bin/python2.7" ]; then
+if [ "`which python3`" != "$VENVDIR/bin/python3" ]; then
 	echo "ERROR: Virtualenv is not there or couldn't activate. Aborting so LAMMPS doesn't install on system python."
 	echo "       Re-run this script to finish installation after sorting out whatever is wrong with virtualenv."
 	exit

@@ -14,6 +14,7 @@ import argparse
 import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
 
+
 parser = argparse.ArgumentParser(description='Application for the processing of LAMMPS'\
                                  'dump files generated with lammps_multistate_rods library',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -40,7 +41,7 @@ model = rods.Rod_model(rods.Rod_params().from_file(args.config_file))
     
 for in_file in args.in_files:
     
-    raw_data = rods_tools.parse_dump_file(in_file)
+    raw_data = rods_tools.parsing.parse_dump_file(in_file)
     _, _, data_structure, _ = next(raw_data)
     del raw_data
     
@@ -48,7 +49,7 @@ for in_file in args.in_files:
         
         if 'c_micelle_ID' in data_structure:
             timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
-                rods_tools.parse_dump_file(in_file), 'micelle_ID',
+                rods_tools.parsing.parse_dump_file(in_file), 'micelle_ID',
                 args.every, model, args.type_offset)
             
             micelle_output_path = os.path.splitext(in_file)[0]+"_micelle_data"
@@ -57,7 +58,7 @@ for in_file in args.in_files:
         
         if 'c_fibril_ID' in data_structure:
             timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
-                rods_tools.parse_dump_file(in_file), 'fibril_ID',
+                rods_tools.parsing.parse_dump_file(in_file), 'fibril_ID',
                 args.every, model, args.type_offset)
             
             fibril_output_path = os.path.splitext(in_file)[0]+"_fibril_data"
@@ -65,16 +66,16 @@ for in_file in args.in_files:
                                                    fibril_output_path)
     
     if args.last_dump:
-        for timestep, box_bounds, data_structure, data in rods_tools.parse_dump_file(in_file):
+        for timestep, box_bounds, data_structure, data in rods_tools.parsing.parse_dump_file(in_file):
             pass
         last_dump_output_path = os.path.splitext(in_file)[0]+"_last_dump"
-        rods_tools.write_dump_snapshot((timestep, box_bounds, data_structure, data),
-                                       last_dump_output_path)
+        rods_tools.parsing.write_dump_snapshot((timestep, box_bounds, data_structure, data),
+                                               last_dump_output_path)
     
     if args.membrane:
         if 'c_mem_cluster' in data_structure:           
             timesteps, box_sizes, mem_cluster_data = rods_tools.clusters.get_cluster_data(
-                rods_tools.parse_dump_file(in_file), 'mem_cluster',
+                rods_tools.parsing.parse_dump_file(in_file), 'mem_cluster',
                 args.every, model, args.type_offset)
             biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
             for snapshot in mem_cluster_data:
@@ -98,5 +99,5 @@ for in_file in args.in_files:
             rods_tools.clusters.write_cluster_data(timesteps, box_sizes, adsorbed_rods,
                                                    adsorbed_output_path)
         else:
-            print 'ERROR: No membrane data to analyse! (invalid -m option)'
+            print('ERROR: No membrane data to analyse! (invalid -m option)')
 

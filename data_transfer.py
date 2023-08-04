@@ -66,7 +66,7 @@ def scp_transfer(remote_src, local_dest, attempts = 1):
     return exit_status
 
 def sftp_transfer(remote_src, local_dest):
-    print "Transfering {:s}".format(os.path.relpath(remote_src, remote_basedir))
+    print("Transfering {:s}".format(os.path.relpath(remote_src, remote_basedir)))
     shutil.copy(remote_src, local_dest)
     
 def file_transfer(remote_src, local_dest, scp_attempts=1):
@@ -97,7 +97,7 @@ for node, dirs, files in os.walk(rootnode, topdown=True):
             cfg_path = os.path.join(node, filename)
             dirs.remove(basename)
             srcdir = os.path.join(node, basename)
-            print "Processing", os.path.relpath(srcdir, remote_basedir), "..."
+            print("Processing", os.path.relpath(srcdir, remote_basedir), "...")
             destdir = remote_to_local(srcdir)
             if not os.path.exists(destdir):
                 os.makedirs(destdir)
@@ -124,9 +124,9 @@ for node, dirs, files in os.walk(rootnode, topdown=True):
             else:
                 os.remove(cfg_path)
             
-            print "... done!"
+            print("... done!")
      
 secs = time.time() - start
 hrs = int(secs/3600); secs -= hrs*3600
 mins = int(secs/60); secs -= mins*60
-print "time: {:02d}:{:02d}:{:05.2f}".format(hrs, mins, secs)
+print("time: {:02d}:{:02d}:{:05.2f}".format(hrs, mins, secs))

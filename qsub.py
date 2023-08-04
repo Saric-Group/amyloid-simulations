@@ -36,7 +36,7 @@ parser.add_argument('-t', '--walltime', type=str, default='24:00:00',
                     help='walltime for the job (HH:MM:SS)')
 parser.add_argument('-m', '--memory', type=str, default='1G',
                     help='memory for the job')
-parser.add_argument('-np', '--num_proc', type=str, default='8',
+parser.add_argument('-np', '--num_proc', type=str, default='10',
                     help='number of processors/cores')
 parser.add_argument('--args', type=str, default='',
                     help='any additional args for the program (to be passed verbatim)')

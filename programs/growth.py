@@ -55,7 +55,7 @@ if args.seed is None:
     if mpi_rank == 0:
         import time
         seed = int((time.time() % 1)*1000000)
-        print "WARNING: no seed given explicitly; using:", seed
+        print("WARNING: no seed given explicitly; using:", seed)
     seed = mpi_comm.bcast(seed, root = 0)
 else:
     seed = args.seed
@@ -83,9 +83,11 @@ log_path = os.path.join(output_folder, log_filename)
 
 run_args = rods.Rod_params() # any object with __dict__ would do
 if mpi_rank == 0:
-    execfile(args.run_file,
-             {'__builtins__' : None, 'True' : True, 'False' : False, 'None' : None},
-             vars(run_args))
+    with open(args.run_file) as f:
+        compiled_file = compile(f.read(), args.run_file, 'exec')
+    exec(compiled_file,
+         {'__builtins__' : None, 'True' : True, 'False' : False, 'None' : None},
+         vars(run_args))
 run_args = mpi_comm.bcast(run_args, root = 0)
 
 out_freq = args.output_freq if args.output_freq != None else run_args.mc_every
@@ -118,9 +120,9 @@ simulation.setup("box")
 fibril_edges = []
 fibril_rods = []
 if mpi_rank == 0:
-    fibril_edges = rods_tools.prepare_fibril(model, run_args.seed_size, run_args.seed_phi,
-                                             run_args.seed_theta, run_args.seed_r0,
-                                             data = fibril_rods)
+    fibril_edges = rods_tools.preparation.prepare_fibril(
+        model, run_args.seed_size, run_args.seed_phi, run_args.seed_theta,
+        run_args.seed_r0, data = fibril_rods)
 fibril_edges = mpi_comm.bcast(fibril_edges, root = 0)
 fibril_rods = mpi_comm.bcast(fibril_rods, root = 0)
 
