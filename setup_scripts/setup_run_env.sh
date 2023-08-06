@@ -39,6 +39,7 @@ else
 	git pull origin develop
 fi
 
+cp "$LAMMPSDIR"/lib/python/Makefile.lammps.python3 "$LAMMPSDIR"/lib/python/Makefile.lammps
 cd "$LAMMPSDIR"/src
 make clean-all
 make purge
