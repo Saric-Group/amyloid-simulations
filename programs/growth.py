@@ -200,13 +200,11 @@ simulation.set_state_concentration(0, concentration, run_args.mc_every, mc_excha
 # GROUPS & COMPUTES
 if hasattr(run_args, 'label_fibrils'):
     fibril_group = 'beta_patches'
-    beta_active_patch_types = sorted(filter(lambda t: (t in model.active_bead_types) and\
-                                                      (t not in model.body_bead_types),
-                                            model.state_bead_types[1]))
-    py_lmp.variable(fibril_group, 'atom', '"' + 
-                                          '||'.join(['(type == {:d})'.format(t)
-                                                     for t in beta_active_patch_types]) + 
-                                          '"')
+    beta_active_patch_types = sorted([t for t in model.state_bead_types[1]
+                                      if (t in model.active_bead_types)
+                                      and (t not in model.body_bead_types)])
+    py_lmp.variable(fibril_group, 'atom', '"' + '||'.join(['(type == {:d})'.format(t)
+                    for t in beta_active_patch_types]) + '"')
     py_lmp.group(fibril_group, 'dynamic', simulation.rods_group, 'var', fibril_group,
                  'every', out_freq)
     fibril_compute = "fibril_ID"

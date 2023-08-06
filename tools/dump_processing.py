@@ -81,7 +81,7 @@ for in_file in args.in_files:
             for snapshot in mem_cluster_data:
                 biggest_cluster_ID = 0
                 biggest_cluster_size = 0
-                for cluster_ID, cluster in snapshot.iteritems():
+                for cluster_ID, cluster in snapshot.items():
                     cluster_size = len(cluster)
                     if cluster_size > biggest_cluster_size:
                         biggest_cluster_size = cluster_size

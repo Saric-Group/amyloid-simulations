@@ -329,8 +329,7 @@ mem_type_range = "{:d}*{:d}".format(min(membrane.bead_types),
                                     max(membrane.bead_types))
 py_lmp.pair_coeff(mem_type_range, rod_type_range, 0.0, model.global_cutoff - 0.01, model.global_cutoff)
 # lipid-protein volume-exclusion (all states)
-vx_types = filter(lambda t: t not in model.active_bead_types,
-                  model.all_bead_types)
+vx_types = [t for t in model.all_bead_types if t not in model.active_bead_types]
 for vx_type in vx_types:
     bead_lipid_contact = 0.5 * membrane.sigma * pow(2, 1./6) + model.bead_radii[vx_type]
     for mem_bead_type in membrane.bead_types:

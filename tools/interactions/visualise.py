@@ -14,11 +14,11 @@ import numpy as np
 
 from lammps_multistate_rods import Rod_model, Rod_params
 import lammps_multistate_rods.tools.interactions as md
-from . import mc
+import mc
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, RadioButtons, AxesWidget
-import six
+from matplotlib import colormaps
 
 class VertSlider(AxesWidget):
     """
@@ -159,7 +159,7 @@ class VertSlider(AxesWidget):
         self.val = val
         if not self.eventson:
             return
-        for _, func in six.iteritems(self.observers):
+        for _, func in self.observers.items():
             func(val)
 
     def on_changed(self, func):
@@ -241,7 +241,7 @@ def draw_point_rod_2D(vals, vals_min, fig_title = ''):
                         valstep=1, valfmt = '%1.1f deg')
     
     data_chooser_axes = fig_2D.add_axes([0.03, 0.55, 0.05, 0.1], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_2D.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -292,7 +292,7 @@ def draw_point_rod_z_slice(vals, vals_min, fig_title = ''):
                       valstep=1, valfmt = '%1.2f')
     
     data_chooser_axes = fig_r.add_axes([0.02, 0.55, 0.07, 0.15], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_r.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -345,7 +345,7 @@ def draw_point_rod_r_slice(vals, vals_min, fig_title = ''):
     r_slider.valtext.set_text(r_slider.valfmt % (r_init*dx))
     
     data_chooser_axes = fig_z.add_axes([0.02, 0.55, 0.07, 0.15], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_z.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -406,7 +406,7 @@ def draw_rod_rod_2D(vals, vals_min, fig_title = ''):
                         valstep=1, valfmt = '%1.1f deg')
     
     data_chooser_axes = fig_2D.add_axes([0.03, 0.55, 0.05, 0.1], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_2D.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -478,7 +478,7 @@ def draw_rod_rod_z_slice(vals, vals_min, fig_title = ''):
                       valstep=1, valfmt = '%1.2f')
     
     data_chooser_axes = fig_r.add_axes([0.03, 0.55, 0.05, 0.1], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_r.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -551,7 +551,7 @@ def draw_rod_rod_r_slice(vals, vals_min, fig_title = ''):
     r_slider.valtext.set_text(r_slider.valfmt % (r_init*dx))
     
     data_chooser_axes = fig_z.add_axes([0.03, 0.55, 0.05, 0.1], facecolor=widget_color)
-    data_chooser = RadioButtons(data_chooser_axes, vals.keys())
+    data_chooser = RadioButtons(data_chooser_axes, list(vals.keys()))
     
     mc_scale_slider_axes = fig_z.add_axes([0.04, 0.10, 0.03, 0.35], facecolor=widget_color)
     mc_scale_slider = VertSlider(mc_scale_slider_axes, r'MC scaling', 0.0, -vals_min,
@@ -700,8 +700,8 @@ thetas = np.linspace(thetamin, thetamax, theta_points)
 
 # figure parameters
 axis_font = {'size':13}
-img_cmap = plt.get_cmap("RdBu")
-plot_cmap = plt.cm.get_cmap('nipy_spectral')
+img_cmap = colormaps['RdBu']
+plot_cmap = colormaps['nipy_spectral']
 widget_color = 'lightgoldenrodyellow'
 
 # interactive console - choice of interaction
@@ -718,8 +718,8 @@ while True:
                     raise Exception("")
                 break
             except:
-                print("Unexpected input ({:}), please enter one of the following: ".format(bead_type), end=' ')
-                print(model.all_bead_types)
+                print("Unexpected input ({:}), please enter one of the following: ".format(bead_type),
+                      model.all_bead_types)
         for i in range(model.num_states):
                 print("{:2d} : {:s}".format(i, model.rod_states[i]))
         while True:
