@@ -17,7 +17,7 @@ if not os.path.exists(out_folder):
 
 version = int(template_path[-1])
 
-SSs = [0.0] #3.25
+SSs = [0.0] #[3.25]
 SB_tips = [1.0]
 SB_crosss = [4.5] #absolute value, SB_tip/2 will be deduced
 SB_centrals = [1.5]

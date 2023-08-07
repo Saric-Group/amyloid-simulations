@@ -6,17 +6,20 @@ Created on 10 Aug 2018
 
 @author: Eugen Rožić
 '''
-import os
+import os, sys
 
 from lammps import PyLammps
 
 import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
 
-params = rods.Rod_params().from_file('./data/test/5p_v3.cfg')
+cfg_file_loc = sys.argv[1]
+script_loc = os.path.abspath(os.path.dirname())
+
+params = rods.Rod_params().from_file(cfg_file_loc)
 model = rods.Rod_model(params)
     
-output_dir = os.path.dirname('./data/test/test_out/')
+output_dir = os.path.join(os.path.dirname(cfg_file_loc), 'test_out')
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 data_in = os.path.join(output_dir, 'data.in')

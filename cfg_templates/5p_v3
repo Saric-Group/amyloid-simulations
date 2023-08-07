@@ -1,5 +1,6 @@
 # This model has 5 patches, 4 active ones (2 side, at 90 deg from center, and 2 "central", at 30 deg from center), and a passive, repulsive (volume-exclusion) one at 0 deg.
 # All active patches have broken C2 symmetry to facilitate proper alignment (active to active tip)
+# The central patches have a longer range (1.0) than the side patches (0.75); this is necessary because the interaction shouldn't "leak" on the outer side of the fibril/monomers
 # The "tip-patch", i.e. the "cross" interaction is between soluble tip (2) and beta central patches, with the "signature" of: (0 , 0, 1/3, 1/3, 1/2, 1)
 
 rod_states = ('soluble_state', 'beta_state')
