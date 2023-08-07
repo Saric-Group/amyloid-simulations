@@ -12,12 +12,9 @@
 
 *.pyc
 
-data/*
-libs/*
-venv/*
-lammps-local/*
-programs/test.py
-cfg_gen.py
-run_gen.py
+data
+libs
+venv
+lammps-local
 
 TODO

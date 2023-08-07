@@ -15,7 +15,7 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('server', type=str,
-                    help='myriad or lemon')
+                    help='myriad or kathleen or lemon')
 parser.add_argument('-u', '--user', type=str,
                     help='user name for the given server')
 parser.add_argument('-s', '--search', type=str, default=r'growth',
@@ -26,13 +26,19 @@ parser.add_argument('--no_scp', action='store_true',
                     help="uses only the OS's sftp connection for transfer")
 args = parser.parse_args()
 
-if args.server.startswith('myriad'):
+if args.server == 'myriad':
     host = 'myriad.rc.ucl.ac.uk'
     user = 'ucapero' if args.user == None else args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
     remote_homedir = remote_local + 'lustre/home/' + user
     remote_rel_basedir = 'Scratch/amyloids'
-elif args.server.startswith('lemon'):
+elif args.server == 'kathleen':
+    host = 'kathleen.rc.ucl.ac.uk'
+    user = 'ucapero' if args.user == None else args.user
+    remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
+    remote_homedir = remote_local + 'lustre/home/' + user
+    remote_rel_basedir = 'Scratch/amyloids'
+elif args.server == 'lemon':
     host = 'lemon0.biop.phys.ucl.ac.uk'
     user = 'erozic' if args.user == None else args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
