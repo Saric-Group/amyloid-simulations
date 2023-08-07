@@ -4,9 +4,9 @@
 # PROJECT_ROOT/lammps-local, and installs this LAMMPS into the venv,
 # with everything needed to run the programs of this project.
 
-STARTDIR="$(pwd)"
+STARTDIR="$(realpath .)"
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
-BASEDIR="$(pwd)"
+BASEDIR="$(realpath .)"
 
 VENVDIR="$BASEDIR"/venv
 if [ ! -d $VENVDIR ]; then
@@ -17,8 +17,10 @@ fi
 
 source "$VENVDIR"/bin/activate
 if [ "`which python3`" != "$VENVDIR/bin/python3" ]; then
+	echo "`which python3` != $VENVDIR/bin/python3 !!"
 	echo "ERROR: Virtualenv is not there or couldn't activate. Aborting so LAMMPS doesn't install on system python."
 	echo "       Re-run this script to finish installation after sorting out whatever is wrong with virtualenv."
+	cd "$STARTDIR"
 	exit
 fi
 
