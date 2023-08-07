@@ -14,7 +14,7 @@ import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
 
 cfg_file_loc = sys.argv[1]
-script_loc = os.path.abspath(os.path.dirname())
+script_loc = os.path.abspath(os.path.dirname(sys.argv[0]))
 
 params = rods.Rod_params().from_file(cfg_file_loc)
 model = rods.Rod_model(params)
