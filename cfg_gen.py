@@ -10,12 +10,13 @@ import sys, os, re
 
 
 template_path = sys.argv[1]
+template_name = os.path.basename(template_path)
 
-out_folder = template_path+'_out'
+out_folder = template_path + '_out'
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
 
-version = int(template_path[-1])
+version = int(template_name[-1])
 
 SSs = [0.0] #[3.25]
 SB_tips = [1.0]
@@ -70,8 +71,8 @@ for SS in SSs:
                             cent_eff = calc_central_int(version, BB_central, SB_central, SB_cross, SB_tip)
                             side_eff = calc_side_int(version, BB_side, SB_side, SB_cross, SB_tip)
                             
-                            cfg_filename = "{:.2f}-{:.2f}-{:.2f}-{:.2f}_{:.2f}-{:.2f}_{:.2f}.cfg".format(
-                                SS, SB_tip, SB_cross, SB_central, BB_central, SB_side, BB_side)
+                            cfg_filename = "{}_{:.2f}-{:.2f}-{:.2f}-{:.2f}_{:.2f}-{:.2f}_{:.2f}.cfg".format(
+                                template_name, SS, SB_tip, SB_cross, SB_central, BB_central, SB_side, BB_side)
                             cfg_filepath = os.path.join(out_folder, cfg_filename)
                             
                             with open(cfg_filepath, 'w') as cfg_file:
