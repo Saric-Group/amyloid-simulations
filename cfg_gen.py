@@ -23,11 +23,11 @@ SB_tips = [1.0]
 SB_crosss = [4.5] #absolute value, SB_tip/2 will be deduced
 SB_centrals = [1.5]
 BB_centrals = [6.0] #relative to SB_centrals
-SB_sides = [1.5]
+SB_sides = [2.0]
 BB_sides = [2.0, 4.0] #relative to SB_sides
 
-D_mu = 15.0
-VX = 5.0
+D_mu = 10.0
+VX = 1.0
 
 def calc_central_int(version, BB_central, SB_central, SB_cross, SB_tip):
     if version == 2:

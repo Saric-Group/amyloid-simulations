@@ -13,7 +13,7 @@ label_fibrils = True
 mc_every = 100
 mc_tries = 1.0
 
-dt = 0.01
+dt = 0.005
 
 # fibril seed params
 seed_size = 8

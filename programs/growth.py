@@ -192,8 +192,8 @@ if model.num_states <= 1 or run_args.mc_tries <= 0:
 mc_tries = int(run_args.mc_tries * simulation.rods_count())
 mc_exchange_tries = int(0.01 * mc_tries + 1)
 concentration = run_args.conc / run_args.cell_size**3
-overlap = (2.1 * model.rod_radius) / run_args.cell_size
-simulation.set_state_transitions(run_args.mc_every, mc_tries)#, opt = ["full_energy"])    
+overlap = 2.1 * model.rod_radius
+simulation.set_state_transitions(run_args.mc_every, mc_tries, opt = ['auto_skin'])#, opt = ["full_energy"])
 simulation.set_state_concentration(0, concentration, run_args.mc_every, mc_exchange_tries,
                                    opt = ["overlap_cutoff", overlap])
 
@@ -233,7 +233,10 @@ try:
 except:
     pass
 py_lmp.dump("dump_cmd", "all", "custom", out_freq, '"' + dump_path + '"', dump_elems)
+#py_lmp.variable("dump_var", "equal", "stride(8000,8500,1)")
+#py_lmp.dump_modify("dump_cmd", "every", "v_dump_var")
 py_lmp.dump_modify("dump_cmd", "sort id")
+
 py_lmp.thermo_style("custom", "step atoms", "pe temp",
                     " ".join(["v_{}".format(group_var)
                               for group_var in simulation.state_group_vars]),

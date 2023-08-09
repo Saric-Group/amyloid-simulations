@@ -74,7 +74,7 @@ mc_every = 100
 
 simulation.set_state_concentration(0, conc, mc_every, int(0.01 * N_sol_approx + 1),
                                    opt = ["overlap_cutoff", overlap])
-simulation.set_state_transitions(mc_every, N + N_sol_approx)#, opt = ['auto_skin'])#, opt = ['full_energy'])
+simulation.set_state_transitions(mc_every, N + N_sol_approx, opt = ['auto_skin'])#, opt = ['full_energy'])
 
 # OUTPUT
 dump_elems = "id x y z type mol"# c_"+simulation.cluster_compute

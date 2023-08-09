@@ -138,7 +138,7 @@ if model.num_states <= 1 or run_args.mc_tries <= 0:
 mc_tries = int(run_args.mc_tries * simulation.rods_count())
 mc_exchange_tries = int(0.01 * mc_tries + 1)
 concentration = run_args.conc / run_args.cell_size**3
-overlap = (2.1 * model.rod_radius) / run_args.cell_size
+overlap = 2.1 * model.rod_radius
 simulation.set_state_transitions(run_args.mc_every, mc_tries)#, opt = ["full_energy"])    
 simulation.set_state_concentration(0, concentration, run_args.mc_every, mc_exchange_tries,
                                    opt = ["overlap_cutoff", overlap])
