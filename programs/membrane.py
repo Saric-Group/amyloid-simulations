@@ -360,7 +360,7 @@ if hasattr(run_args, 'label_micelles'):
         SS_tip_int_key = model.eps[(sol_tip_bead_type, sol_tip_bead_type)][1]
         SS_tip_int_range = model.int_types[SS_tip_int_key][1]
         micelle_cutoff = 2*model.rod_radius + SS_tip_int_range
-    py_lmp.compute(micelle_compute, micelle_group, 'aggregate/atom', micelle_cutoff)
+    py_lmp.compute(micelle_compute, micelle_group, 'cluster/atom', micelle_cutoff)
 
 #TODO label_fibrils ??
 

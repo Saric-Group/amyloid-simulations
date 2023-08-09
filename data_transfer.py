@@ -31,13 +31,13 @@ if args.server == 'myriad':
     user = 'ucapero' if args.user == None else args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
     remote_homedir = remote_local + 'lustre/home/' + user
-    remote_rel_basedir = 'Scratch/amyloids'
+    remote_rel_basedir = 'simulations/amyloids/data' #'Scratch/amyloids'
 elif args.server == 'kathleen':
     host = 'kathleen.rc.ucl.ac.uk'
     user = 'ucapero' if args.user == None else args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
     remote_homedir = remote_local + 'lustre/home/' + user
-    remote_rel_basedir = 'Scratch/amyloids'
+    remote_rel_basedir = 'simulations/amyloids/data' #'Scratch/amyloids'
 elif args.server == 'lemon':
     host = 'lemon0.biop.phys.ucl.ac.uk'
     user = 'erozic' if args.user == None else args.user

@@ -224,7 +224,7 @@ if hasattr(run_args, 'label_fibrils'):
                 cutoff = model.bead_radii[t1] + model.bead_radii[t2] + int_range*2/3
                 if cutoff > fibril_cutoff:
                     fibril_cutoff = cutoff
-    py_lmp.compute(fibril_compute, fibril_group, 'aggregate/atom', fibril_cutoff)
+    py_lmp.compute(fibril_compute, fibril_group, 'cluster/atom', fibril_cutoff)
 
 # OUTPUT
 dump_elems = "id x y z type mol"
