@@ -26,7 +26,7 @@ BB_centrals = [6.0] #relative to SB_centrals
 SB_sides = [2.0]
 BB_sides = [2.0, 4.0] #relative to SB_sides
 
-D_mu = 10.0
+D_mu = 15.0
 VX = 1.0
 
 def calc_central_int(version, BB_central, SB_central, SB_cross, SB_tip):
