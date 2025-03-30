@@ -12,7 +12,7 @@
 
 *.pyc
 
-data
+test
 libs
 venv
 lammps-local
