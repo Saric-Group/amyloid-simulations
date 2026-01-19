@@ -8,13 +8,15 @@ STARTDIR="$(pwd)"
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 BASEDIR="$(pwd)"
 
-mkdir -p "libs"
-LIBSDIR="$BASEDIR/libs"
+# 1) get "lammps multistate rods" library (put it in virtual env)
 
-git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBSDIR/temp"
+LIBDIR="$BASEDIR/venv/lib/python3.12/site-packages"
+mkdir -p "$LIBDIR"
+rm -rf "$LIBDIR/lammps_multistate_rods"
 
-rm -rf "$LIBSDIR/lammps_multistate_rods"
-mv "$LIBSDIR/temp/lammps_multistate_rods" "$LIBSDIR/lammps_multistate_rods"
-rm -rf "$LIBSDIR/temp"
+git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBDIR/lammps_multistate_rods"
 
+# 2) ...
+
+# finish
 cd "$STARTDIR"

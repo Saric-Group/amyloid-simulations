@@ -797,10 +797,10 @@ while True:
 # interactive console - choice of plot
 while True:
     print("""
-print "1 : 2D plot"
-print "2 : z-slice plot"
-print "3 : r-slice plot"
-print "q : Quit""")
+1 : 2D plot
+2 : z-slice plot
+3 : r-slice plot
+q : Quit""")
     plot_type = input("What to plot? (enter 1, 2 or 3) ")
     plot_type = plot_type.strip()
     if plot_type == '1':

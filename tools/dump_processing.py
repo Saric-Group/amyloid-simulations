@@ -48,21 +48,21 @@ for in_file in args.in_files:
     if args.cluster_data:
         
         if 'c_micelle_ID' in data_structure:
-            timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
+            timesteps, box_sizes, rod_counts, cluster_data = rods_tools.clusters.get_cluster_data(
                 rods_tools.parsing.parse_dump_file(in_file), 'micelle_ID',
                 args.every, model, args.type_offset)
             
             micelle_output_path = os.path.splitext(in_file)[0]+"_micelle_data"
-            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, rod_counts, cluster_data,
                                                    micelle_output_path)
         
         if 'c_fibril_ID' in data_structure:
-            timesteps, box_sizes, cluster_data = rods_tools.clusters.get_cluster_data(
+            timesteps, box_sizes, rod_counts, cluster_data = rods_tools.clusters.get_cluster_data(
                 rods_tools.parsing.parse_dump_file(in_file), 'fibril_ID',
                 args.every, model, args.type_offset)
             
             fibril_output_path = os.path.splitext(in_file)[0]+"_fibril_data"
-            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, cluster_data,
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, rod_counts, cluster_data,
                                                    fibril_output_path)
     
     if args.last_dump:
@@ -74,7 +74,7 @@ for in_file in args.in_files:
     
     if args.membrane:
         if 'c_mem_cluster' in data_structure:           
-            timesteps, box_sizes, mem_cluster_data = rods_tools.clusters.get_cluster_data(
+            timesteps, box_sizes, rod_counts, mem_cluster_data = rods_tools.clusters.get_cluster_data(
                 rods_tools.parsing.parse_dump_file(in_file), 'mem_cluster',
                 args.every, model, args.type_offset)
             biggest_cluster_IDs = [] #those clusters will be the membrane + adsorbed
@@ -96,7 +96,7 @@ for in_file in args.in_files:
                 adsorbed_rods.append(adsorbed)
         
             adsorbed_output_path = os.path.splitext(in_file)[0]+"_adsorbed"
-            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, adsorbed_rods,
+            rods_tools.clusters.write_cluster_data(timesteps, box_sizes, rod_counts, adsorbed_rods,
                                                    adsorbed_output_path)
         else:
             print('ERROR: No membrane data to analyse! (invalid -m option)')

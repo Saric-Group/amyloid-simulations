@@ -11,22 +11,22 @@ import os
 import matplotlib.pyplot as plt
 import math
 
-from lammps import PyLammps
+from lammps import lammps
 import sys
 
-py_lmp = PyLammps()
-#py_lmp.log("none")
+lmp = lammps()
+#lmp.cmd.log("none")
 
-py_lmp.units("lj")
-py_lmp.dimension(3)
-py_lmp.atom_style("atomic")
+lmp.cmd.units("lj")
+lmp.cmd.dimension(3)
+lmp.cmd.atom_style("atomic")
 
-py_lmp.boundary("p p p")
+lmp.cmd.boundary("p p p")
 box_size = 10
-py_lmp.region("box", "block", -box_size / 2, box_size / 2, -box_size / 2, box_size / 2, -box_size / 2, box_size / 2)
-py_lmp.create_box(3, "box")
+lmp.cmd.region("box", "block", -box_size / 2, box_size / 2, -box_size / 2, box_size / 2, -box_size / 2, box_size / 2)
+lmp.cmd.create_box(3, "box")
 
-py_lmp.mass("*", 1)
+lmp.cmd.mass("*", 1)
 
 # general potential parameters
 eps = 1.0
@@ -51,35 +51,35 @@ max_r = 3*sigma
 #########################################################################################
 
 for lj_cutoff in (2.6, 3.0, 3.75):
-    py_lmp.pair_style("lj/cut", max_r)
-    #py_lmp.pair_modify("shift yes")
-    py_lmp.pair_coeff("*", "*", eps, sigma/math.pow(2, 1./6), lj_cutoff*r_body)
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-6_'+str(lj_cutoff))
+    lmp.cmd.pair_style("lj/cut", max_r)
+    #lmp.cmd.pair_modify("shift yes")
+    lmp.cmd.pair_coeff("*", "*", eps, sigma/math.pow(2, 1./6), lj_cutoff*r_body)
+    lmp.cmd.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-6_'+str(lj_cutoff))
 
 # for i in (9,):
-#     py_lmp.pair_style("nm/cut", max_r)
-#     #py_lmp.pair_modify("shift yes")
-#     py_lmp.pair_coeff("*", "*", eps, sigma, 12, i, cutoff)
-#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
+#     lmp.cmd.pair_style("nm/cut", max_r)
+#     #lmp.cmd.pair_modify("shift yes")
+#     lmp.cmd.pair_coeff("*", "*", eps, sigma, 12, i, cutoff)
+#     lmp.cmd.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'LJ_12-'+str(i))
       
 # for std_dev in (0.5, 0.6):
 #     std_dev *= r_body
-#     py_lmp.pair_style("gauss/cut", max_r)
-#     #py_lmp.pair_modify("shift yes")
-#     py_lmp.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
-#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
+#     lmp.cmd.pair_style("gauss/cut", max_r)
+#     #lmp.cmd.pair_modify("shift yes")
+#     lmp.cmd.pair_coeff("*", "*", -math.sqrt(2*math.pi)*std_dev*eps, sigma, std_dev)
+#     lmp.cmd.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Gauss-{:0.2f}'.format(std_dev))
        
 # for a in (2.5,):
 #     a /= r_body
-#     py_lmp.pair_style("morse", max_r)
-#     #py_lmp.pair_modify("shift yes")
-#     py_lmp.pair_coeff("*", "*", eps, a, sigma, cutoff)
-#     py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
+#     lmp.cmd.pair_style("morse", max_r)
+#     #lmp.cmd.pair_modify("shift yes")
+#     lmp.cmd.pair_coeff("*", "*", eps, a, sigma, cutoff)
+#     lmp.cmd.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'Morse-'+str(a))
 
 for reach in (0.0, 0.1, 1.0):
-    py_lmp.pair_style("cosine/squared", max_r)
-    py_lmp.pair_coeff("*", "*", eps, sigma, sigma + reach*r_body, "wca")
-    py_lmp.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos-sq_'+str(reach))
+    lmp.cmd.pair_style("cosine/squared", max_r)
+    lmp.cmd.pair_coeff("*", "*", eps, sigma, sigma + reach*r_body, "wca")
+    lmp.cmd.pair_write(1, 1, num_points, 'r', min_r, max_r, output_filename, 'cos-sq_'+str(reach))
     
 
 #########################################################################################
@@ -88,22 +88,23 @@ for reach in (0.0, 0.1, 1.0):
 
 data = []
 with open(output_filename, 'r') as data_file:
-    line = data_file.readline()
+    line = data_file.readline() # pair_write comment line
+    data_file.readline() # 1st interaction comment line
     while (line!=''):
-        data_file.readline()
+        data_file.readline() # empty line
         name = data_file.readline().strip()
         rs = []
         Es = []
         Fs = []
         data.append([name, rs, Es, Fs])
         N = int(data_file.readline().split()[1])
-        data_file.readline()
+        data_file.readline() # empty line
         for i in range(N):
             parts = data_file.readline().split()
             rs.append(float(parts[1]))
             Es.append(float(parts[2]))
             Fs.append(float(parts[3]))
-        line = data_file.readline()    
+        line = data_file.readline() #next interaction comment line, or empty
 n = len(data)
 
 axis_font = {'size':14}

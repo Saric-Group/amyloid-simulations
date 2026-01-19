@@ -16,7 +16,7 @@ from mpi4py import MPI
 mpi_comm = MPI.COMM_WORLD
 mpi_rank = mpi_comm.Get_rank()
 
-import os
+import os, sys
 import argparse
 
 parser = argparse.ArgumentParser(description='Program for NVE+Langevin hybrid LAMMPS'\
@@ -39,8 +39,6 @@ parser.add_argument('--out', type=str, default=None,
 parser.add_argument('-o', '--output_freq', type=int,
                     help='configuration output frequency (in MD steps);'\
                     ' default behavior is after every batch of MC moves')
-parser.add_argument('-v', '--verbose', action='store_true',
-                    help="print all LAMMPS output to stdout")
 
 args = parser.parse_args()
 
@@ -55,7 +53,7 @@ if args.seed is None:
     if mpi_rank == 0:
         import time
         seed = int((time.time() % 1)*1000000)
-        print("WARNING: no seed given explicitly; using:", seed)
+        print("WARNING: no seed given explicitly; using:", seed, file=sys.stderr)
     seed = mpi_comm.bcast(seed, root = 0)
 else:
     seed = args.seed
@@ -65,7 +63,7 @@ if args.out is None:
 else:
     output_folder = args.out
 #========================================================================================
-from lammps import PyLammps
+from lammps import lammps
 import lammps_multistate_rods as rods
 import lammps_multistate_rods.tools as rods_tools
 
@@ -92,11 +90,8 @@ run_args = mpi_comm.bcast(run_args, root = 0)
 
 out_freq = args.output_freq if args.output_freq != None else run_args.mc_every
 
-if mpi_rank == 0:
-    py_lmp = PyLammps(cmdargs = ['-echo', 'both'], comm = mpi_comm, verbose = args.verbose)
-else:
-    py_lmp = PyLammps(cmdargs = ['-echo', 'both'], comm = mpi_comm)
-py_lmp.log('"' + log_path + '"')
+lmp = lammps(cmdargs = ['-echo', 'both'], comm = mpi_comm)
+lmp.cmd.log('"' + log_path + '"')
 
 rod_params = rods.Rod_params()
 if mpi_rank == 0:
@@ -105,13 +100,13 @@ rod_params = mpi_comm.bcast(rod_params, root = 0)
 
 # CREATE BASE OBJECTS
 model = rods.Rod_model(rod_params)
-simulation = rods.Simulation(py_lmp, model, run_args.temp, seed, output_folder)
+simulation = rods.Simulation(lmp, model, run_args.temp, seed, output_folder)
 
-py_lmp.units("lj")
-py_lmp.dimension(3)
-py_lmp.boundary("p p p")
-py_lmp.lattice("sc", 1/(run_args.cell_size**3))
-py_lmp.region("box", "block", -run_args.num_cells / 2, run_args.num_cells / 2,
+lmp.cmd.units("lj")
+lmp.cmd.dimension(3)
+lmp.cmd.boundary("p p p")
+lmp.cmd.lattice("sc", 1/(run_args.cell_size**3))
+lmp.cmd.region("box", "block", -run_args.num_cells / 2, run_args.num_cells / 2,
                               -run_args.num_cells / 2, run_args.num_cells / 2,
                               -run_args.num_cells / 2, run_args.num_cells / 2)
 simulation.setup("box")
@@ -136,55 +131,55 @@ ymin = fibril_edges[1][0] - model.rod_length / 2
 ymax = fibril_edges[1][1] + model.rod_length / 2
 zmin = fibril_edges[2][0] - model.rod_length / 2
 zmax = fibril_edges[2][1] + model.rod_length / 2
-py_lmp.region("fibril", "block", xmin, xmax, ymin, ymax, zmin, zmax, "units box")
+lmp.cmd.region("fibril", "block", xmin, xmax, ymin, ymax, zmin, zmax, "units box")
 #TODO py_lmp.region("box_minus_fibril", "subtract", 2, "box", "fibril")
-py_lmp.region("left", "block",
+lmp.cmd.region("left", "block",
               'EDGE', xmin,
               'EDGE', 'EDGE',
               'EDGE', 'EDGE',
               "units box")
-py_lmp.region("right", "block",
+lmp.cmd.region("right", "block",
                xmax, 'EDGE',
               'EDGE', 'EDGE',
               'EDGE', 'EDGE',
               "units box")
-py_lmp.region("front", "block",
+lmp.cmd.region("front", "block",
               'EDGE', 'EDGE',
               'EDGE', ymin,
               'EDGE', 'EDGE',
               "units box")
-py_lmp.region("back", "block",
+lmp.cmd.region("back", "block",
               'EDGE', 'EDGE',
                ymax, 'EDGE',
               'EDGE', 'EDGE',
               "units box")
-py_lmp.region("down", "block",
+lmp.cmd.region("down", "block",
               'EDGE', 'EDGE',
               'EDGE', 'EDGE',
               'EDGE', zmin,
               "units box")
-py_lmp.region("up", "block",
+lmp.cmd.region("up", "block",
               'EDGE', 'EDGE',
               'EDGE', 'EDGE',
                zmax, 'EDGE',
               "units box")
-py_lmp.region("box_minus_fibril", "union", 6, "up", "down", "front", "back", "left", "right")
+lmp.cmd.region("box_minus_fibril", "union", 6, "up", "down", "front", "back", "left", "right")
 simulation.create_rods(region = ["box_minus_fibril"])
 
 # DYNAMICS
-py_lmp.fix("thermostat", "all", "langevin",
+lmp.cmd.fix("thermostat", "all", "langevin",
            run_args.temp, run_args.temp, run_args.damp, seed)#, "zero yes")
 
 simulation.set_rod_dynamics("nve", opt = ["mol", model.rod_states[0]])
 
-py_lmp.neigh_modify("every 1 delay 1")
-py_lmp.timestep(run_args.dt)
+lmp.cmd.neigh_modify("every 1 delay 1")
+lmp.cmd.timestep(run_args.dt)
 
 # THERMALIZE INITIAL CONFIGURATION
 simulation.deactivate_state(0, vx_eps=5.0)
-py_lmp.run(10000)
+lmp.cmd.run(10000)
 simulation.activate_state(0)
-py_lmp.reset_timestep(0)
+lmp.cmd.reset_timestep(0)
 
 # STATE-CHANGING & CONCENTRATION FIXES
 if model.num_states <= 1 or run_args.mc_tries <= 0:
@@ -203,9 +198,9 @@ if hasattr(run_args, 'label_fibrils'):
     beta_active_patch_types = sorted([t for t in model.state_bead_types[1]
                                       if (t in model.active_bead_types)
                                       and (t not in model.body_bead_types)])
-    py_lmp.variable(fibril_group, 'atom', '"' + '||'.join(['(type == {:d})'.format(t)
+    lmp.cmd.variable(fibril_group, 'atom', '"' + '||'.join(['(type == {:d})'.format(t)
                     for t in beta_active_patch_types]) + '"')
-    py_lmp.group(fibril_group, 'dynamic', simulation.rods_group, 'var', fibril_group,
+    lmp.cmd.group(fibril_group, 'dynamic', simulation.rods_group, 'var', fibril_group,
                  'every', out_freq)
     fibril_compute = "fibril_ID"
     if hasattr(run_args, 'fibril_cutoff'):
@@ -224,7 +219,7 @@ if hasattr(run_args, 'label_fibrils'):
                 cutoff = model.bead_radii[t1] + model.bead_radii[t2] + int_range*2/3
                 if cutoff > fibril_cutoff:
                     fibril_cutoff = cutoff
-    py_lmp.compute(fibril_compute, fibril_group, 'cluster/atom', fibril_cutoff)
+    lmp.cmd.compute(fibril_compute, fibril_group, 'cluster/atom', fibril_cutoff)
 
 # OUTPUT
 dump_elems = "id x y z type mol"
@@ -232,19 +227,19 @@ try:
     dump_elems += " c_"+fibril_compute
 except:
     pass
-py_lmp.dump("dump_cmd", "all", "custom", out_freq, '"' + dump_path + '"', dump_elems)
+lmp.cmd.dump("dump_cmd", "all", "custom", out_freq, '"' + dump_path + '"', dump_elems)
 #py_lmp.variable("dump_var", "equal", "stride(8000,8500,1)")
 #py_lmp.dump_modify("dump_cmd", "every", "v_dump_var")
-py_lmp.dump_modify("dump_cmd", "sort id")
+lmp.cmd.dump_modify("dump_cmd", "sort id")
 
-py_lmp.thermo_style("custom", "step atoms", "pe temp",
+lmp.cmd.thermo_style("custom", "step atoms", "pe temp",
                     " ".join(["v_{}".format(group_var)
                               for group_var in simulation.state_group_vars]),
                     "f_{}[2]".format(simulation.state_trans_fix), # state change successes
                     "f_{}[1]".format(simulation.state_trans_fix)) # state change attempts)
-py_lmp.thermo(out_freq)
+lmp.cmd.thermo(out_freq)
 
 # RUN ...
-py_lmp.run(args.simlen)
+lmp.cmd.run(args.simlen)
 
 MPI.Finalize()

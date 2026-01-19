@@ -1,0 +1,36 @@
+#!/bin/bash -e
+
+# This script is for running multiple local simulations (and output processing) at a time
+
+HOMEDIR="$( dirname "${BASH_SOURCE[0]}" )"
+cfg_dir="/media/data_ntfs/znanost/projects/amyloid MD simulations/models & results/5p_v3/soluble_only/"
+run_dir="$HOMEDIR/run_templates/micelles_out/"
+simlen=1000000
+out_freq=10000
+
+source ~/.python/venvs/lammps/bin/activate
+
+for cfg_file in ${cfg_dir}*.cfg ; do
+	
+	cfg_filename="${cfg_file##*/}"
+	cfg_filename="${cfg_filename%.cfg}"
+	
+	for run_file in ${run_dir}*.run ; do
+
+		run_filename="${run_file##*/}"
+		run_filename="${run_filename%.run}"
+		
+		out_folder="/media/data_ntfs/znanost/projects/amyloid MD simulations/simulation data/soluble_only/5p_v3/$cfg_filename"
+		
+		seed="$(date +"%T.%N")"
+		seed=${seed##*.}
+		seed=$(($seed % 1000000))
+		
+		mpiexec -n 2 python3 $HOMEDIR/programs/micelles.py "${cfg_file}" "${run_file}" $simlen --seed $seed --out "${out_folder}" -o $out_freq
+
+		python3 $HOMEDIR/tools/dump_processing.py "${cfg_file}" "${out_folder}/${run_filename}_${seed}.dump" -c -l
+
+	done
+done
+
+deactivate

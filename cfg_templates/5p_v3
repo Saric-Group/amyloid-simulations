@@ -28,8 +28,8 @@ SS = <SS>
 SB_tip = <SB_tip>
 SB_cross = <SB_cross>
 SB_central = <SB_central>
-BB_central = <BB_central> # <cent_eff>
 SB_side = <SB_side>
+BB_central = <BB_central> # <cent_eff>
 BB_side = <BB_side> # <side_eff>
 
 # body volume exclusion

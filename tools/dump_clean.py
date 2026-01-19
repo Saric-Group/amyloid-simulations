@@ -16,13 +16,18 @@ parser.add_argument('in_files', nargs='+',
                     help='path(s) of the dump file(s) to clean')
 args = parser.parse_args()
 
-for dump_filename in args.in_files():
+for dump_filename in args.in_files:
+    error_found = False
     try:
         for parse_out in parse_dump_file(dump_filename):
             write_dump_snapshot(parse_out, dump_filename + '_', append = True)
     except Exception as e:
         print(e)
         print("{:s} was good until timestep {:d}".format(dump_filename, parse_out[0]))
-
+        error_found = True
+    
+    if not error_found:
+        print("{:s} OK".format(dump_filename, parse_out[0]))
+    
     os.remove(dump_filename)
     os.rename(dump_filename + '_', dump_filename)

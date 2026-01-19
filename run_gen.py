@@ -24,7 +24,7 @@ def fill_template(line):
 num_cells = 8.0
 cell_sizes = [round(x,1) for x in [8.1 * 1.15**i for i in range(10)]]
 for cell_size in cell_sizes:
-    run_filename = "{:.1f}-{:.1f}.run".format(cell_size, num_cells)
+    run_filename = "{:.1f}_{:.1f}.run".format(cell_size, num_cells)
     run_filepath = os.path.join(out_folder, run_filename)
     with open(run_filepath, 'w') as run_file:
         with open(template_path, 'r') as template_file:
