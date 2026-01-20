@@ -55,7 +55,7 @@ cd "$BUILDDIR"
 
 FAIL="false" # for clean-up if build fails
 cmake ../cmake/ || FAIL="true" 
-Cmake_vars="$Cmake_vars"' -D BUILD_SHARED_LIBS='"$BUILD_SHARED_LIBS"
+Cmake_vars="$Cmake_vars"' -D BUILD_SHARED_LIBS=yes'
 Cmake_vars="$Cmake_vars"' -D BUILD_MPI=yes'
 Cmake_vars="$Cmake_vars"' -D BUILD_OMP=yes'
 Cmake_vars="$Cmake_vars"' -D BUILD_TOOLS=no'
