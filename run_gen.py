@@ -33,7 +33,7 @@ for cell_size in cell_sizes:
 
 # mem_wc = 1.4
 # for mem_eps in (1/0.7, 1/0.8, 1/0.9, 1.0, 1/1.1, 1/1.2):
-#     for int_eps in np.arange(0.5, 4.01, 0.25):
+#     for int_eps in np.arange(0.5, 0.4, 0.25):
 #         run_filename = "{:.2f}-{:.2f}-{:.2f}.run".format(mem_wc, mem_eps, int_eps)
 #         run_filepath = os.path.join(out_folder, run_filename)
 #         with open(run_filepath, 'w') as run_file:
@@ -43,7 +43,7 @@ for cell_size in cell_sizes:
 # 
 # mem_eps = 1.0
 # for mem_wc in (1.3, 1.5, 1.6, 1.7):
-#     for int_eps in np.arange(0.5, 4.01, 0.25):
+#     for int_eps in np.arange(0.5, 0.4, 0.25):
 #         run_filename = "{:.2f}-{:.2f}-{:.2f}.run".format(mem_wc, mem_eps, int_eps)
 #         run_filepath = os.path.join(out_folder, run_filename)
 #         with open(run_filepath, 'w') as run_file:

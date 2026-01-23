@@ -12,9 +12,12 @@ BASEDIR="$(pwd)"
 
 LIBDIR="$BASEDIR/venv/lib/python3.12/site-packages"
 mkdir -p "$LIBDIR"
-rm -rf "$LIBDIR/lammps_multistate_rods"
 
-git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBDIR/lammps_multistate_rods"
+git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBDIR/temp"
+
+rm -rf "$LIBDIR/lammps_multistate_rods"
+mv "$LIBDIR/temp/lammps_multistate_rods" "$LIBDIR/lammps_multistate_rods"
+rm -rf "$LIBDIR/temp"
 
 # 2) ...
 
