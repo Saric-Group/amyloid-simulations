@@ -12,9 +12,7 @@
 
 *.pyc
 
-test
-libs
-venv
-lammps-local
+test/*
 
 TODO
+"PBS stuff (for Supek)"
