@@ -13,6 +13,7 @@
 *.pyc
 
 test/*
+!test/test.py
 
 TODO
 Supek_PBS_stuff
