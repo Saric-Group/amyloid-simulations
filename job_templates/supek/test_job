@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#PBS -N test
+#PBS -q cpu-test
+
+#PBS -l select=2:ncpus=4:mpiprocs=8
+#PBS -l mem=1GB
+#PBS -l walltime=01:00:00
+
+# PBS -M eugen.rozic.17@alumni.ucl.ac.uk
+# PBS -m ae
+
+#PBS -o "$PBS_O_WORKDIR/${PBS_JOBID}.out"
+#PBS -j oe
+
+echo "Started at:"
+pwd
+echo "CD to workdir..."
+cd $PBS_O_WORKDIR # where qsub is called from
+echo "Now at:"
+pwd
+
+PROJECT_HOME="$PBS_O_WORKDIR"
+
+if [ -d "$PROJECT_HOME/venv" ]; then
+	source "$PROJECT_HOME"/venv/bin/activate
+	echo "Virtualenv at $PROJECT_HOME/venv activated."
+else
+	echo "WARNING: Virtualenv not found/activated! Using system python & LAMMPS..."
+fi
+
+echo "JOB ID: $PBS_JOBID"
+echo "JOB NAME: $PBS_JOBNAME"
+echo "HOSTS: $PBS_O_HOST"
+echo "NODES: $PBS_NODEFILE"
+echo "THREADS: $OMP_NUM_THREADS"
+echo "NCPUS: $NCPUS"
+echo "TMPDIR: $TMPDIR"
+
+# TODO
+#JOB_ID=$( expr match "${PBS_JOBID}" '\([0-9]*\)' )
+#SEED=$(( 10#${JOB_ID} % 900000000 ))
+
+
+

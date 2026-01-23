@@ -1,0 +1,37 @@
+qsub opcije:
+ -j <N>-<M>[:<step>] (pokretanje više identičnih poslova)
+   + PBS_ARRAY_ID (identifikator polja poslova)
+   + PBS_ARRAY_INDEX (redni broj podposla u polju poslova)
+ depend=<type>:<job_ID> ...
+
+opcije PBS skripte:
+ -N <name>
+ -P <??>
+ -q <queue_name> (cpu/cpu-test/bigmem/login-cpu)
+ -e <path_...>
+ -l select=<N>:ncpus=<N>:mpiprocs=>N>:mem=<N>GB:walltime=<HH:MM:SS>:place=<free?>
+   + može ih se definirati odvojeno (mora ako nema "select")
+ -M <list_of_email_addresses>
+ -m <b/a/e/j> (email opcije: šalje se kad posao počne/prekine/završi/za podposlove)
+ -o <path_for_stdout_file>
+ -e <path_for_errout_file>
+ -j (switch; spoji stdout i stderr u jedan out file)
+ -Wgroup_list <project_ID>
+ 
+PBS varijable:
+ - PBS_JOBID
+ - PBS_JOBNAME (od opcije -N)
+ - PBS_O_WORKDIR (odakle je pozvan qsub)
+ - TMPDIR (put do scratch direktorija)
+ - PBS_O_HOST
+ - OMP_NUM_THREADS / NCPUS
+ - PBS_NODEFILE (popis radnih čvorova/jezgri)
+
+module load cray-pals (prije pokretanja mpiexec)
+
+tracejob <job_ID> (za log poruke PBS-a)
+
+qhold / qrls <job_ID>
+qdel <job_ID> (dodati "-W force -x" prije <job_ID> za prisilno zaustavljanje)
+
+"/storage/home/username" - mjesto za spremati podatke nepotrebne za nove poslove (npr. od starih simulacije, za arhivu ili kasnije obradu)
