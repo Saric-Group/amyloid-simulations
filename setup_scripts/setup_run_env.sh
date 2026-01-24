@@ -50,8 +50,8 @@ echo "... done!"
 
 echo "Building and installing LAMMPS ..."
 BUILDDIR="${LAMMPSDIR}/build"
+rm -rf "${BUILDDIR}"
 mkdir "${BUILDDIR}" 2>&1 || true
-rm -rf "${BUILDDIR}/*"
 cd "$BUILDDIR"
 
 FAIL="false" # for clean-up if build fails
