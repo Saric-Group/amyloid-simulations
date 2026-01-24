@@ -6,6 +6,11 @@ Created on 10 Aug 2018
 
 @author: Eugen Rožić
 '''
+from mpi4py import MPI
+
+mpi_comm = MPI.COMM_WORLD
+mpi_rank = mpi_comm.Get_rank()
+
 import os, sys
 
 from lammps import lammps
@@ -16,11 +21,15 @@ import lammps_multistate_rods.tools as rods_tools
 cfg_file_loc = sys.argv[1]
 script_loc = os.path.abspath(os.path.dirname(sys.argv[0]))
 
-params = rods.Rod_params().from_file(cfg_file_loc)
-model = rods.Rod_model(params)
+rod_params = rods.Rod_params()
+if mpi_rank == 0:
+    rod_params.from_file(cfg_file_loc);
+rod_params = mpi_comm.bcast(rod_params, root = 0)
+
+model = rods.Rod_model(rod_params)
     
 output_dir = os.path.join(os.path.dirname(cfg_file_loc), 'test_out')
-if not os.path.exists(output_dir):
+if not os.path.exists(output_dir) and mpi_rank == 0:
     os.makedirs(output_dir)
 data_in = os.path.join(output_dir, 'data.in')
     
@@ -32,9 +41,14 @@ N = 20
 
 #box_size = 2*model.rod_length
 fibril_rods = []
-#fibril_rods.append(rods_tools.preparation.prepare_single(r0, phi, theta, out_path = data_in))
-fibril_edges = rods_tools.preparation.prepare_fibril(model, N, phi, theta, r0,
-                                                     data = fibril_rods, out_path = data_in)
+fibril_edges = []
+if mpi_rank == 0:
+    #fibril_rods.append(rods_tools.preparation.prepare_single(r0, phi, theta, out_path = data_in))
+    fibril_edges = rods_tools.preparation.prepare_fibril(model, N, phi, theta, r0,
+                                                         data = fibril_rods,
+                                                         out_path = data_in)
+fibril_rods = mpi_comm.bcast(fibril_rods, root = 0)
+fibril_edges = mpi_comm.bcast(fibril_edges, root = 0)
     
 seed = 12345
 T = 1.0
@@ -43,7 +57,7 @@ log_path = os.path.join(output_dir, "test.log")
 output_freq = 10
 dump_path = os.path.join(output_dir, 'test.dump')
 
-lmp = lammps(cmdargs = ['-echo','both'])
+lmp = lammps(cmdargs = ['-echo','both'], comm = mpi_comm)
 lmp.cmd.log('"' + log_path + '"')
 
 simulation = rods.Simulation(lmp, model, T, seed, output_dir)
