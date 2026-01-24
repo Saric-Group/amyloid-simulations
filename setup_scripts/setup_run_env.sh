@@ -49,8 +49,9 @@ echo "... done!"
 # 3) build and install LAMMPS
 
 echo "Building and installing LAMMPS ..."
-BUILDDIR=""$LAMMPSDIR"/build"
-mkdir "$BUILDDIR" 2>&1 || true
+BUILDDIR="${LAMMPSDIR}/build"
+mkdir "${BUILDDIR}" 2>&1 || true
+rm -rf "${BUILDDIR}/*"
 cd "$BUILDDIR"
 
 FAIL="false" # for clean-up if build fails
