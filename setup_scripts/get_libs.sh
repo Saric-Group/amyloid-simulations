@@ -10,7 +10,10 @@ BASEDIR="$(pwd)"
 
 # 1) get "lammps multistate rods" library (put it in virtual env)
 
-LIBDIR="$BASEDIR/venv/lib/python3.12/site-packages"
+py_version=$(python --version)
+[[ $py_version =~ Python\ ([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+) ]] && py_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+
+LIBDIR="$BASEDIR/venv/lib/python${py_version}/site-packages"
 mkdir -p "$LIBDIR"
 
 git clone -b develop https://github.com/Saric-Group/lammps_multistate_rods.git "$LIBDIR/temp"
