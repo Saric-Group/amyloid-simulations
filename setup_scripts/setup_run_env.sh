@@ -27,7 +27,7 @@ if [ "`which python3`" != "$VENVDIR/bin/python3" ]; then
 fi
 
 if [[ $venv_setup == 1 ]]; then
-	pip install scipy pyquaternion mpi4py #matplotlib venv
+	pip install scipy pyquaternion mpi4py #matplotlib
 	echo "...done!"
 fi
 
@@ -63,7 +63,7 @@ Cmake_vars="$Cmake_vars"' -D BUILD_TOOLS=no'
 Cmake_vars="$Cmake_vars"' -D WITH_JPEG=yes'
 Cmake_vars="$Cmake_vars"' -D WITH_PNG=yes'
 Cmake_vars="$Cmake_vars"' -D WITH_GZIP=yes'
-Cmake_vars="$Cmake_vars"' -D WITH_FFMPEG=yes'
+Cmake_vars="$Cmake_vars"' -D WITH_FFMPEG=no'
 cmake $Cmake_vars . || FAIL="true"
 LAMMPS_packages='-D PKG_MOLECULE=on'
 LAMMPS_packages="$LAMMPS_packages"' -D PKG_RIGID=on'
