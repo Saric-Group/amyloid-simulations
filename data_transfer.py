@@ -15,8 +15,8 @@ import argparse
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('server', type=str,
-                    help='myriad or kathleen or lemon')
-parser.add_argument('-u', '--user', type=str,
+                    help='supek or ...')
+parser.add_argument('user', type=str,
                     help='user name for the given server')
 parser.add_argument('-s', '--search', type=str, default=r'growth',
                     help='the root search dir')
@@ -26,29 +26,17 @@ parser.add_argument('--no_scp', action='store_true',
                     help="uses only the OS's sftp connection for transfer")
 args = parser.parse_args()
 
-if args.server == 'myriad':
-    host = 'myriad.rc.ucl.ac.uk'
-    user = 'ucapero' if args.user == None else args.user
+if args.server == 'supek':
+    host = 'login-cpu.hpc.srce.hr'
+    user = args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
-    remote_homedir = remote_local + 'lustre/home/' + user
-    remote_rel_basedir = 'simulations/amyloids/data' #'Scratch/amyloids'
-elif args.server == 'kathleen':
-    host = 'kathleen.rc.ucl.ac.uk'
-    user = 'ucapero' if args.user == None else args.user
-    remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
-    remote_homedir = remote_local + 'lustre/home/' + user
-    remote_rel_basedir = 'simulations/amyloids/data' #'Scratch/amyloids'
-elif args.server == 'lemon':
-    host = 'lemon0.biop.phys.ucl.ac.uk'
-    user = 'erozic' if args.user == None else args.user
-    remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
-    remote_homedir = remote_local + 'storage/users/' + user
-    remote_rel_basedir = 'simulations/amyloids/data'
+    remote_homedir = remote_local + 'lustre/home/' + user # 'storage/home/' for longterm data
+    remote_rel_basedir = 'amyloids/simulations/data'
 else:
     raise Exception('Unsupported server ({:s})!'.format(args.server))
 
 remote_basedir = os.path.join(remote_homedir, remote_rel_basedir)
-local_basedir = r'/media/data_ntfs/PhD/projects/amyloid MD simulations/data'
+local_basedir = r'/media/data_ntfs/znanost/projects/amyloid MD simulations/simulation data'
 
 def remote_to_local(path):
     return os.path.join(local_basedir, os.path.relpath(path, remote_basedir))

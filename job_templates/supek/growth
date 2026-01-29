@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N <name>
+#PBS -N growth
 #PBS -q cpu
 
 #PBS -l ncpus=<num_proc>
@@ -35,10 +35,11 @@ py_version=$(python --version)
 [[ $py_version =~ Python\ ([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+) ]] && py_version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
 export PYTHONPATH="${PYTHONPATH}:${PROJECT_HOME}/venv/lib/python${py_version}/site-packages"
 
+
 SEED=$(( 10#${JOB_ID} % 900000000 ))
 
-/usr/bin/time --verbose mpiexec -np <num_proc> python "$PROJECT_HOME"/programs/<script> "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
+/usr/bin/time --verbose mpiexec -np <num_proc> python "$PROJECT_HOME"/programs/growth.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
 
 run_filename=`basename "<run_file>"`
 run_filename="${run_filename%.*}"
-python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/${run_filename}_${SEED}.dump" <aargs>
+python "$PROJECT_HOME"/tools/dump_processing.py "<cfg_file>" "<out_folder>/${run_filename}_${SEED}.dump" -c -l <aargs>
