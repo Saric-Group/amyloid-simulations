@@ -1,4 +1,3 @@
-
 # Eclipse stuff
 .project
 .pydevproject
@@ -9,8 +8,8 @@
 *.lammps
 *.dat
 *.dump
-
 *.pyc
+*_out
 
 data
 
