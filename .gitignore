@@ -12,6 +12,8 @@
 
 *.pyc
 
+data
+
 test/*
 !test/test.py
 

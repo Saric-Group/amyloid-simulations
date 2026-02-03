@@ -1,0 +1,21 @@
+#!/bin/bash -e
+
+# This script is for running multiple local simulations (and output processing) at a time
+
+HOMEDIR="$(dirname "${BASH_SOURCE[0]}")"
+
+program="$1"
+simlen=100000
+out_freq=1000
+
+cfg_dir="$HOMEDIR/cfg_templates/5p_v3_out/"
+run_dir="$HOMEDIR/run_templates/${program}_out/"
+
+for cfg_file in ${cfg_dir}*.cfg ; do
+	
+	for run_file in ${run_dir}*.run ; do
+		
+		python qsub.py "$HOMEDIR/job_templates/supek/${program}" ${cfg_file} ${run_file} ${simlen}
+
+	done
+done
