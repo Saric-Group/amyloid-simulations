@@ -18,7 +18,7 @@ if not os.path.exists(out_folder):
 
 version = int(template_name[-1])
 
-SSs = [3.25]
+SSs = [0.00, 3.25]
 SB_tips = [1.0]
 SB_crosss = [4.0]
 SB_centrals = [1.0, 1.5, 2.0]
@@ -26,7 +26,7 @@ SB_sides = [1.0, 1.5, 2.0]
 BB_centrals = [2.5, 4.5, 6.5] #relative to SB_centrals
 BB_sides = [2.0, 3.5, 5.0] #relative to SB_sides
 
-D_mu = 15.0
+D_mus = [15]
 VX = 1.0
 
 def cent_inter_diff(BB_central, SB_central, SB_cross, SB_tip):
@@ -60,16 +60,17 @@ for SS in SSs:
                         BB_central += SB_central    
                         for BB_side in BB_sides:
                             BB_side += SB_side
+                            for D_mu in D_mus:
                             
-                            cent_eff = cent_inter_diff(BB_central, SB_central, SB_cross, SB_tip)
-                            side_eff = side_inter_diff(BB_side, SB_side, SB_cross, SB_tip)
+                                cent_eff = cent_inter_diff(BB_central, SB_central, SB_cross, SB_tip)
+                                side_eff = side_inter_diff(BB_side, SB_side, SB_cross, SB_tip)
                             
-                            cfg_filename = "{}_{:.2f}_{:.2f}-{:.2f}-{:.2f}-{:.2f}_{:.2f}-{:.2f}.cfg".format(
-                                template_name, SS, SB_tip, SB_cross, SB_central, SB_side, BB_central, BB_side)
-                            cfg_filepath = os.path.join(out_folder, cfg_filename)
+                                cfg_filename = "{:.2f}_{:.2f}-{:.2f}-{:.2f}-{:.2f}_{:.2f}-{:.2f}_{:.0f}.cfg".format(
+                                    SS, SB_tip, SB_cross, SB_central, SB_side, BB_central, BB_side, D_mu)
+                                cfg_filepath = os.path.join(out_folder, cfg_filename)
                             
-                            with open(cfg_filepath, 'w') as cfg_file:
-                                with open(template_path, 'r') as template_file:
-                                    for line in template_file:
-                                        cfg_file.write(fill_template(line))
+                                with open(cfg_filepath, 'w') as cfg_file:
+                                    with open(template_path, 'r') as template_file:
+                                        for line in template_file:
+                                            cfg_file.write(fill_template(line))
                             
