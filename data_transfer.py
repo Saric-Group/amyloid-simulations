@@ -18,25 +18,36 @@ parser.add_argument('server', type=str,
                     help='supek or ...')
 parser.add_argument('user', type=str,
                     help='user name for the given server')
-parser.add_argument('-s', '--search', type=str, default=r'growth',
+parser.add_argument('local_dir', type=str,
+                    help='local directory where to transfer data to')
+
+parser.add_argument('-s', '--search', type=str, default='growth',
                     help='the root search dir')
 parser.add_argument('-f', '--full', action='store_true',
                     help='transfers the .dump files too')
+
+parser.add_argument('--remote_home', type=str, default='lustre/home/', # 'storage/home/' for longterm data
+                    help='remote home dirs location, relative to root')
+parser.add_argument('--project_dir', type=str, default='amyloids',
+                    help='name of the project directory on remote')
+parser.add_argument('--data_dir', type=str, default='data',
+                    help='location of data relative to the project dir')
+
 parser.add_argument('--no_scp', action='store_true',
                     help="uses only the OS's sftp connection for transfer")
+
 args = parser.parse_args()
 
 if args.server == 'supek':
     host = 'login-cpu.hpc.srce.hr'
     user = args.user
     remote_local = r'/run/user/1000/gvfs/sftp:host={:s},user={:s}/'.format(host, user)
-    remote_homedir = remote_local + 'lustre/home/' + user # 'storage/home/' for longterm data
-    remote_rel_basedir = 'amyloids/simulations/data'
+    remote_homedir = os.path.join(remote_local, args.remote_home, user) 
 else:
     raise Exception('Unsupported server ({:s})!'.format(args.server))
 
-remote_basedir = os.path.join(remote_homedir, remote_rel_basedir)
-local_basedir = r'/media/data_ntfs/znanost/projects/amyloid MD simulations/simulation data'
+remote_basedir = os.path.join(remote_homedir, args.project_dir, args.data_dir)
+local_basedir = os.path.abspath(args.local_dir)
 
 def remote_to_local(path):
     return os.path.join(local_basedir, os.path.relpath(path, remote_basedir))
@@ -52,6 +63,7 @@ def scp_transfer(remote_src, local_dest, attempts = 1):
     while attempt <= attempts:
         command = r'scp {:s} {:s}'.format(
             dq_esc(remote_to_scp(remote_src)), dq_esc(local_dest))
+        #print("SCP try: {:s}".format(command))
         exit_status = os.system(command)
         if exit_status == 0:
             break
@@ -107,6 +119,8 @@ for node, dirs, files in os.walk(rootnode, topdown=True):
                     result_filepath = os.path.join(srcdir, result_filename)
                     if not os.path.exists(remote_to_local(result_filepath)):
                         file_transfer(result_filepath, destdir)
+                    else:
+                        print("Skipping {:s} (already exists)".format(os.path.relpath(result_filepath, remote_basedir)))
                 
                 #TODO possibly delete some stuff (*.mol, *.dat, *.out, *.log)
             

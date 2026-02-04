@@ -8,7 +8,7 @@ Created on 16 Oct 2018
 '''
 
 import argparse
-import sys, os, re
+import sys, os, re, shutil
 import subprocess
 import traceback
 import time
@@ -31,6 +31,11 @@ parser.add_argument('simlen', type=int,
 
 parser.add_argument('--home', type=str, default=script_loc,
                     help='the location of the home directory')
+parser.add_argument('--model', type=str, default="5p_v3",
+                    help='model version')
+parser.add_argument('--out', type=str, default=None,
+                    help='the location of the output folder')
+
 parser.add_argument('-t', '--walltime', type=str, default='24:00:00',
                     help='walltime for the job (HH:MM:SS)')
 parser.add_argument('-m', '--memory', type=str, default='1G',
@@ -66,10 +71,20 @@ args = job_args.args
 aargs = job_args.aargs
 
 temp_script_path = 'temp_job_script'
-    
-out_folder = os.path.splitext(cfg_file)[0]
+
+if job_args.out == None:
+    job_name = os.path.basename(job_args.job_template)
+    cfg_name = os.path.splitext(os.path.basename(cfg_file))[0]
+    out_folder = os.path.join(project_home, "data", job_name, job_args.model, cfg_name)
+else:
+    out_folder = job_args.out
 if not os.path.exists(out_folder):
-    os.makedirs(out_folder)
+    os.makedirs(out_folder) #has to exist because of PBS script header
+
+# copy cfg file to output folder parent, for later processing
+cfg_copy = os.path.join(out_folder, "..", os.path.basename(cfg_file))
+if not os.path.exists(cfg_copy):
+    shutil.copy(cfg_file, cfg_copy)
     
 with open(temp_script_path, 'w') as job_script,\
      open(job_args.job_template, 'r') as job_template:

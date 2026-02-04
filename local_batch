@@ -18,7 +18,7 @@ for cfg_file in ${cfg_dir}*.cfg ; do
 	cfg_filename="${cfg_file##*/}"
 	cfg_filename="${cfg_filename%.cfg}"
 	
-	out_folder="$HOMEDIR/data/5p_v3/${cfg_filename}"
+	out_folder="$HOMEDIR/data/${program}/5p_v3/${cfg_filename}"
 	
 	for run_file in ${run_dir}*.run ; do
 
