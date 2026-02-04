@@ -38,7 +38,7 @@ export PYTHONPATH="${PYTHONPATH}:${PROJECT_HOME}/venv/lib/python${py_version}/si
 
 SEED=$(( 10#${JOB_ID} % 900000000 ))
 
-/usr/bin/time --verbose mpiexec -np <num_proc> python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED <args>
+/usr/bin/time --verbose mpiexec -np <num_proc> python "$PROJECT_HOME"/programs/nucleation.py "<cfg_file>" "<run_file>" <simlen> --seed $SEED --out "<out_folder>" <args>
 
 run_filename=`basename "<run_file>"`
 run_filename="${run_filename%.*}"
