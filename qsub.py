@@ -40,15 +40,17 @@ parser.add_argument('-t', '--walltime', type=str, default='24:00:00',
                     help='walltime for the job (HH:MM:SS)')
 parser.add_argument('-m', '--memory', type=str, default='1G',
                     help='memory for the job')
-parser.add_argument('-np', '--num_proc', type=str, default='8',
+parser.add_argument('-p', '--num_proc', type=str, default='8',
                     help='number of processors/cores')
+parser.add_argument('-e', '--e_mail', type=str, default='',
+                    help='e-mail address to send notification about jobs to')
+parser.add_argument('-n', '--repeat', type=int, default=1,
+                    help='number of copies of each job to start')
+
 parser.add_argument('--args', type=str, default='',
                     help='any additional args for the program (to be passed verbatim)')
 parser.add_argument('--aargs', type=str, default='',
                     help='any additional args for analysis (to be passed verbatim)')
-
-parser.add_argument('-n', '--repeat', type=int, default=1,
-                    help='number of copies of each job to start')
 
 job_args = parser.parse_args()
 
@@ -67,6 +69,11 @@ project_home = job_args.home
 walltime = job_args.walltime
 memory = job_args.memory
 num_proc = job_args.num_proc
+mail_address = job_args.e_mail
+if job_args.e_mail != '':
+    e_mail = ''
+else:
+    e_mail = '#NOMAIL ' # to comment-out the e-mail PBS instructions in the job script
 args = job_args.args
 aargs = job_args.aargs
 

@@ -7,8 +7,8 @@
 #PBS -l mem=<memory>
 #PBS -l walltime=<walltime>
 
-#PBS -M eugen.rozic.17@alumni.ucl.ac.uk
-#PBS -m ae
+<e_mail>#PBS -M <mail_address>
+<e_mail>#PBS -m ae
 
 #PBS -o "<out_folder>"
 #PBS -j oe
